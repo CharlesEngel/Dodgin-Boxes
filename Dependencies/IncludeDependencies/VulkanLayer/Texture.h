@@ -9,6 +9,7 @@
 
 #include "Device.h"
 #include "CommandPool.h"
+#include "MemoryManager.h"
 
 // Contains a texture and its related information
 struct VulkanTextureData
@@ -21,8 +22,9 @@ struct VulkanTextureData
 
 struct VulkanTexture
 {
+	VulkanMemoryManager *memory_manager;
 	VkImage texture_image;
-	VkDeviceMemory texture_memory;
+	VulkanMemory texture_memory;
 	VkImageView texture_image_view;
 	VkSampler texture_sampler;
 	VkDevice device;
@@ -36,6 +38,7 @@ struct VulkanTexture
 struct VulkanTextureParameters
 {
 	VulkanDevice device;
+	VulkanMemoryManager *memory_manager;
 	VulkanCommandPool command_pool;
 	VkImageUsageFlags usage;
 	VulkanTextureData data;

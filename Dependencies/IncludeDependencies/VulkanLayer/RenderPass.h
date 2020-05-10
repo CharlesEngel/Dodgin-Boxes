@@ -7,20 +7,21 @@
 
 #include "Device.h"
 #include "SwapChain.h"
+#include "MemoryManager.h"
 
 // Contains render pass and its image views and command pool
 struct VulkanRenderPass
 {
 	VkDevice device;
+	VulkanMemoryManager *memory_manager;
 	VkCommandPool command_pool;
 	VkRenderPass render_pass;
-	// TODO: Move into Swap Chain? (Maybe give render passes their own optional framebuffers?)
 	std::vector<VkFramebuffer> framebuffers;
 
 	VkImageView color_image_view;
 	VkImageView depth_image_view;
-	VkDeviceMemory color_image_memory;
-	VkDeviceMemory depth_image_memory;
+	VulkanMemory color_image_memory;
+	VulkanMemory depth_image_memory;
 	VkImage color_image;
 	VkImage depth_image;
 	VkExtent2D draw_extent;
@@ -40,6 +41,7 @@ struct VulkanRenderPassParameters
 {
 	VulkanDevice device;
 	VulkanSwapChain swap_chain;
+	VulkanMemoryManager *memory_manager;
 	GLFWwindow *glfw_window;
 
 	VulkanRenderPassFramebufferAttachment attachments;

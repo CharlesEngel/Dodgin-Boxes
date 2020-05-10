@@ -12,6 +12,7 @@
 #include "Buffer.h"
 #include "SwapChain.h"
 #include "RenderPass.h"
+#include "Resource.h"
 
 
 
@@ -30,15 +31,25 @@ struct VulkanCommandParameters
 	VulkanCommandPool command_pool;
 };
 
-struct VulkanRenderPassCommandBufferParameters
+struct VulkanRenderPassCommandBufferAllocateParameters
 {
-	// TODO: Passing a LOT of data here, maybe use references?
+	VulkanSwapChain swap_chain;
+};
+
+struct VulkanRenderPassCommandBufferRecordParameters
+{
+	// TODO: Passing a LOT of data here, maybe fix?
 	std::vector<VulkanPipeline> pipelines;
-	std::vector<VulkanBuffer> vertex_buffers;
-	std::vector<VulkanBuffer> index_buffers;
+
+	// Keep these in the same order as the pipelines they corrospond to
+	std::vector<std::vector<VulkanResource>> resources;
+	std::vector<std::vector<VulkanBuffer>> vertex_buffers;
+	std::vector<std::vector<VulkanBuffer>> index_buffers;
+
 	VulkanSwapChain swap_chain;
 	VulkanDevice device;
 	std::vector<VkClearValue> clear_values;
+	uint32_t framebuffer_index;
 };
 
 // Initializes values in VulkanCommand
@@ -54,7 +65,10 @@ void start_single_time_command(VulkanCommand &command, VulkanCommandParameters &
 void end_single_time_command(VulkanCommand &command);
 
 // Creates command buffers for the render pass
-void create_render_pass_command_buffers(VulkanRenderPass &render_pass, VulkanRenderPassCommandBufferParameters &parameters);
+void allocate_render_pass_command_buffers(VulkanRenderPass &render_pass, VulkanRenderPassCommandBufferAllocateParameters &parameters);
+
+// Records command buffers for the render pass
+void record_render_pass_command_buffers(VulkanRenderPass &render_pass, VulkanRenderPassCommandBufferRecordParameters &parameters);
 
 // De-allocates command buffers for render pass
 void cleanup_render_pass_command_buffers(VulkanRenderPass &render_pass);

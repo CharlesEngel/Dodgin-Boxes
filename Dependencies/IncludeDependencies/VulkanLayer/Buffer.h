@@ -6,13 +6,15 @@
 #include <vector>
 
 #include "Device.h"
+#include "MemoryManager.h"
 
 // Contains a buffer, can serve any purpose
 struct VulkanBuffer
 {
 	VkBuffer buffer;
-	VkDeviceMemory buffer_memory;
+	VulkanMemory buffer_memory;
 	VkDevice device;
+	VulkanMemoryManager *memory_manager;
 	VkDeviceSize size;
 	uint32_t range;
 	VkBufferUsageFlags usage;
@@ -21,9 +23,8 @@ struct VulkanBuffer
 struct VulkanBufferParameters
 {
 	VulkanDevice device;
+	VulkanMemoryManager *memory_manager;
 	VkDeviceSize size;
-	// TODO: This currently does nothing
-	VkDeviceSize offset;
 	VkBufferUsageFlags usage;
 	VkMemoryPropertyFlags properties;
 	uint32_t range;
