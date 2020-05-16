@@ -1,16 +1,16 @@
 #include "Renderer.h"
 
 #include <VulkanLayer/Command.h>
-
-#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <chrono>
+#include <algorithm>
 
 const bool enable_validation_layers = true;
 
 void create_renderer(Renderer &renderer, RendererParameters &parameters)
 {
-	renderer.submitted_instances = {};
+	renderer.instances = {};
 	renderer.max_frames = parameters.max_frames;
 
 	// Copy window
@@ -140,24 +140,24 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	models["SQUARE"] = { square_vertices_buffer, square_indices_buffer };
 
 	std::vector<glm::vec3> cube_vertices_data = {
-		{-0.5f, -0.5f, 0.0f},
-		{0.5f, -0.5f, 0.0f},
-		{0.5f, 0.5f, 0.0f},
-		{-0.5f, 0.5f, 0.0f},
+		{-0.5f, -0.5f, -0.5f},
+		{0.5f, -0.5f, -0.5f},
+		{0.5f, 0.5f, -0.5f},
+		{-0.5f, 0.5f, -0.5f},
 
-		{-0.5f, -0.5f, 1.0f},
-		{0.5f, -0.5f, 1.0f},
-		{0.5f, 0.5f, 1.0f},
-		{-0.5f, 0.5f, 1.0f}
+		{-0.5f, -0.5f, 0.5f},
+		{0.5f, -0.5f, 0.5f},
+		{0.5f, 0.5f, 0.5f},
+		{-0.5f, 0.5f, 0.5f}
 	};
 
 	std::vector<uint32_t> cube_indices_data = {
-		0, 1, 2, 2, 3, 0,
-		0, 3, 4, 4, 3, 7,
-		1, 5, 2, 2, 5, 6,
-		6, 5, 7, 7, 5, 4,
-		4, 5, 1, 1, 0, 4,
-		3, 2, 6, 6, 7, 3
+		0, 2, 1, 3, 2, 0,
+		0, 4, 3, 3, 4, 7,
+		1, 2, 5, 5, 2, 6,
+		6, 7, 5, 5, 7, 4,
+		5, 4, 1, 1, 4, 0,
+		2, 3, 6, 6, 3, 7
 	};
 
 	VulkanBufferParameters cube_vertices_parameters = {};
@@ -192,6 +192,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	data_manager_parameters.shaders = shaders;
 	data_manager_parameters.textures = textures;
 	data_manager_parameters.uniform_buffers = {};
+	data_manager_parameters.materials = {};
 
 	create_data_manager(renderer.data, data_manager_parameters);
 
@@ -210,8 +211,15 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	allocate_render_pass_command_buffers(render_pass, command_buffer_parameters);
 
 	// Create pipelines
+	int w, h;
+
+	glfwGetFramebufferSize(renderer.window, &w, &h);
+
 	std::unordered_map<std::string, VulkanPipeline> pipelines;
-	VulkanPipeline pipeline = {};
+	VulkanPipeline pipeline_green = {};
+	VulkanPipeline pipeline_red = {};
+	VulkanPipeline pipeline_blue = {};
+	VulkanPipeline pipeline_yellow = {};
 	VulkanPipelineParameters pipeline_parameters = {};
 	pipeline_parameters.attribute_descriptions = attribute_descriptions;
 	pipeline_parameters.binding_descriptions = binding_descriptions;
@@ -222,9 +230,28 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.render_pass = render_pass;
 	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_green.spv"] };
 	pipeline_parameters.swap_chain = renderer.swap_chain;
+	pipeline_parameters.viewport_width = std::min(w, h);
+	pipeline_parameters.viewport_height = std::min(w, h);
+	pipeline_parameters.viewport_offset_x = (w - pipeline_parameters.viewport_width) / 2;
+	pipeline_parameters.viewport_offset_y = (h - pipeline_parameters.viewport_height) / 2;
 
-	create_pipeline(pipeline, pipeline_parameters);
-	pipelines["standard_green"] = pipeline;
+	create_pipeline(pipeline_green, pipeline_parameters);
+	pipelines["standard_green"] = pipeline_green;
+
+	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_red.spv"] };
+
+	create_pipeline(pipeline_red, pipeline_parameters);
+	pipelines["standard_red"] = pipeline_red;
+
+	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_blue.spv"] };
+
+	create_pipeline(pipeline_blue, pipeline_parameters);
+	pipelines["standard_blue"] = pipeline_blue;
+
+	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_yellow.spv"] };
+
+	create_pipeline(pipeline_yellow, pipeline_parameters);
+	pipelines["standard_yellow"] = pipeline_yellow;
 
 	// Create resources
 	// None yet...
@@ -234,10 +261,45 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	RenderPassManagerParameters render_pass_manager_parameters = {};
 	render_pass_manager_parameters.pass = render_pass;
 	render_pass_manager_parameters.pass_pipelines = pipelines;
-	render_pass_manager_parameters.resources = {};
 
 	create_render_pass_manager(render_pass_manager, render_pass_manager_parameters);
 	renderer.render_passes = { render_pass_manager };
+
+	// Create materials
+	Material mat_green_cube = {};
+	mat_green_cube.model = &renderer.data.models["CUBE"];
+	mat_green_cube.pipeline = "standard_green";
+	mat_green_cube.textures = {};
+	mat_green_cube.resources = &renderer.render_passes[0].resources[mat_green_cube.pipeline];
+	mat_green_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipeline];
+	mat_green_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_green_cube.pipeline];
+
+	Material mat_red_square = {};
+	mat_red_square.model = &renderer.data.models["SQUARE"];
+	mat_red_square.pipeline = "standard_red";
+	mat_red_square.textures = {};
+	mat_red_square.resources = &renderer.render_passes[0].resources[mat_red_square.pipeline];
+	mat_red_square.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_red_square.pipeline];
+	mat_red_square.index_buffers = &renderer.render_passes[0].index_buffers[mat_red_square.pipeline];
+
+	Material mat_blue_cube = {};
+	mat_blue_cube.model = &renderer.data.models["CUBE"];
+	mat_blue_cube.pipeline = "standard_blue";
+	mat_blue_cube.textures = {};
+	mat_blue_cube.resources = &renderer.render_passes[0].resources[mat_blue_cube.pipeline];
+	mat_blue_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipeline];
+	mat_blue_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_blue_cube.pipeline];
+
+	Material mat_yellow_cube = {};
+	mat_yellow_cube.model = &renderer.data.models["CUBE"];
+	mat_yellow_cube.pipeline = "standard_yellow";
+	mat_yellow_cube.textures = {};
+	mat_yellow_cube.resources = &renderer.render_passes[0].resources[mat_yellow_cube.pipeline];
+	mat_yellow_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipeline];
+	mat_yellow_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipeline];
+
+
+	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube };
 
 	// Create semaphores/fences
 	renderer.image_available_semaphores.resize(parameters.max_frames);
@@ -269,6 +331,8 @@ void update_image_index(Renderer &renderer, uint32_t draw_frame)
 	VkResult result = vkAcquireNextImageKHR(renderer.device.device, renderer.swap_chain.swap_chain, UINT64_MAX, renderer.image_available_semaphores[draw_frame], VK_NULL_HANDLE, &renderer.image_index);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+
+		resize_swap_chain(renderer);
 		/*int width = 0, height = 0;
 		glfwGetFramebufferSize(window, &width, &height);
 		while (width == 0 || height == 0) {
@@ -374,40 +438,23 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 	// TODO: This is way too slow. Maybe store the instances with the render passes, so we don't need to search to find them?
 	// Record command buffers
 	std::vector<std::pair<VulkanRenderPass*, std::vector<Instance*>>> pass_instances;
+
 	for (auto &render_pass : renderer.render_passes)
 	{
-		std::vector<Instance*> resources;
-		for (auto &instance : renderer.submitted_instances)
+		std::vector<std::vector<VulkanBuffer>> index_buffers;
+		std::vector<std::vector<VulkanBuffer>> vertex_buffers;
+		std::vector<std::vector<VulkanResource>> resources;
+		std::vector<VulkanPipeline> pipelines;
+		for (auto &pipeline : render_pass.pass_pipelines)
 		{
-			if (render_pass.resources.find(instance.second) != render_pass.resources.end())
-			{
-				resources.emplace_back(&render_pass.resources[instance.second]);
-			}
-		}
+			vertex_buffers.emplace_back(render_pass.vertex_buffers[pipeline.first]);
+			index_buffers.emplace_back(render_pass.index_buffers[pipeline.first]);
+			resources.emplace_back(render_pass.resources[pipeline.first]);
+			pipelines.emplace_back(pipeline.second);
 
-		if (resources.size() > 0)
-		{
-			std::pair<VulkanRenderPass*, std::vector<Instance*>> pass_resource = { &render_pass.pass, resources };
-			pass_instances.emplace_back(pass_resource);
-		}
-	}
-
-	renderer.submitted_instances.clear();
-
-	for (auto pass_resource : pass_instances)
-	{
-		std::vector<std::vector<VulkanBuffer>> index_buffers(pass_resource.second.size());
-		std::vector<std::vector<VulkanBuffer>> vertex_buffers(pass_resource.second.size());
-		std::vector<std::vector<VulkanResource>> resources(pass_resource.second.size());
-		std::vector<VulkanPipeline> pipelines(pass_resource.second.size());
-		//for (auto &resource : pass_resource.second)
-		for (uint32_t i = 0; i < pass_resource.second.size(); i++)
-		{
-			auto resource = pass_resource.second[i];
-			vertex_buffers[i] = { renderer.data.models[resource->model].first };
-			index_buffers[i] = { renderer.data.models[resource->model].second };
-			resources[i] = { resource->resource };
-			pipelines[i] = resource->resource.pipeline;
+			render_pass.vertex_buffers[pipeline.first].clear();
+			render_pass.index_buffers[pipeline.first].clear();
+			render_pass.resources[pipeline.first].clear();
 		}
 
 		VulkanRenderPassCommandBufferRecordParameters record_parameters;
@@ -419,9 +466,11 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 		record_parameters.vertex_buffers = vertex_buffers;
 		record_parameters.framebuffer_index = renderer.image_index;
 
-		record_render_pass_command_buffers(*(pass_resource.first), record_parameters);
+		record_render_pass_command_buffers(render_pass.pass, record_parameters);
 
-		//record_parameters.index_buffers = pass_resource.second
+		/*render_pass.index_buffers.clear();
+		render_pass.vertex_buffers.clear();
+		render_pass.resources.clear();*/
 	}
 
 	vkWaitForFences(renderer.device.device, 1, &renderer.in_flight_fences[parameters.draw_frame], VK_TRUE, UINT64_MAX);
@@ -475,6 +524,9 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 	VkResult result = vkQueuePresentKHR(renderer.device.present_queue, &present_info);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| framebufferResized*/) {
+
+		resize_swap_chain(renderer);
+
 		//framebufferResized = false;
 
 		/*int width = 0, height = 0;
@@ -588,6 +640,11 @@ void cleanup_renderer(Renderer &renderer)
 	{
 		cleanup_render_pass_manager(renderer, render_pass);
 	}
+
+	for (auto &instance : renderer.instances)
+	{
+		cleanup_resource(instance.second.resource);
+	}
 	
 	cleanup_data_manager(renderer, renderer.data);
 
@@ -605,6 +662,11 @@ std::string get_uniform_buffer(Renderer &renderer, UniformBufferParameters &para
 	// Generate name
 	auto num_uniforms = renderer.data.uniform_buffers.size();
 	std::string name = "Uniform_Buffer_" + std::to_string(num_uniforms);
+
+	while (renderer.data.uniform_buffers.find(name) != renderer.data.uniform_buffers.end())
+	{
+		name += ("_" + std::to_string(num_uniforms));
+	}
 
 	// Create buffers
 	std::vector<VulkanBuffer> buffers(renderer.swap_chain.swap_chain_images.size());
@@ -663,6 +725,9 @@ void free_uniform_buffer(Renderer &renderer, std::string uniform_buffer_name)
 std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 {
 	// Find pipeline
+
+	Material mat = renderer.data.materials[parameters.material];
+
 	VulkanPipeline chosen_pipeline = {};
 	uint32_t render_pass_index = 0;
 	for (uint32_t i = 0; i < renderer.render_passes.size(); i++)
@@ -670,7 +735,7 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 		auto render_pass = renderer.render_passes[i];
 		for (auto pipeline : render_pass.pass_pipelines)
 		{
-			if (pipeline.first == parameters.pipeline)
+			if (pipeline.first == mat.pipeline)
 			{
 
 				chosen_pipeline = pipeline.second;
@@ -690,7 +755,7 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 	}
 
 	// Generate name
-	std::string name = std::to_string(render_pass_index) + parameters.model + "_" + parameters.pipeline + "_" + parameters.uniform_buffer;
+	std::string name = std::to_string(render_pass_index) + '_' + std::to_string( parameters.material) + "_" + parameters.uniform_buffer;
 
 	// Make sure resource of this description doesn't already exist
 	for (auto render_pass : renderer.render_passes)
@@ -701,58 +766,40 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 		}
 	}
 
-	// Find textures
-	std::vector<std::vector<VulkanTexture>> full_textures(0);
-	for (auto texture_vector : parameters.textures)
-	{
-		std::vector<VulkanTexture> textures;
-		for (auto texture : texture_vector)
-		{
-			name += "_" + texture;
-			textures.push_back(renderer.data.textures[texture]);
-		}
-
-		full_textures.push_back(textures);
-	}
-
 	// Fill out structure
 	VulkanResource resource = {};
 	VulkanResourceParameters resource_parameters = {};
 	resource_parameters.device = renderer.device;
 	resource_parameters.swap_chain = renderer.swap_chain;
 	resource_parameters.pipeline = chosen_pipeline;
-	resource_parameters.textures = full_textures;
+	resource_parameters.textures = mat.textures;
 	resource_parameters.uniform_buffers = renderer.data.uniform_buffers[parameters.uniform_buffer].buffers;
 
 	create_resource(resource, resource_parameters);
 
 	Instance instance = {};
-	instance.model = parameters.model;
 	instance.resource = resource;
+	instance.material = parameters.material;
 
-	renderer.render_passes[render_pass_index].resources[name] = instance;
+	renderer.instances[name] = instance;
 	return name;
 }
 
 void submit_instance(Renderer &renderer, InstanceSubmitParameters &parameters)
 {
-	std::pair<std::string, std::string> instance = { parameters.pipeline_name, parameters.instance_name };
-	renderer.submitted_instances.push_back(instance);
+	Instance instance = renderer.instances[parameters.instance_name];
+	Material material = renderer.data.materials[instance.material];
+
+	material.resources->emplace_back(instance.resource);
+	material.vertex_buffers->emplace_back(material.model->first);
+	material.index_buffers->emplace_back(material.model->second);
 }
 
 void free_instance(Renderer &renderer, std::string instance_name)
 {
-	for (auto render_pass : renderer.render_passes)
-	{
-		if (render_pass.resources.find(instance_name) != render_pass.resources.end())
-		{
-			VulkanResource resource = render_pass.resources[instance_name].resource;
-			//vkDestroyDescriptorPool(renderer.device.device, resource.descriptor_pool, nullptr);
-			cleanup_resource(resource);
-			render_pass.resources.erase(instance_name);
-			return;
-		}
-	}
+	auto &instance = renderer.instances[instance_name];
+	cleanup_resource(instance.resource);
+	renderer.instances.erase(instance_name);
 }
 
 void create_data_manager(DataManager &data_manager, DataManagerParameters &data_manager_parameters)
@@ -762,6 +809,7 @@ void create_data_manager(DataManager &data_manager, DataManagerParameters &data_
 	data_manager.shaders = data_manager_parameters.shaders;
 	data_manager.textures = data_manager_parameters.textures;
 	data_manager.uniform_buffers = data_manager_parameters.uniform_buffers;
+	data_manager.materials = data_manager_parameters.materials;
 }
 
 void cleanup_data_manager(Renderer &renderer, DataManager &data_manager)
@@ -801,7 +849,9 @@ void create_render_pass_manager(RenderPassManager &render_pass_manager, RenderPa
 {
 	render_pass_manager.pass = render_pass_manager_parameters.pass;
 	render_pass_manager.pass_pipelines = render_pass_manager_parameters.pass_pipelines;
-	render_pass_manager.resources = render_pass_manager_parameters.resources;
+	render_pass_manager.resources = {};
+	render_pass_manager.vertex_buffers = {};
+	render_pass_manager.index_buffers = {};
 }
 
 void cleanup_render_pass_manager(Renderer &renderer, RenderPassManager &render_pass_manager)
@@ -816,10 +866,151 @@ void cleanup_render_pass_manager(Renderer &renderer, RenderPassManager &render_p
 
 	cleanup_render_pass(render_pass_manager.pass);
 
-	for (auto &resource : render_pass_manager.resources)
-	{
-		cleanup_resource(resource.second.resource);
+	render_pass_manager = {};
+}
+
+void resize_swap_chain(Renderer &renderer)
+{
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(renderer.window, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(renderer.window, &width, &height);
+		glfwWaitEvents();
 	}
 
-	render_pass_manager = {};
+	vkDeviceWaitIdle(renderer.device.device);
+
+	for (uint32_t i = 0; i < renderer.render_passes.size(); i++)
+	{
+		cleanup_render_pass_manager(renderer, renderer.render_passes[i]);
+	}
+
+	cleanup_swap_chain(renderer.swap_chain);
+
+	// Create swap chain
+	VulkanSwapChainParameters swap_chain_parameters = {};
+	swap_chain_parameters.device = renderer.device;
+	swap_chain_parameters.glfw_window = renderer.window;
+
+	create_swap_chain(renderer.swap_chain, swap_chain_parameters);
+
+	// Create render passes
+	VulkanRenderPass render_pass = {};
+	VulkanRenderPassParameters render_pass_parameters = {};
+	render_pass_parameters.device = renderer.device;
+	render_pass_parameters.glfw_window = renderer.window;
+	render_pass_parameters.memory_manager = &(renderer.memory_manager);
+	render_pass_parameters.swap_chain = renderer.swap_chain;
+
+	create_render_pass(render_pass, render_pass_parameters);
+
+	VulkanRenderPassCommandBufferAllocateParameters command_buffer_parameters = {};
+	command_buffer_parameters.swap_chain = renderer.swap_chain;
+	allocate_render_pass_command_buffers(render_pass, command_buffer_parameters);
+
+	// Create attribute and binding description
+	VkVertexInputAttributeDescription attribute_description = {};
+
+	attribute_description.binding = 0;
+	attribute_description.location = 0;
+	attribute_description.format = VK_FORMAT_R32G32B32_SFLOAT;
+	attribute_description.offset = 0;
+	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description };
+
+	VkVertexInputBindingDescription binding_description = {};
+	binding_description.binding = 0;
+	binding_description.stride = sizeof(glm::vec3);
+	binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	std::vector<VkVertexInputBindingDescription> binding_descriptions = { binding_description };
+
+	// Create pipelines
+	int w, h;
+
+	glfwGetFramebufferSize(renderer.window, &w, &h);
+
+	std::unordered_map<std::string, VulkanPipeline> pipelines;
+	VulkanPipeline pipeline_green = {};
+	VulkanPipeline pipeline_red = {};
+	VulkanPipeline pipeline_blue = {};
+	VulkanPipeline pipeline_yellow = {};
+	VulkanPipelineParameters pipeline_parameters = {};
+	pipeline_parameters.attribute_descriptions = attribute_descriptions;
+	pipeline_parameters.binding_descriptions = binding_descriptions;
+	pipeline_parameters.device = renderer.device;
+	pipeline_parameters.glfw_window = renderer.window;
+	pipeline_parameters.num_textures = 0;
+	pipeline_parameters.pipeline_barriers = {};
+	pipeline_parameters.render_pass = render_pass;
+	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_green.spv"] };
+	pipeline_parameters.swap_chain = renderer.swap_chain;
+	pipeline_parameters.viewport_width = std::min(w, h);
+	pipeline_parameters.viewport_height = std::min(w, h);
+	pipeline_parameters.viewport_offset_x = (w - pipeline_parameters.viewport_width) / 2;
+	pipeline_parameters.viewport_offset_y = (h - pipeline_parameters.viewport_height) / 2;
+
+	create_pipeline(pipeline_green, pipeline_parameters);
+	pipelines["standard_green"] = pipeline_green;
+
+	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_red.spv"] };
+
+	create_pipeline(pipeline_red, pipeline_parameters);
+	pipelines["standard_red"] = pipeline_red;
+
+	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_blue.spv"] };
+
+	create_pipeline(pipeline_blue, pipeline_parameters);
+	pipelines["standard_blue"] = pipeline_blue;
+
+	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_yellow.spv"] };
+
+	create_pipeline(pipeline_yellow, pipeline_parameters);
+	pipelines["standard_yellow"] = pipeline_yellow;
+
+	// Create resources
+	// None yet...
+
+	// Create render pass manager
+	RenderPassManager render_pass_manager = {};
+	RenderPassManagerParameters render_pass_manager_parameters = {};
+	render_pass_manager_parameters.pass = render_pass;
+	render_pass_manager_parameters.pass_pipelines = pipelines;
+
+	create_render_pass_manager(render_pass_manager, render_pass_manager_parameters);
+	renderer.render_passes = { render_pass_manager };
+
+	// Create materials
+	Material mat_green_cube = {};
+	mat_green_cube.model = &renderer.data.models["CUBE"];
+	mat_green_cube.pipeline = "standard_green";
+	mat_green_cube.textures = {};
+	mat_green_cube.resources = &renderer.render_passes[0].resources[mat_green_cube.pipeline];
+	mat_green_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipeline];
+	mat_green_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_green_cube.pipeline];
+
+	Material mat_red_square = {};
+	mat_red_square.model = &renderer.data.models["SQUARE"];
+	mat_red_square.pipeline = "standard_red";
+	mat_red_square.textures = {};
+	mat_red_square.resources = &renderer.render_passes[0].resources[mat_red_square.pipeline];
+	mat_red_square.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_red_square.pipeline];
+	mat_red_square.index_buffers = &renderer.render_passes[0].index_buffers[mat_red_square.pipeline];
+
+	Material mat_blue_cube = {};
+	mat_blue_cube.model = &renderer.data.models["CUBE"];
+	mat_blue_cube.pipeline = "standard_blue";
+	mat_blue_cube.textures = {};
+	mat_blue_cube.resources = &renderer.render_passes[0].resources[mat_blue_cube.pipeline];
+	mat_blue_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipeline];
+	mat_blue_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_blue_cube.pipeline];
+
+	Material mat_yellow_cube = {};
+	mat_yellow_cube.model = &renderer.data.models["CUBE"];
+	mat_yellow_cube.pipeline = "standard_yellow";
+	mat_yellow_cube.textures = {};
+	mat_yellow_cube.resources = &renderer.render_passes[0].resources[mat_yellow_cube.pipeline];
+	mat_yellow_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipeline];
+	mat_yellow_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipeline];
+
+
+	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube };
 }

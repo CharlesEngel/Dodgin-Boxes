@@ -1,6 +1,8 @@
 #pragma once
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+
 
 #include <VulkanLayer/Device.h>
 #include <VulkanLayer/SwapChain.h>
@@ -17,7 +19,20 @@
 struct Instance
 {
 	VulkanResource resource;
-	std::string model;
+	uint32_t material;
+};
+
+struct Material
+{
+	std::string pipeline;
+	std::pair<VulkanBuffer, VulkanBuffer> *model;
+
+	// Not a pointer because this needs to be passes as-is
+	std::vector<std::vector<VulkanTexture>> textures;
+
+	std::vector<VulkanResource> *resources;
+	std::vector<VulkanBuffer> *vertex_buffers;
+	std::vector<VulkanBuffer> *index_buffers;
 };
 
 // TODO: Is this a good name?
@@ -25,7 +40,11 @@ struct RenderPassManager
 {
 	VulkanRenderPass pass;
 	std::unordered_map<std::string, VulkanPipeline> pass_pipelines;
-	std::unordered_map<std::string, Instance> resources;
+	//std::unordered_map<std::string, Instance> resources;
+
+	std::unordered_map<std::string, std::vector<VulkanResource>> resources;
+	std::unordered_map<std::string, std::vector<VulkanBuffer>> vertex_buffers;
+	std::unordered_map<std::string, std::vector<VulkanBuffer>> index_buffers;
 };
 
 struct UniformBuffer
@@ -40,6 +59,7 @@ struct DataManager
 	std::unordered_map<std::string, UniformBuffer> uniform_buffers;
 	std::unordered_map<std::string, std::pair<VulkanBuffer, VulkanBuffer>> models;
 	std::unordered_map<std::string, VulkanShader> shaders;
+	std::vector<Material> materials;
 };
 
 struct Renderer
@@ -58,7 +78,8 @@ struct Renderer
 	std::vector<VkFence> in_flight_fences;
 	std::vector<VkFence> images_in_flight;
 
-	std::vector<std::pair<std::string, std::string>> submitted_instances;
+	//std::vector<std::pair<std::string, std::string>> submitted_instances;
+	std::unordered_map<std::string, Instance> instances;
 };
 
 struct RendererParameters
@@ -92,14 +113,11 @@ struct UniformBufferUpdateParameters
 struct InstanceParameters
 {
 	std::string uniform_buffer;
-	std::vector<std::vector<std::string>> textures;
-	std::string pipeline;
-	std::string model;
+	uint32_t material;
 };
 struct InstanceSubmitParameters
 {
 	std::string instance_name;
-	std::string pipeline_name;
 };
 
 struct DataManagerParameters
@@ -108,13 +126,13 @@ struct DataManagerParameters
 	std::unordered_map<std::string, UniformBuffer> uniform_buffers;
 	std::unordered_map<std::string, std::pair<VulkanBuffer, VulkanBuffer>> models;
 	std::unordered_map<std::string, VulkanShader> shaders;
+	std::vector<Material> materials;
 };
 
 struct RenderPassManagerParameters
 {
 	VulkanRenderPass pass;
 	std::unordered_map<std::string, VulkanPipeline> pass_pipelines;
-	std::unordered_map<std::string, Instance> resources;
 };
 
 // Sets up the renderer
@@ -158,3 +176,6 @@ void create_render_pass_manager(RenderPassManager &render_pass_manager, RenderPa
 
 // Cleans up the render pass manager
 void cleanup_render_pass_manager(Renderer &renderer, RenderPassManager &render_pass_manager);
+
+//  Recreates the necessary components to resize the swap chain
+void resize_swap_chain(Renderer &renderer);

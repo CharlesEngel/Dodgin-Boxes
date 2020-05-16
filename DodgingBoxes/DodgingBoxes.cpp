@@ -1,9 +1,11 @@
 #include "Renderer/Renderer.h"
-
-#include <glm/gtc/matrix_transform.hpp>
+#include "Player.h"
 
 #include <chrono>
 #include <iostream>
+
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/gtc/matrix_transform.hpp>
 
 const int max_frames = 2;
 
@@ -16,7 +18,10 @@ const std::vector<std::string> models = {
 
 const std::vector<std::string> shaders = {
 	"vert_standard.spv",
-	"frag_green.spv"
+	"frag_green.spv",
+	"frag_red.spv",
+	"frag_blue.spv",
+	"frag_yellow.spv"
 };
 
 const std::vector<std::string> textures = {
@@ -32,11 +37,15 @@ struct UB
 
 int main()
 {
+	srand(static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+
 	// Set up glfw and create window
 	glfwInit();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow *window = glfwCreateWindow(width, height, "Dodgin' Boxes", nullptr, nullptr);
+
+	glfwSetKeyCallback(window, GameManager::handle_input);
 
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
@@ -58,23 +67,7 @@ int main()
 	
 	create_renderer(renderer, renderer_parameters);
 
-	UniformBufferParameters uniform_parameters = {};
-	uniform_parameters.size = sizeof(UB);
-
-	std::string uniform_buffer_name = get_uniform_buffer(renderer, uniform_parameters);
-	/*std::string uniform_buffer_name_2 = get_uniform_buffer(renderer, uniform_parameters)*/;
-
-	InstanceParameters instance_parameters = {};
-	instance_parameters.model = "CUBE";
-	instance_parameters.pipeline = "standard_green";
-	instance_parameters.textures = {};
-	instance_parameters.uniform_buffer = uniform_buffer_name;
-
-	std::string instance = create_instance(renderer, instance_parameters);
-
-	/*instance_parameters.uniform_buffer = uniform_buffer_name_2;
-	instance_parameters.model = "CUBE";
-	std::string instance_2 = create_instance(renderer, instance_parameters);*/
+	GameManager game_manager(&renderer, width, height);
 
 	uint16_t frame_count = 0;
 
@@ -84,40 +77,30 @@ int main()
 
 		update_image_index(renderer, frame_count);
 
-		static auto start_time = std::chrono::high_resolution_clock::now();
+		static auto frame_time_1 = std::chrono::high_resolution_clock::now();
+		static auto frame_time_2 = std::chrono::high_resolution_clock::now();
+		double time;
 
-		/*static auto frame_time = std::chrono::high_resolution_clock::now();
+		if (frame_time_1 > frame_time_2)
+		{
+			frame_time_2 = std::chrono::high_resolution_clock::now();
+			time = std::chrono::duration<float, std::chrono::seconds::period>(frame_time_2 - frame_time_1).count();
+		}
+		else
+		{
+			frame_time_1 = std::chrono::high_resolution_clock::now();
+			time = std::chrono::duration<float, std::chrono::seconds::period>(frame_time_1 - frame_time_2).count();
+		}
 
-		std::cout << 1.0 / std::chrono::duration<float, std::chrono::seconds::period>(std::chrono::high_resolution_clock::now() - frame_time).count() << "\n";
+		int w, h;
 
-		frame_time = std::chrono::high_resolution_clock::now();*/
+		glfwGetFramebufferSize(window, &w, &h);
 
-		auto current_time = std::chrono::high_resolution_clock::now();
+		game_manager.update(time, w, h);
+		game_manager.resolve_collisions();
+		//std::cout << 1.0 / time << "\n";
 
-		float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
-
-		UB ubo = {};
-		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.view = glm::lookAt(glm::vec3(.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, .0f, 1.0f));
-		ubo.proj = glm::perspective(glm::radians(45.0f), width / (float)height, 0.1f, 10.0f);
-		ubo.proj[1][1] *= -1;
-
-		UniformBufferUpdateParameters update_parameters = {};
-		update_parameters.buffer_name = uniform_buffer_name;
-		update_parameters.data = &ubo;
-
-		update_uniform_buffer(renderer, update_parameters);
-
-		ubo.model = glm::translate(ubo.model, glm::vec3(0.3, 0.3, 0.0));
-
-		/*update_parameters.buffer_name = uniform_buffer_name_2;
-		update_uniform_buffer(renderer, update_parameters);*/
-
-		InstanceSubmitParameters submit_parameters = {};
-		submit_parameters.instance_name = instance;
-		submit_parameters.pipeline_name = "standard_green";
-
-		submit_instance(renderer, submit_parameters);
+		game_manager.submit_for_rendering(static_cast<uint32_t>(w), static_cast<uint32_t>(h));
 
 		/*submit_parameters.instance_name = instance_2;
 
@@ -134,8 +117,6 @@ int main()
 			frame_count = 0;
 		}
 	}
-
-	free_uniform_buffer(renderer, uniform_buffer_name);
 
 	cleanup_renderer(renderer);
 

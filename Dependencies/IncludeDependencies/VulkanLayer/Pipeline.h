@@ -65,6 +65,12 @@ struct VulkanPipelineParameters
 	uint32_t num_textures;
 	
 	std::vector<VulkanPipelineBarrier> pipeline_barriers;
+
+	uint32_t viewport_width;
+	uint32_t viewport_height;
+	int32_t viewport_offset_x;
+	int32_t viewport_offset_y;
+
 };
 
 // Contains information about a vertex
