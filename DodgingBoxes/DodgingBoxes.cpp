@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <time.h>
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/gtc/matrix_transform.hpp>
@@ -37,8 +38,6 @@ struct UB
 
 int main()
 {
-	srand(static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count()));
-
 	// Set up glfw and create window
 	glfwInit();
 

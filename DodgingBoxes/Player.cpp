@@ -7,7 +7,7 @@ Player::Player(Renderer *renderer, Input *input)
 	this->renderer = renderer;
 	scale = glm::scale(glm::mat4(1), glm::vec3(0.2, 0.2, 0.2));
 	location = glm::vec2(0.0, 0.0);
-	dead = false;
+	state = PLAYER_DEFAULT;
 
 	this->input = input;
 
@@ -38,7 +38,7 @@ Player::~Player()
 
 void Player::update(double time)
 {
-	if (!dead)
+	if (state != PLAYER_DEAD)
 	{
 		glm::vec2 direction(0.0);
 
@@ -71,15 +71,15 @@ void Player::update(double time)
 			input_w_released = true;
 		}
 
-		if (input->w && !dash && input_w_released && (direction.x != 0 || direction.y != 0))
+		if (input->w && state != PLAYER_DASHING && input_w_released && (direction.x != 0 || direction.y != 0))
 		{
-			dash = true;
+			state = PLAYER_DASHING;
 			dash_direction = direction;
 			current_dash_time = 0.0;
 			input_w_released = false;
 		}
 
-		if (!dash)
+		if (state != PLAYER_DASHING)
 		{
 			location += glm::vec2(time * speed * direction.x, time * speed * direction.y);
 		}
@@ -89,7 +89,7 @@ void Player::update(double time)
 			current_dash_time += float(time);
 			if (current_dash_time > total_dash_time)
 			{
-				dash = false;
+				state = PLAYER_DEFAULT;
 			}
 		}
 
@@ -143,15 +143,10 @@ void Player::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, f
 	submit_instance(*(this->renderer), submit_parameters);
 }
 
-void Player::handle_internal_collisions()
-{
-
-}
-
 void Player::handle_external_collisions(const Rectangle *collider, const GameObject *other)
 {
 	if (other->type == 1)
 	{
-		dead = true;
+		state = PLAYER_DEAD;
 	}
 }

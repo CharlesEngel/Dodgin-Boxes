@@ -19,16 +19,7 @@ struct VulkanPipelineBarrier
 	VkPipelineStageFlags src;
 	VkPipelineStageFlags dst;
 	// TODO: Do I want to store dependency flags?
-
-	// TODO: figure out this mess
-
-	//uint32_t memory_barrier_count;
-	//VkMemoryBarrier *memory_barriers;
-	//uint32_t buffer_barrier_count;
-	//VkBufferMemoryBarrier *buffer_barriers;
 	std::vector<VulkanBuffer> buffers;
-	//uint32_t image_barrier_count;
-	//VkImageMemoryBarrier *image_barriers;
 	std::vector <VulkanTexture> images;
 	VkImageSubresourceRange subresource_range;
 };
@@ -41,12 +32,6 @@ struct VulkanPipeline
 	VkPipeline pipeline;
 
 	VkDescriptorSetLayout descriptor_set_layout;
-	/*VkDescriptorPool descriptor_pool;
-	std::vector<VkDescriptorSet> descriptor_sets;*/
-
-	/*std::vector<VulkanBuffer> uniform_buffers;
-	std::vector<std::vector<VulkanTexture>> textures;*/
-
 	std::vector<VulkanPipelineBarrier> pipeline_barriers;
 };
 
@@ -58,8 +43,6 @@ struct VulkanPipelineParameters
 	GLFWwindow *glfw_window;
 
 	std::vector<VulkanShader> shaders;
-	/*std::vector<VulkanBuffer> uniform_buffers;
-	std::vector<std::vector<VulkanTexture>> textures;*/
 	std::vector<VkVertexInputBindingDescription> binding_descriptions;
 	std::vector<VkVertexInputAttributeDescription> attribute_descriptions;
 	uint32_t num_textures;
@@ -72,9 +55,6 @@ struct VulkanPipelineParameters
 	int32_t viewport_offset_y;
 
 };
-
-// Contains information about a vertex
-// TODO: Should I make it so information is passed in instead of being defined here?
 
 // Initializes values in VulkanPipeline
 void create_pipeline(VulkanPipeline &pipeline, VulkanPipelineParameters &parameters);

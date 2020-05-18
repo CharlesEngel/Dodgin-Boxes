@@ -1,5 +1,8 @@
 #include "EnemyManager.h"
 
+#include <iostream>
+#include "Utilities.h"
+
 EnemyManager::EnemyManager(Renderer *renderer)
 {
 	this->renderer = renderer;
@@ -40,10 +43,13 @@ void EnemyManager::update(double time)
 		}
 	}
 
-	if (enemies.size() < max_enemies && spawn_time > (1.0 + 0.8 * enemies.size()) && (rand() > (RAND_MAX - 15)))
+	if (spawn_time > (1.0 + 0.5 * enemies.size()))
 	{
-		enemies.push_back(new Enemy(renderer));
-		colliders.push_back(enemies.back()->get_collider()[0]);
+		if (enemies.size() < max_enemies && (random_int(0, 100) > 80))
+		{
+			enemies.push_back(new Enemy(renderer));
+			colliders.push_back(enemies.back()->get_collider()[0]);
+		}
 		spawn_time = 0;
 	}
 }
@@ -59,23 +65,6 @@ void EnemyManager::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float wi
 	{
 		enemy->submit_for_rendering(view, proj, width, height);
 	}
-}
-
-void EnemyManager::handle_internal_collisions()
-{
-	/*for (uint32_t i = 0; i < colliders.size(); i++)
-	{
-		for (uint32_t j = i + 1; j < colliders.size(); j++)
-		{
-			if (check_collision_rect_rect(colliders[i], colliders[j]))
-			{
-				deaths++;
-
-				enemies[i]->handle_external_collisions(colliders[i], enemies[j]);
-				enemies[j]->handle_external_collisions(colliders[j], enemies[i]);
-			}
-		}
-	}*/
 }
 
 void EnemyManager::handle_external_collisions(const Rectangle *collider, const GameObject *other)

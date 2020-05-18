@@ -330,101 +330,9 @@ void update_image_index(Renderer &renderer, uint32_t draw_frame)
 	// Get image to draw to
 	VkResult result = vkAcquireNextImageKHR(renderer.device.device, renderer.swap_chain.swap_chain, UINT64_MAX, renderer.image_available_semaphores[draw_frame], VK_NULL_HANDLE, &renderer.image_index);
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
 		resize_swap_chain(renderer);
-		/*int width = 0, height = 0;
-		glfwGetFramebufferSize(window, &width, &height);
-		while (width == 0 || height == 0) {
-			glfwGetFramebufferSize(window, &width, &height);
-			glfwWaitEvents();
-		}
-
-		vkDeviceWaitIdle(device.device);
-		cleanup_render_pass_command_buffers(render_pass_draw_screen);
-		cleanup_render_pass_command_buffers(render_pass_draw_texture);
-		cleanup_resource(resource_draw_texture);
-		cleanup_resource(resource_draw_screen);
-		cleanup_pipeline(pipeline_draw_screen);
-		cleanup_pipeline(pipeline_draw_texture);
-		cleanup_render_pass(render_pass_draw_screen);
-		cleanup_render_pass(render_pass_draw_texture);
-		cleanup_swap_chain(swap_chain);
-		create_swap_chain(swap_chain, swap_chain_parameters);
-
-		draw_texture_parameters.height = 600;
-		draw_texture_parameters.width = draw_texture_parameters.height;
-		draw_texture_image_views.clear();
-
-		for (size_t i = 0; i < draw_textures.size(); i++)
-		{
-			cleanup_texture(draw_textures[i]);
-			create_texture(draw_textures[i], draw_texture_parameters);
-			draw_texture_image_views.push_back(draw_textures[i].texture_image_view);
-		}
-
-		load_image(texture_data, texture_data_parameters);
-		texture_parameters.data = texture_data;
-
-		for (size_t i = 0; i < textures.size(); i++)
-		{
-			cleanup_texture(textures[0]);
-			create_texture(textures[0], texture_parameters);
-		}
-
-		cleanup_image(texture_data);
-
-		texture_attachment.height = draw_textures[0].height;
-		texture_attachment.width = draw_textures[0].width;
-		texture_attachment.image_views = draw_texture_image_views;
-		texture_attachment.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-		texture_attachment.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		texture_attachment.format = draw_textures[0].format;
-
-		render_pass_parameters.swap_chain = swap_chain;
-		render_pass_parameters.attachments = texture_attachment;
-		create_render_pass(render_pass_draw_texture, render_pass_parameters);
-		render_pass_parameters.attachments = {};
-		create_render_pass(render_pass_draw_screen, render_pass_parameters);
-		create_shader(vertex_shader, vertex_shader_parameters);
-		create_shader(fragment_shader, fragment_shader_parameters);
-		pipeline_parameters.swap_chain = swap_chain;
-		pipeline_parameters.shaders = { vertex_shader, fragment_shader };
-		barrier.images = draw_textures;
-		pipeline_parameters.render_pass = render_pass_draw_screen;
-		pipeline_parameters.pipeline_barriers = { barrier };
-		create_pipeline(pipeline_draw_screen, pipeline_parameters);
-		pipeline_parameters.render_pass = render_pass_draw_texture;
-		pipeline_parameters.pipeline_barriers = {};
-		create_pipeline(pipeline_draw_texture, pipeline_parameters);
-		cleanup_shader(vertex_shader);
-		cleanup_shader(fragment_shader);
-
-		resource_parameters.textures = { textures };
-		resource_parameters.uniform_buffers = uniform_buffers_draw_texture;
-		resource_parameters.pipeline = pipeline_draw_texture;
-		resource_parameters.swap_chain = swap_chain;
-
-		create_resource(resource_draw_texture, resource_parameters);
-		resource_parameters.textures = { draw_textures };
-		resource_parameters.uniform_buffers = uniform_buffers_draw_screen;
-		resource_parameters.pipeline = pipeline_draw_screen;
-		create_resource(resource_draw_screen, resource_parameters);
-
-		command_buffer_allocate_parameters = { swap_chain };
-		command_buffer_parameters.clear_values = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} };
-		command_buffer_parameters.pipelines = { pipeline_draw_texture };
-		command_buffer_parameters.swap_chain = swap_chain;
-		command_buffer_parameters.resources = { { resource_draw_texture } };
-		allocate_render_pass_command_buffers(render_pass_draw_texture, command_buffer_allocate_parameters);
-		record_render_pass_command_buffers(render_pass_draw_texture, command_buffer_parameters);
-		command_buffer_parameters.clear_values = {};
-		command_buffer_parameters.pipelines = { pipeline_draw_screen };
-		command_buffer_parameters.resources = { { resource_draw_screen } };
-		allocate_render_pass_command_buffers(render_pass_draw_screen, command_buffer_allocate_parameters);
-		record_render_pass_command_buffers(render_pass_draw_screen, command_buffer_parameters);
-
-		continue;*/
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 		throw std::runtime_error("Failed to acquire swap chain image!");
@@ -433,9 +341,6 @@ void update_image_index(Renderer &renderer, uint32_t draw_frame)
 
 void draw(Renderer &renderer, DrawParameters &parameters)
 {
-	
-
-	// TODO: This is way too slow. Maybe store the instances with the render passes, so we don't need to search to find them?
 	// Record command buffers
 	std::vector<std::pair<VulkanRenderPass*, std::vector<Instance*>>> pass_instances;
 
@@ -467,10 +372,6 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 		record_parameters.framebuffer_index = renderer.image_index;
 
 		record_render_pass_command_buffers(render_pass.pass, record_parameters);
-
-		/*render_pass.index_buffers.clear();
-		render_pass.vertex_buffers.clear();
-		render_pass.resources.clear();*/
 	}
 
 	vkWaitForFences(renderer.device.device, 1, &renderer.in_flight_fences[parameters.draw_frame], VK_TRUE, UINT64_MAX);
@@ -526,99 +427,6 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| framebufferResized*/) {
 
 		resize_swap_chain(renderer);
-
-		//framebufferResized = false;
-
-		/*int width = 0, height = 0;
-		glfwGetFramebufferSize(renderer.window, &width, &height);
-		while (width == 0 || height == 0) {
-			glfwGetFramebufferSize(renderer.window, &width, &height);
-			glfwWaitEvents();
-		}
-
-		vkDeviceWaitIdle(device.device);
-		cleanup_render_pass_command_buffers(render_pass_draw_screen);
-		cleanup_render_pass_command_buffers(render_pass_draw_texture);
-		cleanup_resource(resource_draw_texture);
-		cleanup_resource(resource_draw_screen);
-		cleanup_pipeline(pipeline_draw_screen);
-		cleanup_pipeline(pipeline_draw_texture);
-		cleanup_render_pass(render_pass_draw_screen);
-		cleanup_render_pass(render_pass_draw_texture);
-		cleanup_swap_chain(swap_chain);
-		create_swap_chain(swap_chain, swap_chain_parameters);
-
-		draw_texture_parameters.height = 600;
-		draw_texture_parameters.width = draw_texture_parameters.height;
-		draw_texture_image_views.clear();
-
-		for (size_t i = 0; i < draw_textures.size(); i++)
-		{
-			cleanup_texture(draw_textures[i]);
-			create_texture(draw_textures[i], draw_texture_parameters);
-			draw_texture_image_views.push_back(draw_textures[i].texture_image_view);
-		}
-
-		load_image(texture_data, texture_data_parameters);
-		texture_parameters.data = texture_data;
-
-		for (size_t i = 0; i < textures.size(); i++)
-		{
-			cleanup_texture(textures[0]);
-			create_texture(textures[0], texture_parameters);
-		}
-
-		cleanup_image(texture_data);
-
-		texture_attachment.height = draw_textures[0].height;
-		texture_attachment.width = draw_textures[0].width;
-		texture_attachment.image_views = draw_texture_image_views;
-		texture_attachment.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-		texture_attachment.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		texture_attachment.format = draw_textures[0].format;
-
-		render_pass_parameters.swap_chain = swap_chain;
-		render_pass_parameters.attachments = texture_attachment;
-		create_render_pass(render_pass_draw_texture, render_pass_parameters);
-		render_pass_parameters.attachments = {};
-		create_render_pass(render_pass_draw_screen, render_pass_parameters);
-		create_shader(vertex_shader, vertex_shader_parameters);
-		create_shader(fragment_shader, fragment_shader_parameters);
-		pipeline_parameters.swap_chain = swap_chain;
-		pipeline_parameters.shaders = { vertex_shader, fragment_shader };
-		barrier.images = draw_textures;
-		pipeline_parameters.render_pass = render_pass_draw_screen;
-		pipeline_parameters.pipeline_barriers = { barrier };
-		create_pipeline(pipeline_draw_screen, pipeline_parameters);
-		pipeline_parameters.render_pass = render_pass_draw_texture;
-		pipeline_parameters.pipeline_barriers = {};
-		create_pipeline(pipeline_draw_texture, pipeline_parameters);
-		cleanup_shader(vertex_shader);
-		cleanup_shader(fragment_shader);
-
-		resource_parameters.textures = { textures };
-		resource_parameters.uniform_buffers = uniform_buffers_draw_texture;
-		resource_parameters.pipeline = pipeline_draw_texture;
-		resource_parameters.swap_chain = swap_chain;
-
-		create_resource(resource_draw_texture, resource_parameters);
-		resource_parameters.textures = { draw_textures };
-		resource_parameters.uniform_buffers = uniform_buffers_draw_screen;
-		resource_parameters.pipeline = pipeline_draw_screen;
-		create_resource(resource_draw_screen, resource_parameters);
-
-		command_buffer_allocate_parameters = { swap_chain };
-		command_buffer_parameters.clear_values = { {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} };
-		command_buffer_parameters.pipelines = { pipeline_draw_texture };
-		command_buffer_parameters.swap_chain = swap_chain;
-		command_buffer_parameters.resources = { { resource_draw_texture } };
-		allocate_render_pass_command_buffers(render_pass_draw_texture, command_buffer_allocate_parameters);
-		record_render_pass_command_buffers(render_pass_draw_texture, command_buffer_parameters);
-		command_buffer_parameters.clear_values = {};
-		command_buffer_parameters.pipelines = { pipeline_draw_screen };
-		command_buffer_parameters.resources = { { resource_draw_screen } };
-		allocate_render_pass_command_buffers(render_pass_draw_screen, command_buffer_allocate_parameters);
-		record_render_pass_command_buffers(render_pass_draw_screen, command_buffer_parameters);*/
 	}
 	else if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to present swap chain image!");
@@ -725,7 +533,6 @@ void free_uniform_buffer(Renderer &renderer, std::string uniform_buffer_name)
 std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 {
 	// Find pipeline
-
 	Material mat = renderer.data.materials[parameters.material];
 
 	VulkanPipeline chosen_pipeline = {};
@@ -965,9 +772,6 @@ void resize_swap_chain(Renderer &renderer)
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
-
-	// Create resources
-	// None yet...
 
 	// Create render pass manager
 	RenderPassManager render_pass_manager = {};

@@ -15,7 +15,6 @@ struct VulkanSwapChain
 	VkFormat swap_chain_format;
 	VkExtent2D swap_chain_extent;
 	std::vector<VkImageView> swap_chain_image_views;
-	//std::vector<VkFramebuffer> swap_chain_framebuffers;
 	VkDevice device;
 };
 

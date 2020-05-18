@@ -58,12 +58,6 @@ void Floor::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, fl
 	submit_instance(*renderer, submit_parameters);
 }
 
-
-void Floor::handle_internal_collisions()
-{
-
-}
-
 void Floor::handle_external_collisions(const Rectangle *collider, const GameObject *other)
 {
 

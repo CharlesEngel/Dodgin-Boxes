@@ -13,6 +13,13 @@ struct PlayerUniform
 	glm::mat4 proj;
 };
 
+enum PlayerState
+{
+	PLAYER_DEFAULT = 0,
+	PLAYER_DASHING = 1,
+	PLAYER_DEAD = 2
+};
+
 class Player : public GameObject
 {
 public:
@@ -21,7 +28,6 @@ public:
 	virtual void update(double time);
 	virtual std::vector<Rectangle *> get_collider();
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const;
-	virtual void handle_internal_collisions();
 	virtual void handle_external_collisions(const Rectangle *collider, const GameObject *other);
 
 	glm::vec2 location;
@@ -41,7 +47,7 @@ private:
 	glm::vec2 dash_direction;
 	float current_dash_time;
 
-	bool dead;
-	bool dash;
+	PlayerState state;
+
 	bool input_w_released;
 };

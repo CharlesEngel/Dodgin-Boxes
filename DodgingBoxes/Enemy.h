@@ -11,6 +11,14 @@ struct EnemyUniform
 	glm::mat4 proj;
 };
 
+enum EnemyDirection
+{
+	ENEMY_MOVING_DOWN = 0,
+	ENEMY_MOVING_UP = 1,
+	ENEMY_MOVING_LEFT = 2,
+	ENEMY_MOVING_RIGHT = 3
+};
+
 class Enemy : public GameObject
 {
 public:
@@ -20,7 +28,6 @@ public:
 	virtual void update(double time);
 	virtual std::vector<Rectangle *> get_collider();
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const;
-	virtual void handle_internal_collisions();
 	virtual void handle_external_collisions(const Rectangle *collider, const GameObject *other);
 
 	bool dead;
@@ -36,7 +43,8 @@ private:
 
 	const float acceleration = 1.5f;
 	float speed;
-	uint8_t direction;
+
+	EnemyDirection direction;
 private:
 	void get_direction();
 };

@@ -92,11 +92,6 @@ void GameManager::update(double time, uint32_t width, uint32_t height)
 
 void GameManager::resolve_collisions()
 {
-	for (auto &object : objects)
-	{
-		object->handle_internal_collisions();
-	}
-
 	for (uint32_t i = 0; i < objects.size(); i++)
 	{
 		for (uint32_t j = i + 1; j < objects.size(); j++)

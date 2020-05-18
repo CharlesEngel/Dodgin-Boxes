@@ -1,6 +1,7 @@
 #include "Enemy.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include "Utilities.h"
 
 Enemy::Enemy(Renderer *renderer)
 {
@@ -36,19 +37,19 @@ Enemy::~Enemy()
 
 void Enemy::update(double time)
 {
-	if (direction < 64 && location.y < -1)
+	if (direction == 0 && location.y < -1)
 	{
 		get_direction();
 	}
-	else if (direction < 128 && direction >= 64 && location.y > 1)
+	else if (direction == 1 && location.y > 1)
 	{
 		get_direction();
 	}
-	else if (direction < 192 && direction >= 128 && location.x < -1)
+	else if (direction == 2 && location.x < -1)
 	{
 		get_direction();
 	}
-	else if (direction >= 192 && location.x > 1)
+	else if (direction == 3 && location.x > 1)
 	{
 		get_direction();
 	}
@@ -56,15 +57,15 @@ void Enemy::update(double time)
 	speed += float(time) * acceleration;
 	glm::vec2 velocity;
 
-	if (direction < 64)
+	if (direction == 0)
 	{
 		velocity = glm::vec2(0.0, -speed);
 	}
-	else if (direction < 128)
+	else if (direction == 1)
 	{
 		velocity = glm::vec2(0.0, speed);
 	}
-	else if (direction < 192)
+	else if (direction == 2)
 	{
 		velocity = glm::vec2(-speed, 0.0);
 	}
@@ -105,19 +106,19 @@ void Enemy::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, fl
 
 void Enemy::get_direction()
 {
-	direction = rand() % 256;
+	direction = static_cast<EnemyDirection>(random_int(0, 99) % 4);
 
-	auto rand_location = 1.6 * (rand() / (RAND_MAX - 1.0) - 0.5);
+	auto rand_location = 1.6 * (random_int(0, 100) / 100.0 - 0.5);
 
-	if (direction < 64)
+	if (direction == 0)
 	{
 		location = glm::vec2(rand_location, 1);
 	}
-	else if (direction < 128)
+	else if (direction == 1)
 	{
 		location = glm::vec2(rand_location, -1);
 	}
-	else if (direction < 192)
+	else if (direction == 2)
 	{
 		location = glm::vec2(1, rand_location);
 	}
@@ -127,11 +128,6 @@ void Enemy::get_direction()
 	}
 
 	speed = 0;
-}
-
-void Enemy::handle_internal_collisions()
-{
-	
 }
 
 void Enemy::handle_external_collisions(const Rectangle *collider, const GameObject *other)

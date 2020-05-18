@@ -20,8 +20,6 @@ struct VulkanDevice
 	uint32_t graphics_family_index;
 	uint32_t present_family_index;
 	VulkanCommandPool command_pool;
-
-	// TODO: Do I need to record this in the structure?
 	VkSampleCountFlagBits max_sample_count;
 };
 
