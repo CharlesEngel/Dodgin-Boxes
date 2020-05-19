@@ -11,8 +11,9 @@ Input GameManager::input = {false, false, false, false, false};
 GameManager::GameManager(Renderer *renderer, uint32_t width, uint32_t height)
 {
 	this->renderer = renderer;
+	game_should_end = false;
 
-	objects.push_back(new Player(renderer, &input));
+	objects.push_back(new Player(renderer, &input, &game_should_end));
 	objects.push_back(new EnemyManager(renderer));
 	objects.push_back(new Floor(renderer));
 
@@ -120,4 +121,9 @@ void GameManager::submit_for_rendering(uint32_t width, uint32_t height)
 	{
 		object->submit_for_rendering(view, proj, view_width, view_height);
 	}
+}
+
+bool GameManager::game_has_ended()
+{
+	return game_should_end;
 }

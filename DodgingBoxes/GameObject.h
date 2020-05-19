@@ -7,6 +7,7 @@
 class GameObject
 {
 public:
+	virtual ~GameObject() = 0;
 	virtual void update(double time) = 0;
 	virtual std::vector<Rectangle *> get_collider() = 0;
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const = 0;
@@ -15,3 +16,8 @@ public:
 	glm::vec2 location;
 	uint32_t type;
 };
+
+inline GameObject::~GameObject()
+{
+
+}

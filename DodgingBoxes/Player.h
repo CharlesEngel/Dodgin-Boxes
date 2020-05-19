@@ -17,14 +17,15 @@ enum PlayerState
 {
 	PLAYER_DEFAULT = 0,
 	PLAYER_DASHING = 1,
-	PLAYER_DEAD = 2
+	PLAYER_DYING = 2,
+	PLAYER_DEAD = 3
 };
 
 class Player : public GameObject
 {
 public:
-	Player(Renderer *renderer, Input *input);
-	~Player();
+	Player(Renderer *renderer, Input *input, bool *game_end_flag);
+	virtual ~Player();
 	virtual void update(double time);
 	virtual std::vector<Rectangle *> get_collider();
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const;
@@ -39,13 +40,16 @@ private:
 	glm::mat4 scale;
 	Rectangle collider;
 	const Input *input;
+	bool *game_end;
 
 	const float speed = 0.8f;
 	const float dash_speed = 3.f;
 	const float total_dash_time = 0.08f;
+	const float total_death_time = 0.3f;
 
 	glm::vec2 dash_direction;
 	float current_dash_time;
+	float current_death_time;
 
 	PlayerState state;
 

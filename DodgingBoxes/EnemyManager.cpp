@@ -29,8 +29,9 @@ void EnemyManager::update(double time)
 	auto enemy = enemies.begin();
 	while (enemy != enemies.end())
 	{
-		if ((*enemy)->dead)
+		if ((*enemy)->state == ENEMY_DEAD)
 		{
+			// Remove enemy if it is dead
 			delete (*enemy);
 			uint32_t index = std::distance(enemies.begin(), enemy);
 			enemy = enemies.erase(enemy);
@@ -38,6 +39,7 @@ void EnemyManager::update(double time)
 		}
 		else
 		{
+			// Update enemy if it is not dead
 			(*enemy)->update(time);
 			enemy++;
 		}
@@ -47,6 +49,7 @@ void EnemyManager::update(double time)
 	{
 		if (enemies.size() < max_enemies && (random_int(0, 100) > 80))
 		{
+			// If conditions line up, create enemy
 			enemies.push_back(new Enemy(renderer));
 			colliders.push_back(enemies.back()->get_collider()[0]);
 		}
@@ -71,9 +74,11 @@ void EnemyManager::handle_external_collisions(const Rectangle *collider, const G
 {
 	if (other->type == 0)
 	{
+		// Find which enemy collided
 		auto element = std::find(colliders.begin(), colliders.end(), collider);
 		auto index = std::distance(colliders.begin(), element);
 
+		// Tell enemy to handle collision
 		enemies[index]->handle_external_collisions(collider, other);
 	}
 }

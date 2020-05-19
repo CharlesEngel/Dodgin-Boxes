@@ -7,8 +7,9 @@ Enemy::Enemy(Renderer *renderer)
 {
 	this->renderer = renderer;
 	scale = glm::scale(glm::mat4(1), glm::vec3(0.08, 0.08, 0.08));
-	dead = false;
+	state = ENEMY_DEFAULT;
 	type = 2;
+	current_death_time = 0;
 
 	get_direction();
 	
@@ -37,46 +38,66 @@ Enemy::~Enemy()
 
 void Enemy::update(double time)
 {
-	if (direction == 0 && location.y < -1)
+	if (state == ENEMY_DEFAULT)
 	{
-		get_direction();
-	}
-	else if (direction == 1 && location.y > 1)
-	{
-		get_direction();
-	}
-	else if (direction == 2 && location.x < -1)
-	{
-		get_direction();
-	}
-	else if (direction == 3 && location.x > 1)
-	{
-		get_direction();
-	}
+		//  If out of bounds, put in new position
+		if (direction == 0 && location.y < -1)
+		{
+			get_direction();
+		}
+		else if (direction == 1 && location.y > 1)
+		{
+			get_direction();
+		}
+		else if (direction == 2 && location.x < -1)
+		{
+			get_direction();
+		}
+		else if (direction == 3 && location.x > 1)
+		{
+			get_direction();
+		}
 
-	speed += float(time) * acceleration;
-	glm::vec2 velocity;
+		// Update speed
+		speed += float(time) * acceleration;
+		glm::vec2 velocity;
 
-	if (direction == 0)
-	{
-		velocity = glm::vec2(0.0, -speed);
-	}
-	else if (direction == 1)
-	{
-		velocity = glm::vec2(0.0, speed);
-	}
-	else if (direction == 2)
-	{
-		velocity = glm::vec2(-speed, 0.0);
-	}
-	else
-	{
-		velocity = glm::vec2(speed, 0.0);
-	}
+		// Find velocity
+		if (direction == 0)
+		{
+			velocity = glm::vec2(0.0, -speed);
+		}
+		else if (direction == 1)
+		{
+			velocity = glm::vec2(0.0, speed);
+		}
+		else if (direction == 2)
+		{
+			velocity = glm::vec2(-speed, 0.0);
+		}
+		else
+		{
+			velocity = glm::vec2(speed, 0.0);
+		}
 
-	location += static_cast<float>(time) * velocity;
+		//update location
+		location += static_cast<float>(time) * velocity;
 
-	collider.set_placement(location + glm::vec2(-0.04, -0.04), glm::vec2(0.08, 0.08));
+		// Update position
+		collider.set_placement(location + glm::vec2(-0.04, -0.04), glm::vec2(0.08, 0.08));
+	}
+	else if (state == ENEMY_DYING)
+	{
+		// Play death animation if dying
+		current_death_time += float(time);
+		scale = glm::scale(glm::mat4(1), glm::vec3(0.08f, 0.08f, 0.08f)) * glm::scale(glm::mat4(1), glm::vec3((total_death_time - current_death_time) / total_death_time));
+
+		if (current_death_time > total_death_time)
+		{
+			// When you're dead, you're dead
+			state = ENEMY_DEAD;
+		}
+	}
 }
 
 std::vector<Rectangle *> Enemy::get_collider()
@@ -106,8 +127,10 @@ void Enemy::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, fl
 
 void Enemy::get_direction()
 {
+	// Generate direction
 	direction = static_cast<EnemyDirection>(random_int(0, 99) % 4);
 
+	// Find new location on the axis not determined by direction
 	auto rand_location = 1.6 * (random_int(0, 100) / 100.0 - 0.5);
 
 	if (direction == 0)
@@ -127,13 +150,14 @@ void Enemy::get_direction()
 		location = glm::vec2(-1, rand_location);
 	}
 
+	// Reset speed
 	speed = 0;
 }
 
 void Enemy::handle_external_collisions(const Rectangle *collider, const GameObject *other)
 {
-	if (other->type == 0)
+	if (state == ENEMY_DEFAULT && other->type == 0)
 	{
-		dead = true;
+		state = ENEMY_DYING;
 	}
 }

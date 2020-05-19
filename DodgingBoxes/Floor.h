@@ -14,7 +14,7 @@ class Floor : public GameObject
 {
 public:
 	Floor(Renderer *renderer);
-	~Floor();
+	virtual ~Floor();
 
 	virtual void update(double time);
 	virtual std::vector<Rectangle *> get_collider();

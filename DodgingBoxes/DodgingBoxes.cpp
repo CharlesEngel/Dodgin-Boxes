@@ -66,7 +66,7 @@ int main()
 	
 	create_renderer(renderer, renderer_parameters);
 
-	GameManager game_manager(&renderer, width, height);
+	GameManager *game_manager = new GameManager(&renderer, width, height);
 
 	uint16_t frame_count = 0;
 
@@ -95,15 +95,10 @@ int main()
 
 		glfwGetFramebufferSize(window, &w, &h);
 
-		game_manager.update(time, w, h);
-		game_manager.resolve_collisions();
-		//std::cout << 1.0 / time << "\n";
+		game_manager->update(time, w, h);
+		game_manager->resolve_collisions();
 
-		game_manager.submit_for_rendering(static_cast<uint32_t>(w), static_cast<uint32_t>(h));
-
-		/*submit_parameters.instance_name = instance_2;
-
-		submit_instance(renderer, submit_parameters);*/
+		game_manager->submit_for_rendering(static_cast<uint32_t>(w), static_cast<uint32_t>(h));
 
 		DrawParameters draw_parameters = {};
 		draw_parameters.draw_frame = frame_count;
@@ -114,6 +109,12 @@ int main()
 		if (frame_count % max_frames == 0)
 		{
 			frame_count = 0;
+		}
+
+		if (game_manager->game_has_ended())
+		{
+			delete game_manager;
+			game_manager = new GameManager(&renderer, w, h);
 		}
 	}
 

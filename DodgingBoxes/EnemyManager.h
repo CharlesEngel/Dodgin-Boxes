@@ -7,7 +7,7 @@ class EnemyManager : public GameObject
 {
 public:
 	EnemyManager(Renderer *renderer);
-	~EnemyManager();
+	virtual ~EnemyManager();
 
 	virtual void update(double time);
 	virtual std::vector<Rectangle *> get_collider();

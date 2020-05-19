@@ -11,6 +11,13 @@ struct EnemyUniform
 	glm::mat4 proj;
 };
 
+enum EnemyState
+{
+	ENEMY_DEFAULT = 0,
+	ENEMY_DYING = 1,
+	ENEMY_DEAD = 2
+};
+
 enum EnemyDirection
 {
 	ENEMY_MOVING_DOWN = 0,
@@ -23,14 +30,14 @@ class Enemy : public GameObject
 {
 public:
 	Enemy(Renderer *renderer);
-	~Enemy();
+	virtual ~Enemy();
 
 	virtual void update(double time);
 	virtual std::vector<Rectangle *> get_collider();
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const;
 	virtual void handle_external_collisions(const Rectangle *collider, const GameObject *other);
 
-	bool dead;
+	EnemyState state;
 	glm::vec2 location;
 
 private:
@@ -42,7 +49,9 @@ private:
 	Rectangle collider;
 
 	const float acceleration = 1.5f;
+	const float total_death_time = 0.2f;
 	float speed;
+	float current_death_time;
 
 	EnemyDirection direction;
 private:

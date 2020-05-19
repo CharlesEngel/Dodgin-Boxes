@@ -19,6 +19,7 @@ public:
 	void update(double time, uint32_t width, uint32_t height);
 	void resolve_collisions();
 	void submit_for_rendering(uint32_t width, uint32_t height);
+	bool game_has_ended();
 
 	GameManager(const GameManager&) = delete;
 
@@ -31,4 +32,6 @@ private:
 	glm::mat4 proj;
 	float view_width;
 	float view_height;
+
+	bool game_should_end;
 };
