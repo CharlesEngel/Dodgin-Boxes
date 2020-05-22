@@ -14,6 +14,12 @@
 #include "Buffer.h"
 #include "Texture.h"
 
+enum PipelineFlags
+{
+	PIPELINE_BLEND_ENABLE = 1,
+	PIPELINE_BACKFACE_CULL_DISABLE = 2
+};
+
 struct VulkanPipelineBarrier
 {
 	VkPipelineStageFlags src;
@@ -54,6 +60,7 @@ struct VulkanPipelineParameters
 	int32_t viewport_offset_x;
 	int32_t viewport_offset_y;
 
+	PipelineFlags pipeline_flags;
 };
 
 // Initializes values in VulkanPipeline
