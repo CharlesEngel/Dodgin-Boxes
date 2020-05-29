@@ -18,15 +18,18 @@ const std::vector<std::string> models = {
 };
 
 const std::vector<std::string> shaders = {
-	"vert_standard.spv",
-	"frag_green.spv",
-	"frag_red.spv",
-	"frag_blue.spv",
-	"frag_yellow.spv"
+	"Resources/vert_standard.spv",
+	"Resources/vert_standard_tex_coord.spv",
+	"Resources/vert_text.spv",
+	"Resources/frag_green.spv",
+	"Resources/frag_red.spv",
+	"Resources/frag_blue.spv",
+	"Resources/frag_yellow.spv",
+	"Resources/frag_text.spv"
 };
 
 const std::vector<std::string> textures = {
-	
+	"Resources/ARIAL.png"
 };
 
 struct UB

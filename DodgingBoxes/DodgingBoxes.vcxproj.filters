@@ -45,26 +45,15 @@
     <ClCompile Include="Utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="vert_standard.vert">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="frag_green.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="compile_shaders.bat">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="frag_red.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="frag_blue.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="frag_yellow.frag">
-      <Filter>Resource Files</Filter>
-    </None>
+    <ClCompile Include="Character.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Font.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Text.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer\Renderer.h">
@@ -94,5 +83,43 @@
     <ClInclude Include="Utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Character.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Font.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\frag_blue.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\compile_shaders.bat">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_green.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_red.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_yellow.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\vert_standard.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_text.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\vert_standard_tex_coord.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\vert_text.vert">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

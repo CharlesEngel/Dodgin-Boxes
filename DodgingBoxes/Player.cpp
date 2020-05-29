@@ -23,7 +23,7 @@ Player::Player(Renderer *renderer, Input *input, bool *game_end_flag)
 	uniform_buffer = get_uniform_buffer(*renderer, uniform_parameters);
 
 	InstanceParameters instance_parameters = {};
-	instance_parameters.material = 2;
+	instance_parameters.material = MATERIAL_BLUE_CUBE;
 	instance_parameters.uniform_buffer = uniform_buffer;
 
 	instance = create_instance(*renderer, instance_parameters);

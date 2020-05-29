@@ -51,11 +51,11 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 		VulkanShaderParameters shader_parameters = {};
 		shader_parameters.device = renderer.device;
 		shader_parameters.file = shader_file;
-		if (shader_file.substr(0, 4) == "vert")
+		if (shader_file.substr(10, 4) == "vert")
 		{
 			shader_parameters.type = 'v';
 		}
-		else if (shader_file.substr(0, 4) == "frag")
+		else if (shader_file.substr(10, 4) == "frag")
 		{
 			shader_parameters.type = 'f';
 		}
@@ -87,6 +87,12 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	}
 
 	// Create models
+	struct VertexWithTexCoord
+	{
+		glm::vec3 point;
+		glm::vec2 tex_coord;
+	};
+
 	std::unordered_map<std::string, std::pair<VulkanBuffer, VulkanBuffer>> models = {};
 	VkVertexInputBindingDescription binding_description = {};
 	binding_description.binding = 0;
@@ -94,12 +100,33 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 	std::vector<VkVertexInputBindingDescription> binding_descriptions = { binding_description };
 
+	VkVertexInputBindingDescription binding_description_tex_coord = {};
+	binding_description_tex_coord.binding = 0;
+	binding_description_tex_coord.stride = sizeof(VertexWithTexCoord);
+	binding_description_tex_coord.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	std::vector<VkVertexInputBindingDescription> binding_descriptions_tex_coords = { binding_description_tex_coord };
+
 	VkVertexInputAttributeDescription attribute_description = {};
 
 	attribute_description.binding = 0;
 	attribute_description.location = 0;
 	attribute_description.format = VK_FORMAT_R32G32B32_SFLOAT;
-	attribute_description.offset = 0;
+	attribute_description.offset = offsetof(VertexWithTexCoord, point);
+
+	VkVertexInputAttributeDescription attribute_description_tex_coord_location = {};
+
+	attribute_description_tex_coord_location.binding = 0;
+	attribute_description_tex_coord_location.location = 0;
+	attribute_description_tex_coord_location.format = VK_FORMAT_R32G32B32_SFLOAT;
+	attribute_description_tex_coord_location.offset = offsetof(VertexWithTexCoord, point);
+
+	VkVertexInputAttributeDescription attribute_description_tex_coord_coord = {};
+
+	attribute_description_tex_coord_coord.binding = 0;
+	attribute_description_tex_coord_coord.location = 1;
+	attribute_description_tex_coord_coord.format = VK_FORMAT_R32G32_SFLOAT;
+	attribute_description_tex_coord_coord.offset = offsetof(VertexWithTexCoord, tex_coord);
+	std::vector<VkVertexInputAttributeDescription> attribute_descriptions_tex_coords = { attribute_description_tex_coord_location, attribute_description_tex_coord_coord };
 	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description };
 
 	std::vector<glm::vec3> square_vertices_data = {
@@ -107,6 +134,13 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 		{0.5f, -0.5f, 0.5f},
 		{0.5f, 0.5f, 0.5f},
 		{-0.5f, 0.5f, 0.5f}
+	};
+
+	std::vector<VertexWithTexCoord> square_vertices_tex_coords_data = {
+		{{-0.5f, -0.5f, 0.5f}, {0.0, 1.0}},
+		{{0.5f, -0.5f, 0.5f}, {1.0, 1.0}},
+		{{0.5f, 0.5f, 0.5f}, {1.0, 0.0}},
+		{{-0.5f, 0.5f, 0.5f}, {0.0, 0.0}}
 	};
 
 	std::vector<uint32_t> square_indices_data = {
@@ -125,6 +159,18 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	VulkanBuffer square_vertices_buffer = {};
 	create_buffer(square_vertices_buffer, square_vertices_parameters);
 
+	VulkanBufferParameters square_vertices_tex_coords_parameters = {};
+	square_vertices_tex_coords_parameters.data = (void *)square_vertices_tex_coords_data.data();
+	square_vertices_tex_coords_parameters.device = renderer.device;
+	square_vertices_tex_coords_parameters.memory_manager = &(renderer.memory_manager);
+	square_vertices_tex_coords_parameters.range = sizeof(VertexWithTexCoord);
+	square_vertices_tex_coords_parameters.size = sizeof(VertexWithTexCoord) * square_vertices_tex_coords_data.size();
+	square_vertices_tex_coords_parameters.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	square_vertices_tex_coords_parameters.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+	VulkanBuffer square_vertices_tex_coords_buffer = {};
+	create_buffer(square_vertices_tex_coords_buffer, square_vertices_tex_coords_parameters);
+
 	VulkanBufferParameters square_indices_parameters = {};
 	square_indices_parameters.data = (void *)square_indices_data.data();
 	square_indices_parameters.device = renderer.device;
@@ -138,6 +184,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_buffer(square_indices_buffer, square_indices_parameters);
 
 	models["SQUARE"] = { square_vertices_buffer, square_indices_buffer };
+	models["SQUARE_TEX_COORDS"] = { square_vertices_tex_coords_buffer, square_indices_buffer };
 
 	std::vector<glm::vec3> cube_vertices_data = {
 		{-0.5f, -0.5f, -0.5f},
@@ -220,6 +267,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	VulkanPipeline pipeline_red = {};
 	VulkanPipeline pipeline_blue = {};
 	VulkanPipeline pipeline_yellow = {};
+	VulkanPipeline pipeline_text = {};
 	VulkanPipelineParameters pipeline_parameters = {};
 	pipeline_parameters.attribute_descriptions = attribute_descriptions;
 	pipeline_parameters.binding_descriptions = binding_descriptions;
@@ -228,7 +276,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.num_textures = 0;
 	pipeline_parameters.pipeline_barriers = {};
 	pipeline_parameters.render_pass = render_pass;
-	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_green.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_green.spv"] };
 	pipeline_parameters.swap_chain = renderer.swap_chain;
 	pipeline_parameters.viewport_width = std::min(w, h);
 	pipeline_parameters.viewport_height = std::min(w, h);
@@ -238,21 +286,29 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_pipeline(pipeline_green, pipeline_parameters);
 	pipelines["standard_green"] = pipeline_green;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_red.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_red.spv"] };
 
 	create_pipeline(pipeline_red, pipeline_parameters);
 	pipelines["standard_red"] = pipeline_red;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_blue.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_yellow.spv"] };
-	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE);
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
+
+	pipeline_parameters.attribute_descriptions = attribute_descriptions_tex_coords;
+	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
+	pipeline_parameters.num_textures = 1;
+	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
+
+	create_pipeline(pipeline_text, pipeline_parameters);
+	pipelines["text"] = pipeline_text;
 
 	// Create resources
 	// None yet...
@@ -299,8 +355,16 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_yellow_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipeline];
 	mat_yellow_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipeline];
 
+	Material mat_text = {};
+	mat_text.model = &renderer.data.models["SQUARE_TEX_COORDS"];
+	mat_text.pipeline = "text";
+	mat_text.textures = { {renderer.data.textures["Resources/ARIAL.png"]} };;
+	mat_text.resources = &renderer.render_passes[0].resources[mat_text.pipeline];
+	mat_text.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_text.pipeline];
+	mat_text.index_buffers = &renderer.render_passes[0].index_buffers[mat_text.pipeline];
 
-	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube };
+
+	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text };
 
 	// Create semaphores/fences
 	renderer.image_available_semaphores.resize(parameters.max_frames);
@@ -622,10 +686,28 @@ void create_data_manager(DataManager &data_manager, DataManagerParameters &data_
 
 void cleanup_data_manager(Renderer &renderer, DataManager &data_manager)
 {
+	// TODO: There's probably a better way to do this
+	std::vector<VulkanBuffer> buffers_to_cleanup = {};
 	for (auto &model : data_manager.models)
 	{
-		cleanup_buffer(model.second.first);
-		cleanup_buffer(model.second.second);
+		buffers_to_cleanup.push_back(model.second.first);
+		buffers_to_cleanup.push_back(model.second.second);
+
+		for (int i = 0; i < static_cast<int>(buffers_to_cleanup.size()) - 2; i++)
+		{
+			if (buffers_to_cleanup[i].buffer == model.second.first.buffer)
+			{
+				buffers_to_cleanup.erase(buffers_to_cleanup.begin() + i--);
+			}
+			if (buffers_to_cleanup[i].buffer == model.second.second.buffer)
+			{
+				buffers_to_cleanup.erase(buffers_to_cleanup.begin() + i--);
+			}
+		}
+	}
+	for (auto &buffer : buffers_to_cleanup)
+	{
+		cleanup_buffer(buffer);
 	}
 
 	for (auto &shader : data_manager.shaders)
@@ -717,19 +799,46 @@ void resize_swap_chain(Renderer &renderer)
 	allocate_render_pass_command_buffers(render_pass, command_buffer_parameters);
 
 	// Create attribute and binding description
-	VkVertexInputAttributeDescription attribute_description = {};
-
-	attribute_description.binding = 0;
-	attribute_description.location = 0;
-	attribute_description.format = VK_FORMAT_R32G32B32_SFLOAT;
-	attribute_description.offset = 0;
-	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description };
+	struct VertexWithTexCoord
+	{
+		glm::vec3 point;
+		glm::vec2 tex_coord;
+	};
 
 	VkVertexInputBindingDescription binding_description = {};
 	binding_description.binding = 0;
 	binding_description.stride = sizeof(glm::vec3);
 	binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 	std::vector<VkVertexInputBindingDescription> binding_descriptions = { binding_description };
+
+	VkVertexInputBindingDescription binding_description_tex_coord = {};
+	binding_description_tex_coord.binding = 0;
+	binding_description_tex_coord.stride = sizeof(VertexWithTexCoord);
+	binding_description_tex_coord.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	std::vector<VkVertexInputBindingDescription> binding_descriptions_tex_coords = { binding_description_tex_coord };
+
+	VkVertexInputAttributeDescription attribute_description = {};
+
+	attribute_description.binding = 0;
+	attribute_description.location = 0;
+	attribute_description.format = VK_FORMAT_R32G32B32_SFLOAT;
+	attribute_description.offset = offsetof(VertexWithTexCoord, point);
+
+	VkVertexInputAttributeDescription attribute_description_tex_coord_location = {};
+
+	attribute_description_tex_coord_location.binding = 0;
+	attribute_description_tex_coord_location.location = 0;
+	attribute_description_tex_coord_location.format = VK_FORMAT_R32G32B32_SFLOAT;
+	attribute_description_tex_coord_location.offset = offsetof(VertexWithTexCoord, point);
+
+	VkVertexInputAttributeDescription attribute_description_tex_coord_coord = {};
+
+	attribute_description_tex_coord_coord.binding = 0;
+	attribute_description_tex_coord_coord.location = 1;
+	attribute_description_tex_coord_coord.format = VK_FORMAT_R32G32_SFLOAT;
+	attribute_description_tex_coord_coord.offset = offsetof(VertexWithTexCoord, tex_coord);
+	std::vector<VkVertexInputAttributeDescription> attribute_descriptions_tex_coords = { attribute_description_tex_coord_location, attribute_description_tex_coord_coord };
+	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description };
 
 	// Create pipelines
 	int w, h;
@@ -741,6 +850,7 @@ void resize_swap_chain(Renderer &renderer)
 	VulkanPipeline pipeline_red = {};
 	VulkanPipeline pipeline_blue = {};
 	VulkanPipeline pipeline_yellow = {};
+	VulkanPipeline pipeline_text = {};
 	VulkanPipelineParameters pipeline_parameters = {};
 	pipeline_parameters.attribute_descriptions = attribute_descriptions;
 	pipeline_parameters.binding_descriptions = binding_descriptions;
@@ -749,7 +859,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.num_textures = 0;
 	pipeline_parameters.pipeline_barriers = {};
 	pipeline_parameters.render_pass = render_pass;
-	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_green.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_green.spv"] };
 	pipeline_parameters.swap_chain = renderer.swap_chain;
 	pipeline_parameters.viewport_width = std::min(w, h);
 	pipeline_parameters.viewport_height = std::min(w, h);
@@ -759,21 +869,29 @@ void resize_swap_chain(Renderer &renderer)
 	create_pipeline(pipeline_green, pipeline_parameters);
 	pipelines["standard_green"] = pipeline_green;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_red.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_red.spv"] };
 
 	create_pipeline(pipeline_red, pipeline_parameters);
 	pipelines["standard_red"] = pipeline_red;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_blue.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["vert_standard.spv"], renderer.data.shaders["frag_yellow.spv"] };
-	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE);
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
+
+	pipeline_parameters.attribute_descriptions = attribute_descriptions_tex_coords;
+	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
+	pipeline_parameters.num_textures = 1;
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
+	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);
+
+	create_pipeline(pipeline_text, pipeline_parameters);
+	pipelines["text"] = pipeline_text;
 
 	// Create render pass manager
 	RenderPassManager render_pass_manager = {};
@@ -817,6 +935,14 @@ void resize_swap_chain(Renderer &renderer)
 	mat_yellow_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipeline];
 	mat_yellow_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipeline];
 
+	Material mat_text = {};
+	mat_text.model = &renderer.data.models["SQUARE_TEX_COORDS"];
+	mat_text.pipeline = "text";
+	mat_text.textures = { {renderer.data.textures["Resources/ARIAL.png"]} };
+	mat_text.resources = &renderer.render_passes[0].resources[mat_text.pipeline];
+	mat_text.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_text.pipeline];
+	mat_text.index_buffers = &renderer.render_passes[0].index_buffers[mat_text.pipeline];
 
-	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube };
+
+	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text };
 }

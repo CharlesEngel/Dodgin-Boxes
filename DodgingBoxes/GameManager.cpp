@@ -3,6 +3,7 @@
 #include "Player.h"
 #include "EnemyManager.h"
 #include "Floor.h"
+#include "Text.h"
 
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -13,16 +14,16 @@ GameManager::GameManager(Renderer *renderer, uint32_t width, uint32_t height)
 	this->renderer = renderer;
 	game_should_end = false;
 
-	objects.push_back(new Player(renderer, &input, &game_should_end));
-	objects.push_back(new EnemyManager(renderer));
-	objects.push_back(new Floor(renderer));
-
 	view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	proj = glm::perspective(glm::radians(45.0f), /*width / (float)height*/ 1.0f, 0.1f, 10.0f);
 	proj[1][1] *= -1;
 
 	view_height = 2.25f * tan(glm::radians(45.0f / 2.0f));
 	view_width = view_height;
+
+	objects.push_back(new Player(renderer, &input, &game_should_end));
+	objects.push_back(new EnemyManager(renderer));
+	objects.push_back(new Floor(renderer));
 }
 
 GameManager::~GameManager()

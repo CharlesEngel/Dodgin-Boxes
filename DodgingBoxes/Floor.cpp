@@ -14,7 +14,7 @@ Floor::Floor(Renderer *renderer)
 	uniform_buffer = get_uniform_buffer(*renderer, uniform_parameters);
 
 	InstanceParameters instance_parameters = {};
-	instance_parameters.material = 1;
+	instance_parameters.material = MATERIAL_RED_SQUARE;
 	instance_parameters.uniform_buffer = uniform_buffer;
 
 	instance = create_instance(*renderer, instance_parameters);

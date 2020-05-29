@@ -16,6 +16,15 @@
 
 #include <unordered_map>
 
+enum MaterialIds
+{
+	MATERIAL_GREEN_CUBE = 0,
+	MATERIAL_RED_SQUARE = 1,
+	MATERIAL_BLUE_CUBE = 2,
+	MATERIAL_YELLOW_CUBE = 3,
+	MATERIAL_TEXT = 4
+};
+
 struct Instance
 {
 	VulkanResource resource;

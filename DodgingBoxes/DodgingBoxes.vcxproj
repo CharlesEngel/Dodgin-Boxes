@@ -171,34 +171,43 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Character.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="DodgingBoxes.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="EnemyManager.cpp" />
     <ClCompile Include="Floor.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="Text.cpp" />
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="compile_shaders.bat" />
-    <None Include="frag_blue.frag" />
-    <None Include="frag_green.frag" />
-    <None Include="frag_red.frag" />
-    <None Include="frag_yellow.frag" />
-    <None Include="vert_standard.vert" />
-  </ItemGroup>
-  <ItemGroup>
+    <ClInclude Include="Character.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="EnemyManager.h" />
     <ClInclude Include="Floor.h" />
+    <ClInclude Include="Font.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Renderer\Renderer.h" />
+    <ClInclude Include="Text.h" />
     <ClInclude Include="Utilities.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\compile_shaders.bat" />
+    <None Include="Resources\frag_blue.frag" />
+    <None Include="Resources\frag_green.frag" />
+    <None Include="Resources\frag_red.frag" />
+    <None Include="Resources\frag_text.frag" />
+    <None Include="Resources\frag_yellow.frag" />
+    <None Include="Resources\vert_standard.vert" />
+    <None Include="Resources\vert_standard_tex_coord.vert" />
+    <None Include="Resources\vert_text.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

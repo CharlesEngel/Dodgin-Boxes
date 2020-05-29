@@ -2,6 +2,8 @@
 #include "GameObject.h"
 #include "Enemy.h"
 #include <stack>
+#include "Font.h"
+#include "Text.h"
 
 class EnemyManager : public GameObject
 {
@@ -20,6 +22,12 @@ private:
 	std::vector<Rectangle *> colliders;
 
 	const uint32_t max_enemies = 13;
+	double score;
 
 	double spawn_time;
+
+	// TODO: Kinda weird for the EnemyManager to be the one doing this
+	Font score_text_font;
+	Text score_text;
+	Text score_number_text;
 };
