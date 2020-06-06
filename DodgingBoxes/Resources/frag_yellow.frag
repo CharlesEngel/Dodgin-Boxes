@@ -5,5 +5,5 @@ layout(location = 0) out vec4 outColor;
 layout(location = 0) in vec3 inPosition;
 
 void main() {
-	outColor = vec4(0.84, 0.67, 0.23, 1.0);
+	outColor = vec4(0.84, 0.67, 0.23, 0.4);
 }

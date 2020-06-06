@@ -18,14 +18,16 @@ enum PipelineFlags
 {
 	PIPELINE_BLEND_ENABLE = 1,
 	PIPELINE_BACKFACE_CULL_DISABLE = 2,
-	PIPELINE_DEPTH_TEST_DISABLE = 3,
-	PIPELINE_DEPTH_WRITE_DISABLE = 4
+	PIPELINE_DEPTH_TEST_DISABLE = 4,
+	PIPELINE_DEPTH_WRITE_DISABLE = 8
 };
 
 struct VulkanPipelineBarrier
 {
 	VkPipelineStageFlags src;
 	VkPipelineStageFlags dst;
+	VkImageLayout old_layout;
+	VkImageLayout new_layout;
 	// TODO: Do I want to store dependency flags?
 	std::vector<VulkanBuffer> buffers;
 	std::vector <VulkanTexture> images;
@@ -41,6 +43,7 @@ struct VulkanPipeline
 
 	VkDescriptorSetLayout descriptor_set_layout;
 	std::vector<VulkanPipelineBarrier> pipeline_barriers;
+	uint32_t subpass;
 };
 
 struct VulkanPipelineParameters
@@ -63,6 +66,7 @@ struct VulkanPipelineParameters
 	int32_t viewport_offset_y;
 
 	PipelineFlags pipeline_flags;
+	uint32_t subpass;
 };
 
 // Initializes values in VulkanPipeline

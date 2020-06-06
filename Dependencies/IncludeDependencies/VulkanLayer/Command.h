@@ -36,15 +36,19 @@ struct VulkanRenderPassCommandBufferAllocateParameters
 	VulkanSwapChain swap_chain;
 };
 
-struct VulkanRenderPassCommandBufferRecordParameters
+struct VulkanSubpassCommandBufferRecordDetails
 {
-	// TODO: Passing a LOT of data here, maybe fix?
 	std::vector<VulkanPipeline> pipelines;
 
 	// Keep these in the same order as the pipelines they corrospond to
 	std::vector<std::vector<VulkanResource>> resources;
 	std::vector<std::vector<VulkanBuffer>> vertex_buffers;
 	std::vector<std::vector<VulkanBuffer>> index_buffers;
+};
+
+struct VulkanRenderPassCommandBufferRecordParameters
+{
+	std::vector<VulkanSubpassCommandBufferRecordDetails> subpasses;
 
 	VulkanSwapChain swap_chain;
 	VulkanDevice device;

@@ -45,6 +45,7 @@ struct VulkanTextureParameters
 	uint32_t height;
 	uint32_t width;
 	VkFormat format;
+	VkSampleCountFlagBits samples;
 };
 
 struct VulkanTextureDataParameters
