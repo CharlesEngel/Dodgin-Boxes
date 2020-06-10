@@ -1,6 +1,7 @@
 #pragma once
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
 #include <glm/glm.hpp>
 
 
@@ -16,6 +17,8 @@
 
 #include <unordered_map>
 
+const uint8_t max_lights = 14;
+
 enum MaterialIds
 {
 	MATERIAL_GREEN_CUBE = 0,
@@ -23,6 +26,17 @@ enum MaterialIds
 	MATERIAL_BLUE_CUBE = 2,
 	MATERIAL_YELLOW_CUBE = 3,
 	MATERIAL_TEXT = 4
+};
+
+enum LightType
+{
+	LIGHT_POINT = 0
+};
+
+enum LightUsage
+{
+	LIGHT_USAGE_NONE = 0,
+	LIGHT_USAGE_ALL = 1
 };
 
 struct Instance
@@ -38,10 +52,45 @@ struct Material
 
 	// Not a pointer because this needs to be passes as-is
 	std::vector<std::vector<VulkanTexture>> textures;
+	LightUsage use_lights;
 
 	std::vector<VulkanResource> *resources;
 	std::vector<VulkanBuffer> *vertex_buffers;
 	std::vector<VulkanBuffer> *index_buffers;
+};
+
+struct Light
+{
+	glm::vec3 location;
+	glm::vec3 color;
+	float intensity;
+	float max_distance;
+	LightType type;
+	int active;
+};
+
+struct AlignedVec3
+{
+	alignas(16) glm::vec3 value;
+};
+
+struct AlignedFloat
+{
+	alignas(16) float value;
+};
+
+struct AlignedInt
+{
+	alignas(16) int value;
+};
+
+struct LightUniformBuffer
+{
+	alignas(16) AlignedVec3 location[max_lights];
+	alignas(16) AlignedVec3 color[max_lights];
+	alignas(16) AlignedFloat intensity[max_lights];
+	alignas(16) AlignedFloat max_distance[max_lights];
+	alignas(16) AlignedInt active[max_lights];
 };
 
 // TODO: Is this a good name?
@@ -89,6 +138,9 @@ struct Renderer
 
 	//std::vector<std::pair<std::string, std::string>> submitted_instances;
 	std::unordered_map<std::string, Instance> instances;
+
+	std::vector<Light> lights;
+	std::string light_buffers;
 };
 
 struct RendererParameters
@@ -111,6 +163,7 @@ struct DrawParameters
 struct UniformBufferParameters
 {
 	uint32_t size;
+	uint32_t range;
 };
 
 struct UniformBufferUpdateParameters
@@ -124,9 +177,28 @@ struct InstanceParameters
 	std::string uniform_buffer;
 	uint32_t material;
 };
+
 struct InstanceSubmitParameters
 {
 	std::string instance_name;
+};
+
+struct LightParameters
+{
+	glm::vec3 location;
+	glm::vec3 color;
+	float intensity;
+	float max_distance;
+	LightType type;
+};
+
+struct LightUpdateParameters
+{
+	glm::vec3 location;
+	glm::vec3 color;
+	float intensity;
+	float max_distance;
+	uint8_t light_index;
 };
 
 struct DataManagerParameters
@@ -173,6 +245,15 @@ void submit_instance(Renderer &renderer, InstanceSubmitParameters &parameters);
 
 // Frees an instance
 void free_instance(Renderer &renderer, std::string instance_name);
+
+// Creates a light
+uint8_t create_light(Renderer &renderer, LightParameters &parameters);
+
+// Updates a light
+void update_light(Renderer &renderer, LightUpdateParameters &parameters);
+
+// Frees light
+void free_light(Renderer &renderer, uint8_t light_index);
 
 // Sets up the data manager
 void create_data_manager(DataManager &data_manager, DataManagerParameters &data_manager_parameters);

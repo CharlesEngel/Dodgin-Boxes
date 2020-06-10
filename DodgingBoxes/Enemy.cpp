@@ -6,7 +6,7 @@
 Enemy::Enemy(Renderer *renderer)
 {
 	this->renderer = renderer;
-	scale = glm::scale(glm::mat4(1), glm::vec3(0.08, 0.08, 0.08));
+	scale = glm::scale(glm::mat4(1), glm::vec3(scale_factor, scale_factor, scale_factor));
 	state = ENEMY_DEFAULT;
 	type = 2;
 	current_death_time = 0;
@@ -24,7 +24,16 @@ Enemy::Enemy(Renderer *renderer)
 
 	instance = create_instance(*renderer, instance_parameters);
 
-	collider.set_placement(location + glm::vec2(-0.04, -0.04), glm::vec2(0.08, 0.08));
+	LightParameters light_parameters = {};
+	light_parameters.color = glm::vec3(0.84, 0.67, 0.23);
+	light_parameters.intensity = 0.15f;
+	light_parameters.location = glm::vec3(location, -1.0);
+	light_parameters.max_distance = 1.0f;
+	light_parameters.type = LIGHT_POINT;
+
+	light = create_light(*renderer, light_parameters);
+
+	collider.set_placement(location + glm::vec2(-scale_factor / 2.f, -scale_factor / 2.f), glm::vec2(scale_factor, scale_factor));
 }
 
 Enemy::~Enemy()
@@ -33,6 +42,7 @@ Enemy::~Enemy()
 	{
 		free_uniform_buffer(*renderer, uniform_buffer);
 		free_instance(*renderer, instance);
+		free_light(*renderer, light);
 	}
 }
 
@@ -41,19 +51,19 @@ void Enemy::update(double time)
 	if (state == ENEMY_DEFAULT)
 	{
 		//  If out of bounds, put in new position
-		if (direction == 0 && location.y < -1)
+		if (direction == 0 && location.y < -1.4)
 		{
 			get_direction();
 		}
-		else if (direction == 1 && location.y > 1)
+		else if (direction == 1 && location.y > 1.4)
 		{
 			get_direction();
 		}
-		else if (direction == 2 && location.x < -1)
+		else if (direction == 2 && location.x < -1.4)
 		{
 			get_direction();
 		}
-		else if (direction == 3 && location.x > 1)
+		else if (direction == 3 && location.x > 1.4)
 		{
 			get_direction();
 		}
@@ -84,13 +94,13 @@ void Enemy::update(double time)
 		location += static_cast<float>(time) * velocity;
 
 		// Update position
-		collider.set_placement(location + glm::vec2(-0.04, -0.04), glm::vec2(0.08, 0.08));
+		collider.set_placement(location + glm::vec2(-scale_factor / 2.f, -scale_factor / 2.f), glm::vec2(scale_factor, scale_factor));
 	}
 	else if (state == ENEMY_DYING)
 	{
 		// Play death animation if dying
 		current_death_time += float(time);
-		scale = glm::scale(glm::mat4(1), glm::vec3(0.08f, 0.08f, 0.08f)) * glm::scale(glm::mat4(1), glm::vec3((total_death_time - current_death_time) / total_death_time));
+		scale = glm::scale(glm::mat4(1), glm::vec3(scale_factor, scale_factor, scale_factor)) * glm::scale(glm::mat4(1), glm::vec3((total_death_time - current_death_time) / total_death_time));
 
 		if (current_death_time > total_death_time)
 		{
@@ -108,10 +118,22 @@ std::vector<Rectangle *> Enemy::get_collider()
 
 void Enemy::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const
 {
+	// Update light
+	LightUpdateParameters light_update_parameters = {};
+	light_update_parameters.light_index = light;
+	light_update_parameters.color = glm::vec3(0.84, 0.67, 0.23);
+	light_update_parameters.intensity = 0.08f;
+	light_update_parameters.max_distance = 0.3f;
+
+	light_update_parameters.location = glm::vec3(location, -(0.5 - (scale_factor / 2.f) - 0.001f));
+	update_light(*renderer, light_update_parameters);
+
+	// Update uniform buffer
 	EnemyUniform buffer_data = {};
-	buffer_data.model = glm::translate(glm::mat4(1), glm::vec3(location.x * width, location.y * height, -0.075)) * scale;
+	buffer_data.model = glm::translate(glm::mat4(1), glm::vec3(location.x * width, location.y * height, -(0.5 - (scale_factor / 2.f) - 0.001f))) * scale;
 	buffer_data.proj = proj;
 	buffer_data.view = view;
+	buffer_data.light_index = light;
 
 	UniformBufferUpdateParameters update_parameters = {};
 	update_parameters.buffer_name = uniform_buffer;
@@ -131,23 +153,23 @@ void Enemy::get_direction()
 	direction = static_cast<EnemyDirection>(random_int(0, 99) % 4);
 
 	// Find new location on the axis not determined by direction
-	auto rand_location = 1.6 * (random_int(0, 100) / 100.0 - 0.5);
+	auto rand_location = 1.75 * (random_int(0, 100) / 100.0 - 0.5);
 
 	if (direction == 0)
 	{
-		location = glm::vec2(rand_location, 1);
+		location = glm::vec2(rand_location, 1.4);
 	}
 	else if (direction == 1)
 	{
-		location = glm::vec2(rand_location, -1);
+		location = glm::vec2(rand_location, -1.4);
 	}
 	else if (direction == 2)
 	{
-		location = glm::vec2(1, rand_location);
+		location = glm::vec2(1.4, rand_location);
 	}
 	else
 	{
-		location = glm::vec2(-1, rand_location);
+		location = glm::vec2(-1.4, rand_location);
 	}
 
 	// Reset speed

@@ -18,7 +18,7 @@ GameManager::GameManager(Renderer *renderer, uint32_t width, uint32_t height)
 	proj = glm::perspective(glm::radians(45.0f), /*width / (float)height*/ 1.0f, 0.1f, 10.0f);
 	proj[1][1] *= -1;
 
-	view_height = 2.25f * tan(glm::radians(45.0f / 2.0f));
+	view_height = 2.5f * tan(glm::radians(45.0f / 2.0f));
 	view_width = view_height;
 
 	objects.push_back(new Player(renderer, &input, &game_should_end));

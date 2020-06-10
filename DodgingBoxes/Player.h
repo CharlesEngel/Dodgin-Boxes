@@ -11,6 +11,7 @@ struct PlayerUniform
 	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 proj;
+	int light_index;
 };
 
 enum PlayerState
@@ -36,16 +37,18 @@ private:
 	Renderer *renderer;
 	std::string instance;
 	std::string uniform_buffer;
+	uint8_t light;
 
 	glm::mat4 scale;
 	Rectangle collider;
 	const Input *input;
 	bool *game_end;
 
-	const float speed = 0.8f;
-	const float dash_speed = 3.f;
-	const float total_dash_time = 0.08f;
+	const float speed = 1.2f;
+	const float dash_speed = 4.0f;
+	const float total_dash_time = 0.11f;
 	const float total_death_time = 0.3f;
+	const float scale_factor = 0.3f;
 
 	glm::vec2 dash_direction;
 	float current_dash_time;

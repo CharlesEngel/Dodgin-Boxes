@@ -206,6 +206,7 @@
     <None Include="Resources\frag_text.frag" />
     <None Include="Resources\frag_yellow.frag" />
     <None Include="Resources\vert_standard.vert" />
+    <None Include="Resources\vert_standard_light_index.vert" />
     <None Include="Resources\vert_standard_tex_coord.vert" />
     <None Include="Resources\vert_text.vert" />
   </ItemGroup>

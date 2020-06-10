@@ -9,6 +9,7 @@ struct EnemyUniform
 	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 proj;
+	int light_index;
 };
 
 enum EnemyState
@@ -44,12 +45,14 @@ private:
 	Renderer *renderer;
 	std::string instance;
 	std::string uniform_buffer;
+	uint8_t light;
 
 	glm::mat4 scale;
 	Rectangle collider;
 
-	const float acceleration = 1.5f;
+	const float acceleration = 2.2f;
 	const float total_death_time = 0.2f;
+	const float scale_factor = 0.12f;
 	float speed;
 	float current_death_time;
 

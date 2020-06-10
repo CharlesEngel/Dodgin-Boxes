@@ -12,7 +12,7 @@ struct VulkanResource
 	VulkanPipeline pipeline;
 	VkDescriptorPool descriptor_pool;
 	std::vector<VkDescriptorSet> descriptor_sets;
-	std::vector<VulkanBuffer> uniform_buffers;
+	std::vector<std::vector<VulkanBuffer>> uniform_buffers;
 	std::vector<std::vector<VulkanTexture>> textures;
 };
 
@@ -21,7 +21,7 @@ struct VulkanResourceParameters
 	VulkanPipeline pipeline;
 	VulkanDevice device;
 	VulkanSwapChain swap_chain;
-	std::vector<VulkanBuffer> uniform_buffers;
+	std::vector<std::vector<VulkanBuffer>> uniform_buffers;
 	std::vector<std::vector<VulkanTexture>> textures;
 };
 

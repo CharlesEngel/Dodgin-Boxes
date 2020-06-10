@@ -121,5 +121,8 @@
     <None Include="Resources\vert_text.vert">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Resources\vert_standard_light_index.vert">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

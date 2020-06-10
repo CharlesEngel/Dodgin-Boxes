@@ -48,9 +48,9 @@ void EnemyManager::update(double time)
 		}
 	}
 
-	if (spawn_time > (1.0 + 0.5 * enemies.size()))
+	if (spawn_time > (1.0 + 0.75 * enemies.size()))
 	{
-		if (enemies.size() < max_enemies && (random_int(0, 100) > 80))
+		if (enemies.size() < max_enemies && (random_int(0, 100) > 85))
 		{
 			// If conditions line up, create enemy
 			//score += 100;

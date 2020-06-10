@@ -379,6 +379,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.device = renderer.device;
 	pipeline_parameters.glfw_window = renderer.window;
 	pipeline_parameters.num_textures = 0;
+	pipeline_parameters.num_uniform_buffers = 2;
+	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT };
 	pipeline_parameters.pipeline_barriers = {};
 	pipeline_parameters.render_pass = render_pass;
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_green.spv"] };
@@ -397,12 +399,12 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_pipeline(pipeline_red, pipeline_parameters);
 	pipelines["standard_red"] = pipeline_red;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
 	pipeline_parameters.subpass = 1;
 	pipeline_parameters.pipeline_flags = pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_WRITE_DISABLE);
 
@@ -412,6 +414,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.attribute_descriptions = attribute_descriptions_tex_coords;
 	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
 	pipeline_parameters.num_textures = 1;
+	pipeline_parameters.num_uniform_buffers = 1;
+	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT };
 	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
 
@@ -435,6 +439,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_green_cube.model = &renderer.data.models["CUBE"];
 	mat_green_cube.pipeline = "standard_green";
 	mat_green_cube.textures = {};
+	mat_green_cube.use_lights = LIGHT_USAGE_ALL;
 	mat_green_cube.resources = &renderer.render_passes[0].resources[mat_green_cube.pipeline];
 	mat_green_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipeline];
 	mat_green_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_green_cube.pipeline];
@@ -443,6 +448,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_red_square.model = &renderer.data.models["SQUARE"];
 	mat_red_square.pipeline = "standard_red";
 	mat_red_square.textures = {};
+	mat_red_square.use_lights = LIGHT_USAGE_ALL;
 	mat_red_square.resources = &renderer.render_passes[0].resources[mat_red_square.pipeline];
 	mat_red_square.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_red_square.pipeline];
 	mat_red_square.index_buffers = &renderer.render_passes[0].index_buffers[mat_red_square.pipeline];
@@ -451,6 +457,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_blue_cube.model = &renderer.data.models["CUBE"];
 	mat_blue_cube.pipeline = "standard_blue";
 	mat_blue_cube.textures = {};
+	mat_blue_cube.use_lights = LIGHT_USAGE_ALL;
 	mat_blue_cube.resources = &renderer.render_passes[0].resources[mat_blue_cube.pipeline];
 	mat_blue_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipeline];
 	mat_blue_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_blue_cube.pipeline];
@@ -459,6 +466,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_yellow_cube.model = &renderer.data.models["CUBE"];
 	mat_yellow_cube.pipeline = "standard_yellow";
 	mat_yellow_cube.textures = {};
+	mat_yellow_cube.use_lights = LIGHT_USAGE_ALL;
 	mat_yellow_cube.resources = &renderer.render_passes[0].resources[mat_yellow_cube.pipeline];
 	mat_yellow_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipeline];
 	mat_yellow_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipeline];
@@ -467,6 +475,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_text.model = &renderer.data.models["SQUARE_TEX_COORDS"];
 	mat_text.pipeline = "text";
 	mat_text.textures = { {renderer.data.textures["Resources/ARIAL.png"]} };;
+	mat_text.use_lights = LIGHT_USAGE_NONE;
 	mat_text.resources = &renderer.render_passes[0].resources[mat_text.pipeline];
 	mat_text.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_text.pipeline];
 	mat_text.index_buffers = &renderer.render_passes[0].index_buffers[mat_text.pipeline];
@@ -496,6 +505,17 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 			throw std::runtime_error("Failed to create synchronization objects for a frame!");
 		}
 	}
+
+	// Create buffer for lights
+	renderer.lights.resize(max_lights);
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		renderer.lights[i] = {};
+	}
+
+	UniformBufferParameters lights_buffer_parameters = {};
+	lights_buffer_parameters.size = sizeof(LightUniformBuffer);
+	renderer.light_buffers = get_uniform_buffer(renderer, lights_buffer_parameters);
 }
 
 void update_image_index(Renderer &renderer, uint32_t draw_frame)
@@ -514,6 +534,23 @@ void update_image_index(Renderer &renderer, uint32_t draw_frame)
 
 void draw(Renderer &renderer, DrawParameters &parameters)
 {
+	// Update lights buffer
+	LightUniformBuffer lights_data;
+
+	for (uint8_t i = 0; i < max_lights; i++)
+	{
+		lights_data.active[i].value = renderer.lights[i].active;
+		lights_data.color[i].value = renderer.lights[i].color;
+		lights_data.intensity[i].value = renderer.lights[i].intensity;
+		lights_data.max_distance[i].value = renderer.lights[i].max_distance;
+		lights_data.location[i].value = renderer.lights[i].location;
+	}
+
+	UniformBufferUpdateParameters lights_buffer_update_parameters = {};
+	lights_buffer_update_parameters.buffer_name = renderer.light_buffers;
+	lights_buffer_update_parameters.data = &lights_data;
+	update_uniform_buffer(renderer, lights_buffer_update_parameters);
+
 	// Record command buffers
 	std::vector<std::pair<VulkanRenderPass*, std::vector<Instance*>>> pass_instances;
 
@@ -644,6 +681,12 @@ std::string get_uniform_buffer(Renderer &renderer, UniformBufferParameters &para
 	auto num_uniforms = renderer.data.uniform_buffers.size();
 	std::string name = "Uniform_Buffer_" + std::to_string(num_uniforms);
 
+	uint32_t range = parameters.range;
+	if (range == 0)
+	{
+		range = parameters.size;
+	}
+
 	while (renderer.data.uniform_buffers.find(name) != renderer.data.uniform_buffers.end())
 	{
 		name += ("_" + std::to_string(num_uniforms));
@@ -657,7 +700,7 @@ std::string get_uniform_buffer(Renderer &renderer, UniformBufferParameters &para
 	uniform_buffer_parameters.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	uniform_buffer_parameters.properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 	uniform_buffer_parameters.size = parameters.size;
-	uniform_buffer_parameters.range = parameters.size;
+	uniform_buffer_parameters.range = range;
 
 	for (uint32_t i = 0; i < buffers.size(); i++)
 	{
@@ -753,7 +796,18 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 	resource_parameters.swap_chain = renderer.swap_chain;
 	resource_parameters.pipeline = chosen_pipeline;
 	resource_parameters.textures = mat.textures;
-	resource_parameters.uniform_buffers = renderer.data.uniform_buffers[parameters.uniform_buffer].buffers;
+
+	// If lights are not being used
+	if (mat.use_lights == LIGHT_USAGE_NONE)
+	{
+		// Submit just the one uniform buffer
+		resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffer].buffers };
+	}
+	else if (mat.use_lights == LIGHT_USAGE_ALL)
+	{
+		// Otherwise also use the uniform buffer with lighting information
+		resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffer].buffers, renderer.data.uniform_buffers[renderer.light_buffers].buffers };
+	}
 
 	create_resource(resource, resource_parameters);
 
@@ -780,6 +834,70 @@ void free_instance(Renderer &renderer, std::string instance_name)
 	auto &instance = renderer.instances[instance_name];
 	cleanup_resource(instance.resource);
 	renderer.instances.erase(instance_name);
+}
+
+uint8_t create_light(Renderer &renderer, LightParameters &parameters)
+{
+	// Initialize value (so compiler doesn't complain)
+	Light *light = &renderer.lights[0];
+	uint8_t light_index = max_lights + 1;
+
+	// Find inactive light
+	for (uint8_t i = 0; i < max_lights; i++)
+	{
+		if (!renderer.lights[i].active)
+		{
+			light = &renderer.lights[i];
+			light_index = i;
+			break;
+		}
+	}
+
+	if (light_index == max_lights + 1)
+	{
+		throw std::runtime_error("Tried to create more lights than are available!");
+	}
+
+	// Set light values
+	light->active = 1;
+	light->color = parameters.color;
+	light->intensity = parameters.intensity;
+	light->max_distance = parameters.max_distance;
+	light->location = parameters.location;
+	light->type = parameters.type;
+
+	return light_index;
+}
+
+void update_light(Renderer &renderer, LightUpdateParameters &parameters)
+{
+	// Retrieve light
+	Light *light = &renderer.lights[parameters.light_index];
+
+	if (!light->active)
+	{
+		throw std::runtime_error("Tried to update an inactive light!");
+	}
+	
+	// Set values
+	light->color = parameters.color;
+	light->intensity = parameters.intensity;
+	light->max_distance = parameters.max_distance;
+	light->location = parameters.location;
+}
+
+void free_light(Renderer &renderer, uint8_t light_index)
+{
+	// Retrieve light
+	Light *light = &renderer.lights[light_index];
+
+	if (!light->active)
+	{
+		throw std::runtime_error("Tried to free an inactive light!");
+	}
+
+	// Set inactive
+	light->active = 0;
 }
 
 void create_data_manager(DataManager &data_manager, DataManagerParameters &data_manager_parameters)
@@ -1065,6 +1183,8 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.device = renderer.device;
 	pipeline_parameters.glfw_window = renderer.window;
 	pipeline_parameters.num_textures = 0;
+	pipeline_parameters.num_uniform_buffers = 2;
+	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT };
 	pipeline_parameters.pipeline_barriers = {};
 	pipeline_parameters.render_pass = render_pass;
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_green.spv"] };
@@ -1083,12 +1203,12 @@ void resize_swap_chain(Renderer &renderer)
 	create_pipeline(pipeline_red, pipeline_parameters);
 	pipelines["standard_red"] = pipeline_red;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
 	pipeline_parameters.subpass = 1;
 	pipeline_parameters.pipeline_flags = pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_WRITE_DISABLE);
 
@@ -1098,8 +1218,10 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.attribute_descriptions = attribute_descriptions_tex_coords;
 	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
 	pipeline_parameters.num_textures = 1;
-	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
+	pipeline_parameters.num_uniform_buffers = 1;
+	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT };
 	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
 
 	create_pipeline(pipeline_text, pipeline_parameters);
 	pipelines["text"] = pipeline_text;
@@ -1118,6 +1240,7 @@ void resize_swap_chain(Renderer &renderer)
 	mat_green_cube.model = &renderer.data.models["CUBE"];
 	mat_green_cube.pipeline = "standard_green";
 	mat_green_cube.textures = {};
+	mat_green_cube.use_lights = LIGHT_USAGE_ALL;
 	mat_green_cube.resources = &renderer.render_passes[0].resources[mat_green_cube.pipeline];
 	mat_green_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipeline];
 	mat_green_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_green_cube.pipeline];
@@ -1126,6 +1249,7 @@ void resize_swap_chain(Renderer &renderer)
 	mat_red_square.model = &renderer.data.models["SQUARE"];
 	mat_red_square.pipeline = "standard_red";
 	mat_red_square.textures = {};
+	mat_red_square.use_lights = LIGHT_USAGE_ALL;
 	mat_red_square.resources = &renderer.render_passes[0].resources[mat_red_square.pipeline];
 	mat_red_square.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_red_square.pipeline];
 	mat_red_square.index_buffers = &renderer.render_passes[0].index_buffers[mat_red_square.pipeline];
@@ -1134,6 +1258,7 @@ void resize_swap_chain(Renderer &renderer)
 	mat_blue_cube.model = &renderer.data.models["CUBE"];
 	mat_blue_cube.pipeline = "standard_blue";
 	mat_blue_cube.textures = {};
+	mat_blue_cube.use_lights = LIGHT_USAGE_ALL;
 	mat_blue_cube.resources = &renderer.render_passes[0].resources[mat_blue_cube.pipeline];
 	mat_blue_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipeline];
 	mat_blue_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_blue_cube.pipeline];
@@ -1142,6 +1267,7 @@ void resize_swap_chain(Renderer &renderer)
 	mat_yellow_cube.model = &renderer.data.models["CUBE"];
 	mat_yellow_cube.pipeline = "standard_yellow";
 	mat_yellow_cube.textures = {};
+	mat_yellow_cube.use_lights = LIGHT_USAGE_ALL;
 	mat_yellow_cube.resources = &renderer.render_passes[0].resources[mat_yellow_cube.pipeline];
 	mat_yellow_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipeline];
 	mat_yellow_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipeline];
@@ -1149,7 +1275,8 @@ void resize_swap_chain(Renderer &renderer)
 	Material mat_text = {};
 	mat_text.model = &renderer.data.models["SQUARE_TEX_COORDS"];
 	mat_text.pipeline = "text";
-	mat_text.textures = { {renderer.data.textures["Resources/ARIAL.png"]} };
+	mat_text.textures = { {renderer.data.textures["Resources/ARIAL.png"]} };;
+	mat_text.use_lights = LIGHT_USAGE_NONE;
 	mat_text.resources = &renderer.render_passes[0].resources[mat_text.pipeline];
 	mat_text.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_text.pipeline];
 	mat_text.index_buffers = &renderer.render_passes[0].index_buffers[mat_text.pipeline];
