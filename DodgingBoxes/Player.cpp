@@ -170,8 +170,8 @@ void Player::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, f
 		LightUpdateParameters light_update_parameters = {};
 		light_update_parameters.light_index = light;
 		light_update_parameters.color = glm::vec3(0.23, 0.11, 0.96);
-		light_update_parameters.intensity = 0.15f;
-		light_update_parameters.max_distance = 0.6f;
+		light_update_parameters.intensity = 0.7f;
+		light_update_parameters.max_distance = 0.8f;
 
 		// -(0.5 - (scale_factor / 2.f) - 0.001f) is the distance to put the cube so that the bottom is touching the floor
 		light_update_parameters.location = glm::vec3(location, -(0.5 - (scale_factor / 2.f) - 0.001f));

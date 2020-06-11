@@ -45,8 +45,8 @@ private:
 	bool *game_end;
 
 	const float speed = 1.2f;
-	const float dash_speed = 4.0f;
-	const float total_dash_time = 0.11f;
+	const float dash_speed = 3.8f;
+	const float total_dash_time = 0.10f;
 	const float total_death_time = 0.3f;
 	const float scale_factor = 0.3f;
 

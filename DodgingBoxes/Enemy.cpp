@@ -51,24 +51,25 @@ void Enemy::update(double time)
 	if (state == ENEMY_DEFAULT)
 	{
 		//  If out of bounds, put in new position
-		if (direction == 0 && location.y < -1.4)
+		if (direction == 0 && location.y < -1.3)
 		{
 			get_direction();
 		}
-		else if (direction == 1 && location.y > 1.4)
+		else if (direction == 1 && location.y > 1.3)
 		{
 			get_direction();
 		}
-		else if (direction == 2 && location.x < -1.4)
+		else if (direction == 2 && location.x < -1.3)
 		{
 			get_direction();
 		}
-		else if (direction == 3 && location.x > 1.4)
+		else if (direction == 3 && location.x > 1.3)
 		{
 			get_direction();
 		}
 
 		// Update speed
+		acceleration += 0.75f * float(time);
 		speed += float(time) * acceleration;
 		glm::vec2 velocity;
 
@@ -122,8 +123,8 @@ void Enemy::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, fl
 	LightUpdateParameters light_update_parameters = {};
 	light_update_parameters.light_index = light;
 	light_update_parameters.color = glm::vec3(0.84, 0.67, 0.23);
-	light_update_parameters.intensity = 0.08f;
-	light_update_parameters.max_distance = 0.3f;
+	light_update_parameters.intensity = 0.4f;
+	light_update_parameters.max_distance = 0.9f;
 
 	light_update_parameters.location = glm::vec3(location, -(0.5 - (scale_factor / 2.f) - 0.001f));
 	update_light(*renderer, light_update_parameters);
@@ -149,6 +150,9 @@ void Enemy::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, fl
 
 void Enemy::get_direction()
 {
+	// Reset acceleration
+	acceleration = start_acceleration;
+
 	// Generate direction
 	direction = static_cast<EnemyDirection>(random_int(0, 99) % 4);
 
@@ -157,19 +161,19 @@ void Enemy::get_direction()
 
 	if (direction == 0)
 	{
-		location = glm::vec2(rand_location, 1.4);
+		location = glm::vec2(rand_location, 1.3);
 	}
 	else if (direction == 1)
 	{
-		location = glm::vec2(rand_location, -1.4);
+		location = glm::vec2(rand_location, -1.3);
 	}
 	else if (direction == 2)
 	{
-		location = glm::vec2(1.4, rand_location);
+		location = glm::vec2(1.3, rand_location);
 	}
 	else
 	{
-		location = glm::vec2(-1.4, rand_location);
+		location = glm::vec2(-1.3, rand_location);
 	}
 
 	// Reset speed

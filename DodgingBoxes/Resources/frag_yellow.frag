@@ -12,6 +12,7 @@ layout(binding = 1) uniform LightObject {
 layout(location = 0) out vec4 outColor;
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) flat in int lightIndex;
+layout(location = 2) flat in vec3 normal;
 
 void main() {
 	float ambient_intensity = 0.9;
@@ -21,12 +22,13 @@ void main() {
 
 	for (int i = 0; i < 14; i++)
 	{
+		vec3 normal_light_vector = normalize(lights.location[i] - inPosition);
 		float dist = length(inPosition - lights.location[i]);
-		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0);
+		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0) * clamp(dot(normal, normal_light_vector), 0.0, 1.0);
 		diffuse_color[i] = step(1.0, lights.in_use[i]) * falloff * lights.intensity[i] * lights.color[i];
 	}
 
 	diffuse_color[lightIndex] = vec3(0.0, 0.0, 0.0);
 
-	outColor = vec4(ambient_color + diffuse_color[0] + diffuse_color[1] + diffuse_color[2] + diffuse_color[3] + diffuse_color[4] + diffuse_color[5] + diffuse_color[6] + diffuse_color[7] + diffuse_color[8] + diffuse_color[9] + diffuse_color[10] + diffuse_color[11] + diffuse_color[12] + diffuse_color[13], 0.9);
+	outColor = vec4(ambient_color + diffuse_color[0] + diffuse_color[1] + diffuse_color[2] + diffuse_color[3] + diffuse_color[4] + diffuse_color[5] + diffuse_color[6] + diffuse_color[7] + diffuse_color[8] + diffuse_color[9] + diffuse_color[10] + diffuse_color[11] + diffuse_color[12] + diffuse_color[13], 1.0);
 }

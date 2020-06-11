@@ -120,14 +120,20 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	// Create models
 	struct VertexWithTexCoord
 	{
-		glm::vec3 point;
-		glm::vec2 tex_coord;
+		alignas(16) glm::vec3 point;
+		alignas(8) glm::vec2 tex_coord;
+	};
+
+	struct VertexWithNormal
+	{
+		alignas(16) glm::vec3 point;
+		alignas(16) glm::vec3 normal;
 	};
 
 	std::unordered_map<std::string, std::pair<VulkanBuffer, VulkanBuffer>> models = {};
 	VkVertexInputBindingDescription binding_description = {};
 	binding_description.binding = 0;
-	binding_description.stride = sizeof(glm::vec3);
+	binding_description.stride = sizeof(VertexWithNormal);
 	binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 	std::vector<VkVertexInputBindingDescription> binding_descriptions = { binding_description };
 
@@ -142,7 +148,14 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	attribute_description.binding = 0;
 	attribute_description.location = 0;
 	attribute_description.format = VK_FORMAT_R32G32B32_SFLOAT;
-	attribute_description.offset = offsetof(VertexWithTexCoord, point);
+	attribute_description.offset = offsetof(VertexWithNormal, point);
+
+	VkVertexInputAttributeDescription attribute_description_normal = {};
+
+	attribute_description_normal.binding = 0;
+	attribute_description_normal.location = 1;
+	attribute_description_normal.format = VK_FORMAT_R32G32B32_SFLOAT;
+	attribute_description_normal.offset = offsetof(VertexWithNormal, normal);
 
 	VkVertexInputAttributeDescription attribute_description_tex_coord_location = {};
 
@@ -158,13 +171,13 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	attribute_description_tex_coord_coord.format = VK_FORMAT_R32G32_SFLOAT;
 	attribute_description_tex_coord_coord.offset = offsetof(VertexWithTexCoord, tex_coord);
 	std::vector<VkVertexInputAttributeDescription> attribute_descriptions_tex_coords = { attribute_description_tex_coord_location, attribute_description_tex_coord_coord };
-	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description };
+	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description, attribute_description_normal };
 
-	std::vector<glm::vec3> square_vertices_data = {
-		{-0.5f, -0.5f, 0.5f},
-		{0.5f, -0.5f, 0.5f},
-		{0.5f, 0.5f, 0.5f},
-		{-0.5f, 0.5f, 0.5f}
+	std::vector<VertexWithNormal> square_vertices_data = {
+		{{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
 	};
 
 	std::vector<VertexWithTexCoord> square_vertices_tex_coords_data = {
@@ -182,8 +195,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	square_vertices_parameters.data = (void *)square_vertices_data.data();
 	square_vertices_parameters.device = renderer.device;
 	square_vertices_parameters.memory_manager = &(renderer.memory_manager);
-	square_vertices_parameters.range = sizeof(glm::vec3);
-	square_vertices_parameters.size = sizeof(glm::vec3) * square_vertices_data.size();
+	square_vertices_parameters.range = sizeof(VertexWithNormal);
+	square_vertices_parameters.size = sizeof(VertexWithNormal) * square_vertices_data.size();
 	square_vertices_parameters.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	square_vertices_parameters.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
@@ -217,33 +230,53 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	models["SQUARE"] = { square_vertices_buffer, square_indices_buffer };
 	models["SQUARE_TEX_COORDS"] = { square_vertices_tex_coords_buffer, square_indices_buffer };
 
-	std::vector<glm::vec3> cube_vertices_data = {
-		{-0.5f, -0.5f, -0.5f},
-		{0.5f, -0.5f, -0.5f},
-		{0.5f, 0.5f, -0.5f},
-		{-0.5f, 0.5f, -0.5f},
+	std::vector<VertexWithNormal> cube_vertices_data = {
+		{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},
+		{{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},
+		{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},
+		{{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},
 
-		{-0.5f, -0.5f, 0.5f},
-		{0.5f, -0.5f, 0.5f},
-		{0.5f, 0.5f, 0.5f},
-		{-0.5f, 0.5f, 0.5f}
+		{{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}},
+		{{-0.5f, 0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}},
+		{{-0.5f, -0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}},
+		{{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}},
+
+		{{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+		{{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+		{{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},
+		{{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},
+
+		{{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+
+		{{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}},
+		{{0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}},
+		{{-0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}},
+		{{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}},
+
+		{{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+		{{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+		{{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+		{{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}
 	};
 
 	std::vector<uint32_t> cube_indices_data = {
 		0, 2, 1, 3, 2, 0,
-		0, 4, 3, 3, 4, 7,
-		1, 2, 5, 5, 2, 6,
-		6, 7, 5, 5, 7, 4,
-		5, 4, 1, 1, 4, 0,
-		2, 3, 6, 6, 3, 7
+		4, 6, 5, 5, 6, 7,
+		8, 9, 10, 10, 9, 11,
+		14, 15, 13, 13, 15, 12,
+		19, 18, 17, 17, 18, 16,
+		20, 21, 22, 22, 21, 23
 	};
 
 	VulkanBufferParameters cube_vertices_parameters = {};
 	cube_vertices_parameters.data = (void *)cube_vertices_data.data();
 	cube_vertices_parameters.device = renderer.device;
 	cube_vertices_parameters.memory_manager = &(renderer.memory_manager);
-	cube_vertices_parameters.range = sizeof(glm::vec3);
-	cube_vertices_parameters.size = sizeof(glm::vec3) * cube_vertices_data.size();
+	cube_vertices_parameters.range = sizeof(VertexWithNormal);
+	cube_vertices_parameters.size = sizeof(VertexWithNormal) * cube_vertices_data.size();
 	cube_vertices_parameters.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	cube_vertices_parameters.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
@@ -1127,13 +1160,20 @@ void resize_swap_chain(Renderer &renderer)
 	// Create attribute and binding description
 	struct VertexWithTexCoord
 	{
-		glm::vec3 point;
-		glm::vec2 tex_coord;
+		alignas(16) glm::vec3 point;
+		alignas(8) glm::vec2 tex_coord;
 	};
 
+	struct VertexWithNormal
+	{
+		alignas(16) glm::vec3 point;
+		alignas(16) glm::vec3 normal;
+	};
+
+	std::unordered_map<std::string, std::pair<VulkanBuffer, VulkanBuffer>> models = {};
 	VkVertexInputBindingDescription binding_description = {};
 	binding_description.binding = 0;
-	binding_description.stride = sizeof(glm::vec3);
+	binding_description.stride = sizeof(VertexWithNormal);
 	binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 	std::vector<VkVertexInputBindingDescription> binding_descriptions = { binding_description };
 
@@ -1148,7 +1188,14 @@ void resize_swap_chain(Renderer &renderer)
 	attribute_description.binding = 0;
 	attribute_description.location = 0;
 	attribute_description.format = VK_FORMAT_R32G32B32_SFLOAT;
-	attribute_description.offset = offsetof(VertexWithTexCoord, point);
+	attribute_description.offset = offsetof(VertexWithNormal, point);
+
+	VkVertexInputAttributeDescription attribute_description_normal = {};
+
+	attribute_description_normal.binding = 0;
+	attribute_description_normal.location = 1;
+	attribute_description_normal.format = VK_FORMAT_R32G32B32_SFLOAT;
+	attribute_description_normal.offset = offsetof(VertexWithNormal, normal);
 
 	VkVertexInputAttributeDescription attribute_description_tex_coord_location = {};
 
@@ -1164,7 +1211,7 @@ void resize_swap_chain(Renderer &renderer)
 	attribute_description_tex_coord_coord.format = VK_FORMAT_R32G32_SFLOAT;
 	attribute_description_tex_coord_coord.offset = offsetof(VertexWithTexCoord, tex_coord);
 	std::vector<VkVertexInputAttributeDescription> attribute_descriptions_tex_coords = { attribute_description_tex_coord_location, attribute_description_tex_coord_coord };
-	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description };
+	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description, attribute_description_normal };
 
 	// Create pipelines
 	int w, h;
