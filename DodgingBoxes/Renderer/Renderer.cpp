@@ -438,8 +438,6 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipelines["standard_blue"] = pipeline_blue;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
-	pipeline_parameters.subpass = 1;
-	pipeline_parameters.pipeline_flags = pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_WRITE_DISABLE);
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
@@ -448,6 +446,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
 	pipeline_parameters.num_textures = 1;
 	pipeline_parameters.num_uniform_buffers = 1;
+	pipeline_parameters.subpass = 1;
 	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT };
 	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
@@ -469,49 +468,49 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 
 	// Create materials
 	Material mat_green_cube = {};
-	mat_green_cube.model = &renderer.data.models["CUBE"];
-	mat_green_cube.pipeline = "standard_green";
+	mat_green_cube.models = { &renderer.data.models["CUBE"] };
+	mat_green_cube.pipelines = { "standard_green" };
 	mat_green_cube.textures = {};
 	mat_green_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_green_cube.resources = &renderer.render_passes[0].resources[mat_green_cube.pipeline];
-	mat_green_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipeline];
-	mat_green_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_green_cube.pipeline];
+	mat_green_cube.resources = { &renderer.render_passes[0].resources[mat_green_cube.pipelines[0]] };
+	mat_green_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipelines[0]] };
+	mat_green_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_green_cube.pipelines[0]] };
 
 	Material mat_red_square = {};
-	mat_red_square.model = &renderer.data.models["SQUARE"];
-	mat_red_square.pipeline = "standard_red";
+	mat_red_square.models = { &renderer.data.models["SQUARE"] };
+	mat_red_square.pipelines = { "standard_red" };
 	mat_red_square.textures = {};
 	mat_red_square.use_lights = LIGHT_USAGE_ALL;
-	mat_red_square.resources = &renderer.render_passes[0].resources[mat_red_square.pipeline];
-	mat_red_square.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_red_square.pipeline];
-	mat_red_square.index_buffers = &renderer.render_passes[0].index_buffers[mat_red_square.pipeline];
+	mat_red_square.resources = { &renderer.render_passes[0].resources[mat_red_square.pipelines[0]] };
+	mat_red_square.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_red_square.pipelines[0]] };
+	mat_red_square.index_buffers = { &renderer.render_passes[0].index_buffers[mat_red_square.pipelines[0]] };
 
 	Material mat_blue_cube = {};
-	mat_blue_cube.model = &renderer.data.models["CUBE"];
-	mat_blue_cube.pipeline = "standard_blue";
+	mat_blue_cube.models = { &renderer.data.models["CUBE"] };
+	mat_blue_cube.pipelines = { "standard_blue" };
 	mat_blue_cube.textures = {};
 	mat_blue_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_blue_cube.resources = &renderer.render_passes[0].resources[mat_blue_cube.pipeline];
-	mat_blue_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipeline];
-	mat_blue_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_blue_cube.pipeline];
+	mat_blue_cube.resources = { &renderer.render_passes[0].resources[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_blue_cube.pipelines[0]] };
 
 	Material mat_yellow_cube = {};
-	mat_yellow_cube.model = &renderer.data.models["CUBE"];
-	mat_yellow_cube.pipeline = "standard_yellow";
+	mat_yellow_cube.models = { &renderer.data.models["CUBE"] };
+	mat_yellow_cube.pipelines = { "standard_yellow" };
 	mat_yellow_cube.textures = {};
 	mat_yellow_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_yellow_cube.resources = &renderer.render_passes[0].resources[mat_yellow_cube.pipeline];
-	mat_yellow_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipeline];
-	mat_yellow_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipeline];
+	mat_yellow_cube.resources = { &renderer.render_passes[0].resources[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipelines[0]] };
 
 	Material mat_text = {};
-	mat_text.model = &renderer.data.models["SQUARE_TEX_COORDS"];
-	mat_text.pipeline = "text";
+	mat_text.models = { &renderer.data.models["SQUARE_TEX_COORDS"] };
+	mat_text.pipelines = { "text" };
 	mat_text.textures = { {renderer.data.textures["Resources/ARIAL.png"]} };;
 	mat_text.use_lights = LIGHT_USAGE_NONE;
-	mat_text.resources = &renderer.render_passes[0].resources[mat_text.pipeline];
-	mat_text.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_text.pipeline];
-	mat_text.index_buffers = &renderer.render_passes[0].index_buffers[mat_text.pipeline];
+	mat_text.resources = { &renderer.render_passes[0].resources[mat_text.pipelines[0]] };
+	mat_text.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_text.pipelines[0]] };
+	mat_text.index_buffers = { &renderer.render_passes[0].index_buffers[mat_text.pipelines[0]] };
 
 
 	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text };
@@ -694,7 +693,10 @@ void cleanup_renderer(Renderer &renderer)
 
 	for (auto &instance : renderer.instances)
 	{
-		cleanup_resource(instance.second.resource);
+		for (auto &resource : instance.second.resources)
+		{
+			cleanup_resource(resource);
+		}
 	}
 	
 	cleanup_data_manager(renderer, renderer.data);
@@ -784,34 +786,45 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 	// Find pipeline
 	Material mat = renderer.data.materials[parameters.material];
 
-	VulkanPipeline chosen_pipeline = {};
+	std::vector<VulkanPipeline> chosen_pipelines = {};
 	uint32_t render_pass_index = 0;
-	for (uint32_t i = 0; i < renderer.render_passes.size(); i++)
+	for (uint32_t k = 0; k < mat.pipelines.size(); k++)
 	{
-		auto render_pass = renderer.render_passes[i];
-		for (auto pipeline : render_pass.pass_pipelines)
+		for (uint32_t i = 0; i < renderer.render_passes.size(); i++)
 		{
-			if (pipeline.first == mat.pipeline)
+			auto render_pass = renderer.render_passes[i];
+			for (auto pipeline : render_pass.pass_pipelines)
 			{
+				if (pipeline.first == mat.pipelines[k])
+				{
 
-				chosen_pipeline = pipeline.second;
-				render_pass_index = i;
+					chosen_pipelines.push_back(pipeline.second);
+					render_pass_index = i;
+					break;
+				}
+			}
+
+			if (chosen_pipelines.size() > k)
+			{
 				break;
 			}
 		}
-
-		if (chosen_pipeline.device != VK_NULL_HANDLE)
+		for (auto &chosen_pipeline : chosen_pipelines)
 		{
-			break;
+			if (chosen_pipeline.device == VK_NULL_HANDLE)
+			{
+				throw std::runtime_error("Could not find pipeline!");
+			}
 		}
-	}
-	if (chosen_pipeline.device == VK_NULL_HANDLE)
-	{
-		throw std::runtime_error("Could not find pipeline!");
 	}
 
 	// Generate name
-	std::string name = std::to_string(render_pass_index) + '_' + std::to_string( parameters.material) + "_" + parameters.uniform_buffer;
+	std::string name = std::to_string(parameters.material);
+
+	for (auto uniform_buffer : parameters.uniform_buffers)
+	{
+		name += "_" + uniform_buffer;
+	}
 
 	// Make sure resource of this description doesn't already exist
 	for (auto render_pass : renderer.render_passes)
@@ -823,29 +836,35 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 	}
 
 	// Fill out structure
+	std::vector<VulkanResource> resources;
 	VulkanResource resource = {};
 	VulkanResourceParameters resource_parameters = {};
 	resource_parameters.device = renderer.device;
 	resource_parameters.swap_chain = renderer.swap_chain;
-	resource_parameters.pipeline = chosen_pipeline;
 	resource_parameters.textures = mat.textures;
 
-	// If lights are not being used
-	if (mat.use_lights == LIGHT_USAGE_NONE)
+	// NOTE: chosen_pipelines should be the same size as parameters.uniform_buffers
+	for (uint32_t i = 0; i < parameters.uniform_buffers.size(); i++)
 	{
-		// Submit just the one uniform buffer
-		resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffer].buffers };
-	}
-	else if (mat.use_lights == LIGHT_USAGE_ALL)
-	{
-		// Otherwise also use the uniform buffer with lighting information
-		resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffer].buffers, renderer.data.uniform_buffers[renderer.light_buffers].buffers };
-	}
+		resource_parameters.pipeline = chosen_pipelines[i];
+		// If lights are not being used
+		if (mat.use_lights == LIGHT_USAGE_NONE)
+		{
+			// Submit just the one uniform buffer
+			resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffers[i]].buffers };
+		}
+		else if (mat.use_lights == LIGHT_USAGE_ALL)
+		{
+			// Otherwise also use the uniform buffer with lighting information
+			resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffers[i]].buffers, renderer.data.uniform_buffers[renderer.light_buffers].buffers };
+		}
 
-	create_resource(resource, resource_parameters);
+		create_resource(resource, resource_parameters);
+		resources.push_back(resource);
+	}
 
 	Instance instance = {};
-	instance.resource = resource;
+	instance.resources = resources;
 	instance.material = parameters.material;
 
 	renderer.instances[name] = instance;
@@ -857,15 +876,22 @@ void submit_instance(Renderer &renderer, InstanceSubmitParameters &parameters)
 	Instance instance = renderer.instances[parameters.instance_name];
 	Material material = renderer.data.materials[instance.material];
 
-	material.resources->emplace_back(instance.resource);
-	material.vertex_buffers->emplace_back(material.model->first);
-	material.index_buffers->emplace_back(material.model->second);
+	// Note: instance.resources must be the same size as material.resources
+	for (uint32_t i = 0; i < material.resources.size(); i++)
+	{
+		material.resources[i]->emplace_back(instance.resources[i]);
+		material.vertex_buffers[i]->emplace_back(material.models[i]->first);
+		material.index_buffers[i]->emplace_back(material.models[i]->second);
+	}
 }
 
 void free_instance(Renderer &renderer, std::string instance_name)
 {
 	auto &instance = renderer.instances[instance_name];
-	cleanup_resource(instance.resource);
+	for (auto &resource : instance.resources)
+	{
+		cleanup_resource(resource);
+	}
 	renderer.instances.erase(instance_name);
 }
 
@@ -1256,8 +1282,6 @@ void resize_swap_chain(Renderer &renderer)
 	pipelines["standard_blue"] = pipeline_blue;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
-	pipeline_parameters.subpass = 1;
-	pipeline_parameters.pipeline_flags = pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_WRITE_DISABLE);
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
@@ -1266,6 +1290,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
 	pipeline_parameters.num_textures = 1;
 	pipeline_parameters.num_uniform_buffers = 1;
+	pipeline_parameters.subpass = 1;
 	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT };
 	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
@@ -1284,49 +1309,49 @@ void resize_swap_chain(Renderer &renderer)
 
 	// Create materials
 	Material mat_green_cube = {};
-	mat_green_cube.model = &renderer.data.models["CUBE"];
-	mat_green_cube.pipeline = "standard_green";
+	mat_green_cube.models = { &renderer.data.models["CUBE"] };
+	mat_green_cube.pipelines = { "standard_green" };
 	mat_green_cube.textures = {};
 	mat_green_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_green_cube.resources = &renderer.render_passes[0].resources[mat_green_cube.pipeline];
-	mat_green_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipeline];
-	mat_green_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_green_cube.pipeline];
+	mat_green_cube.resources = { &renderer.render_passes[0].resources[mat_green_cube.pipelines[0]] };
+	mat_green_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipelines[0]] };
+	mat_green_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_green_cube.pipelines[0]] };
 
 	Material mat_red_square = {};
-	mat_red_square.model = &renderer.data.models["SQUARE"];
-	mat_red_square.pipeline = "standard_red";
+	mat_red_square.models = { &renderer.data.models["SQUARE"] };
+	mat_red_square.pipelines = { "standard_red" };
 	mat_red_square.textures = {};
 	mat_red_square.use_lights = LIGHT_USAGE_ALL;
-	mat_red_square.resources = &renderer.render_passes[0].resources[mat_red_square.pipeline];
-	mat_red_square.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_red_square.pipeline];
-	mat_red_square.index_buffers = &renderer.render_passes[0].index_buffers[mat_red_square.pipeline];
+	mat_red_square.resources = { &renderer.render_passes[0].resources[mat_red_square.pipelines[0]] };
+	mat_red_square.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_red_square.pipelines[0]] };
+	mat_red_square.index_buffers = { &renderer.render_passes[0].index_buffers[mat_red_square.pipelines[0]] };
 
 	Material mat_blue_cube = {};
-	mat_blue_cube.model = &renderer.data.models["CUBE"];
-	mat_blue_cube.pipeline = "standard_blue";
+	mat_blue_cube.models = { &renderer.data.models["CUBE"] };
+	mat_blue_cube.pipelines = { "standard_blue" };
 	mat_blue_cube.textures = {};
 	mat_blue_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_blue_cube.resources = &renderer.render_passes[0].resources[mat_blue_cube.pipeline];
-	mat_blue_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipeline];
-	mat_blue_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_blue_cube.pipeline];
+	mat_blue_cube.resources = { &renderer.render_passes[0].resources[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_blue_cube.pipelines[0]] };
 
 	Material mat_yellow_cube = {};
-	mat_yellow_cube.model = &renderer.data.models["CUBE"];
-	mat_yellow_cube.pipeline = "standard_yellow";
+	mat_yellow_cube.models = { &renderer.data.models["CUBE"] };
+	mat_yellow_cube.pipelines = { "standard_yellow" };
 	mat_yellow_cube.textures = {};
 	mat_yellow_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_yellow_cube.resources = &renderer.render_passes[0].resources[mat_yellow_cube.pipeline];
-	mat_yellow_cube.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipeline];
-	mat_yellow_cube.index_buffers = &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipeline];
+	mat_yellow_cube.resources = { &renderer.render_passes[0].resources[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipelines[0]] };
 
 	Material mat_text = {};
-	mat_text.model = &renderer.data.models["SQUARE_TEX_COORDS"];
-	mat_text.pipeline = "text";
+	mat_text.models = { &renderer.data.models["SQUARE_TEX_COORDS"] };
+	mat_text.pipelines = { "text" };
 	mat_text.textures = { {renderer.data.textures["Resources/ARIAL.png"]} };;
 	mat_text.use_lights = LIGHT_USAGE_NONE;
-	mat_text.resources = &renderer.render_passes[0].resources[mat_text.pipeline];
-	mat_text.vertex_buffers = &renderer.render_passes[0].vertex_buffers[mat_text.pipeline];
-	mat_text.index_buffers = &renderer.render_passes[0].index_buffers[mat_text.pipeline];
+	mat_text.resources = { &renderer.render_passes[0].resources[mat_text.pipelines[0]] };
+	mat_text.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_text.pipelines[0]] };
+	mat_text.index_buffers = { &renderer.render_passes[0].index_buffers[mat_text.pipelines[0]] };
 
 
 	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text };

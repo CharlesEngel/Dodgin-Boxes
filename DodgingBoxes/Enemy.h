@@ -50,7 +50,7 @@ private:
 	glm::mat4 scale;
 	Rectangle collider;
 
-	const float start_acceleration = 1.2;
+	const float start_acceleration = 1.2f;
 	float acceleration;
 	const float total_death_time = 0.2f;
 	const float scale_factor = 0.12f;

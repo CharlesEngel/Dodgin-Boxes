@@ -41,22 +41,22 @@ enum LightUsage
 
 struct Instance
 {
-	VulkanResource resource;
+	std::vector<VulkanResource> resources;
 	uint32_t material;
 };
 
 struct Material
 {
-	std::string pipeline;
-	std::pair<VulkanBuffer, VulkanBuffer> *model;
+	std::vector<std::string> pipelines;
+	std::vector<std::pair<VulkanBuffer, VulkanBuffer>*> models;
 
 	// Not a pointer because this needs to be passes as-is
 	std::vector<std::vector<VulkanTexture>> textures;
 	LightUsage use_lights;
 
-	std::vector<VulkanResource> *resources;
-	std::vector<VulkanBuffer> *vertex_buffers;
-	std::vector<VulkanBuffer> *index_buffers;
+	std::vector<std::vector<VulkanResource>*> resources;
+	std::vector<std::vector<VulkanBuffer>*> vertex_buffers;
+	std::vector<std::vector<VulkanBuffer>*> index_buffers;
 };
 
 struct Light
@@ -98,7 +98,6 @@ struct RenderPassManager
 {
 	VulkanRenderPass pass;
 	std::unordered_map<std::string, VulkanPipeline> pass_pipelines;
-	//std::unordered_map<std::string, Instance> resources;
 
 	std::unordered_map<std::string, std::vector<VulkanResource>> resources;
 	std::unordered_map<std::string, std::vector<VulkanBuffer>> vertex_buffers;
@@ -136,7 +135,6 @@ struct Renderer
 	std::vector<VkFence> in_flight_fences;
 	std::vector<VkFence> images_in_flight;
 
-	//std::vector<std::pair<std::string, std::string>> submitted_instances;
 	std::unordered_map<std::string, Instance> instances;
 
 	std::vector<Light> lights;
@@ -174,7 +172,7 @@ struct UniformBufferUpdateParameters
 
 struct InstanceParameters
 {
-	std::string uniform_buffer;
+	std::vector<std::string> uniform_buffers;
 	uint32_t material;
 };
 

@@ -16,7 +16,7 @@ Character::Character(Renderer *renderer, glm::vec2 location, float scale_factor,
 
 	InstanceParameters instance_parameters = {};
 	instance_parameters.material = MATERIAL_TEXT;
-	instance_parameters.uniform_buffer = uniform_buffer;
+	instance_parameters.uniform_buffers = { uniform_buffer };
 
 	instance = create_instance(*renderer, instance_parameters);
 

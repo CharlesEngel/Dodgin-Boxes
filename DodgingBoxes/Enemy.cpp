@@ -20,7 +20,7 @@ Enemy::Enemy(Renderer *renderer)
 
 	InstanceParameters instance_parameters = {};
 	instance_parameters.material = MATERIAL_YELLOW_CUBE;
-	instance_parameters.uniform_buffer = uniform_buffer;
+	instance_parameters.uniform_buffers = { uniform_buffer };
 
 	instance = create_instance(*renderer, instance_parameters);
 

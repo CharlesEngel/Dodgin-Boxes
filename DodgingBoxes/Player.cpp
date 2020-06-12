@@ -24,7 +24,7 @@ Player::Player(Renderer *renderer, Input *input, bool *game_end_flag)
 
 	InstanceParameters instance_parameters = {};
 	instance_parameters.material = MATERIAL_BLUE_CUBE;
-	instance_parameters.uniform_buffer = uniform_buffer;
+	instance_parameters.uniform_buffers = { uniform_buffer };
 
 	instance = create_instance(*renderer, instance_parameters);
 
