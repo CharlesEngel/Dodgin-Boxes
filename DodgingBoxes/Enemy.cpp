@@ -18,12 +18,6 @@ Enemy::Enemy(Renderer *renderer)
 
 	uniform_buffer = get_uniform_buffer(*renderer, uniform_parameters);
 
-	InstanceParameters instance_parameters = {};
-	instance_parameters.material = MATERIAL_YELLOW_CUBE;
-	instance_parameters.uniform_buffers = { uniform_buffer };
-
-	instance = create_instance(*renderer, instance_parameters);
-
 	LightParameters light_parameters = {};
 	light_parameters.color = glm::vec3(0.84, 0.67, 0.23);
 	light_parameters.intensity = 0.15f;
@@ -32,6 +26,12 @@ Enemy::Enemy(Renderer *renderer)
 	light_parameters.type = LIGHT_POINT;
 
 	light = create_light(*renderer, light_parameters);
+
+	InstanceParameters instance_parameters = {};
+	instance_parameters.material = MATERIAL_YELLOW_CUBE;
+	instance_parameters.uniform_buffers = { uniform_buffer };
+
+	instance = create_instance(*renderer, instance_parameters);
 
 	collider.set_placement(location + glm::vec2(-scale_factor / 2.f, -scale_factor / 2.f), glm::vec2(scale_factor, scale_factor));
 }
@@ -123,8 +123,8 @@ void Enemy::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, fl
 	LightUpdateParameters light_update_parameters = {};
 	light_update_parameters.light_index = light;
 	light_update_parameters.color = glm::vec3(0.84, 0.67, 0.23);
-	light_update_parameters.intensity = 0.4f;
-	light_update_parameters.max_distance = 0.9f;
+	light_update_parameters.intensity = 0.4f /*2.5f*/ /*0.f*/;
+	light_update_parameters.max_distance = /*0.9f*/ 2.5f;
 
 	light_update_parameters.location = glm::vec3(location, -(0.5 - (scale_factor / 2.f) - 0.001f));
 	update_light(*renderer, light_update_parameters);

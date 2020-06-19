@@ -18,6 +18,7 @@ layout(location = 1) in vec3 inNormal;
 void main() {
 	outNormal = inNormal;
 	lightIndex = ubo.light_index;
-	outPosition = (ubo.model * vec4(inPosition, 1.0)).xyz;
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+	vec4 pos = ubo.model * vec4(inPosition, 1.0);
+	outPosition = pos.xyz;
+    gl_Position = ubo.proj * ubo.view * pos;
 }

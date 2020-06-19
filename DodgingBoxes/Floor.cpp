@@ -45,6 +45,7 @@ void Floor::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, fl
 	buffer_data.model = transform;
 	buffer_data.proj = proj;
 	buffer_data.view = view;
+	buffer_data.light_index = -1;
 
 	UniformBufferUpdateParameters update_parameters = {};
 	update_parameters.buffer_name = uniform_buffer;

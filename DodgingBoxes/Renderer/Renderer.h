@@ -19,6 +19,12 @@
 
 const uint8_t max_lights = 14;
 
+enum RenderPassIds
+{
+	RENDER_PASS_INDEX_SHADOW = 0,
+	RENDER_PASS_INDEX_DRAW = 1
+};
+
 enum MaterialIds
 {
 	MATERIAL_GREEN_CUBE = 0,
@@ -93,6 +99,18 @@ struct LightUniformBuffer
 	alignas(16) AlignedInt active[max_lights];
 };
 
+struct ShadowMapUniformBuffer
+{
+	/*alignas(16)*/ glm::mat4 view[6];
+	/*alignas(16) */glm::mat4 proj[6];
+	int light_index;
+};
+
+struct ShadowMapFragmentUniformBuffer
+{
+	glm::vec3 location;
+};
+
 // TODO: Is this a good name?
 struct RenderPassManager
 {
@@ -139,6 +157,9 @@ struct Renderer
 
 	std::vector<Light> lights;
 	std::string light_buffers;
+	std::array<std::string, max_lights> shadow_map_buffers;
+	std::array<std::string, max_lights> shadow_map_fragment_buffers;
+	ShadowMapUniformBuffer shadow_map_uniform;
 };
 
 struct RendererParameters
@@ -174,6 +195,7 @@ struct InstanceParameters
 {
 	std::vector<std::string> uniform_buffers;
 	uint32_t material;
+	int light_index;
 };
 
 struct InstanceSubmitParameters

@@ -10,6 +10,12 @@
 #include "MemoryManager.h"
 #include "Texture.h"
 
+enum RenderPassFlags
+{
+	RENDER_PASS_IGNORE_DRAW_IMAGES = 1,
+	RENDER_PASS_MULTIVIEW = 2
+};
+
 // Contains render pass and its image views and command pool
 struct VulkanRenderPass
 {
@@ -82,6 +88,10 @@ struct VulkanRenderPassParameters
 	VulkanRenderPassFramebufferAttachment attachments;
 	VulkanRenderPassSubpasses subpasses;
 
+	RenderPassFlags flags;
+	uint32_t num_views;
+	std::vector<uint32_t> view_masks;
+	std::vector<uint32_t> correlation_masks;
 };
 
 // Initializes values in VulkanRenderPass

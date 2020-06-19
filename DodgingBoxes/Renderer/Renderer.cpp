@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <algorithm>
+#include "../Utilities.h"
 
 const bool enable_validation_layers = true;
 
@@ -116,6 +117,62 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_texture(depth_attachment, depth_attachment_parameters);
 
 	textures["RENDER_PASS_ATTACHMENT_DEPTH"] = depth_attachment;
+
+	VulkanTexture shadow_map_attachment_0 = {};
+	VulkanTexture shadow_map_attachment_1 = {};
+	VulkanTexture shadow_map_attachment_2 = {};
+	VulkanTexture shadow_map_attachment_3 = {};
+	VulkanTexture shadow_map_attachment_4 = {};
+	VulkanTexture shadow_map_attachment_5 = {};
+	VulkanTexture shadow_map_attachment_6 = {};
+	VulkanTexture shadow_map_attachment_7 = {};
+	VulkanTexture shadow_map_attachment_8 = {};
+	VulkanTexture shadow_map_attachment_9 = {};
+	VulkanTexture shadow_map_attachment_10 = {};
+	VulkanTexture shadow_map_attachment_11 = {};
+	VulkanTexture shadow_map_attachment_12 = {};
+	VulkanTexture shadow_map_attachment_13 = {};
+	VulkanTextureParameters shadow_map_attachment_parameters = {};
+	shadow_map_attachment_parameters.device = renderer.device;
+	shadow_map_attachment_parameters.command_pool = renderer.device.command_pool;
+	shadow_map_attachment_parameters.memory_manager = &renderer.memory_manager;
+	shadow_map_attachment_parameters.format = find_depth_format(renderer.device.physical_device);
+	shadow_map_attachment_parameters.width = 512;
+	shadow_map_attachment_parameters.height = 512;
+	shadow_map_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	shadow_map_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	shadow_map_attachment_parameters.layers = 6;
+	shadow_map_attachment_parameters.flags = TextureFlags(TEXTURE_CUBE | TEXTURE_SAMPLER_COMPARE_LESS_OR_EQUAL | TEXTURE_BORDER_WHITE);
+
+	create_texture(shadow_map_attachment_0, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_1, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_2, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_3, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_4, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_5, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_6, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_7, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_8, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_9, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_10, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_11, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_12, shadow_map_attachment_parameters);
+	create_texture(shadow_map_attachment_13, shadow_map_attachment_parameters);
+
+	textures["SHADOW_MAP_ATTACHMENT_0"] = shadow_map_attachment_0;
+	textures["SHADOW_MAP_ATTACHMENT_1"] = shadow_map_attachment_1;
+	textures["SHADOW_MAP_ATTACHMENT_2"] = shadow_map_attachment_2;
+	textures["SHADOW_MAP_ATTACHMENT_3"] = shadow_map_attachment_3;
+	textures["SHADOW_MAP_ATTACHMENT_4"] = shadow_map_attachment_4;
+	textures["SHADOW_MAP_ATTACHMENT_5"] = shadow_map_attachment_5;
+	textures["SHADOW_MAP_ATTACHMENT_6"] = shadow_map_attachment_6;
+	textures["SHADOW_MAP_ATTACHMENT_7"] = shadow_map_attachment_7;
+	textures["SHADOW_MAP_ATTACHMENT_8"] = shadow_map_attachment_8;
+	textures["SHADOW_MAP_ATTACHMENT_9"] = shadow_map_attachment_9;
+	textures["SHADOW_MAP_ATTACHMENT_10"] = shadow_map_attachment_10;
+	textures["SHADOW_MAP_ATTACHMENT_11"] = shadow_map_attachment_11;
+	textures["SHADOW_MAP_ATTACHMENT_12"] = shadow_map_attachment_12;
+	textures["SHADOW_MAP_ATTACHMENT_13"] = shadow_map_attachment_13;
 
 	// Create models
 	struct VertexWithTexCoord
@@ -395,6 +452,78 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	command_buffer_parameters.swap_chain = renderer.swap_chain;
 	allocate_render_pass_command_buffers(render_pass, command_buffer_parameters);
 
+
+	// Create shadow map subpass and attachment descriptions
+	std::vector<VulkanRenderPassAttachment> shadow_map_attachment_descriptions = {};
+	std::vector<VulkanRenderPassSubpassDescription> shadow_map_subpass_descriptions = {};
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		VulkanRenderPassAttachment shadow_map_attachment_description = {};
+		shadow_map_attachment_description.attachment = renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)];
+		shadow_map_attachment_description.attachment_format = shadow_map_attachment_description.attachment.format;
+		shadow_map_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+		shadow_map_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		shadow_map_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
+		shadow_map_attachment_descriptions.push_back(shadow_map_attachment_description);
+
+		VulkanRenderPassSubpassDescription shadow_map_subpass_description = {};
+		shadow_map_subpass_description.depth_attachment = i;
+		shadow_map_subpass_description.use_depth = true;
+		shadow_map_subpass_description.color_attachments = {};
+		shadow_map_subpass_description.input_attachments = {};
+		shadow_map_subpass_description.resolve_attachments = {};
+		shadow_map_subpass_description.dependencies = {};
+		shadow_map_subpass_descriptions.push_back(shadow_map_subpass_description);
+	}
+
+	VulkanRenderPassSubpasses shadow_map_subpasses = {};
+	shadow_map_subpasses.attachments = shadow_map_attachment_descriptions;
+	shadow_map_subpasses.subpass_descriptions = shadow_map_subpass_descriptions;
+
+	// Create render pass for shadow maps
+	VulkanRenderPass shadow_map_render_pass = {};
+	VulkanRenderPassParameters shadow_map_render_pass_parameters = {};
+	shadow_map_render_pass_parameters.device = renderer.device;
+	shadow_map_render_pass_parameters.glfw_window = renderer.window;
+	shadow_map_render_pass_parameters.memory_manager = &renderer.memory_manager;
+	shadow_map_render_pass_parameters.swap_chain = renderer.swap_chain;
+	shadow_map_render_pass_parameters.subpasses = shadow_map_subpasses;
+	shadow_map_render_pass_parameters.flags = static_cast<RenderPassFlags>(RENDER_PASS_IGNORE_DRAW_IMAGES | RENDER_PASS_MULTIVIEW);
+	shadow_map_render_pass_parameters.num_views = 6;
+	shadow_map_render_pass_parameters.view_masks = std::vector<uint32_t>(14, 0b00111111);
+	
+	create_render_pass(shadow_map_render_pass, shadow_map_render_pass_parameters);
+
+	VulkanRenderPassCommandBufferAllocateParameters shadow_map_command_buffer_parameters = {};
+	shadow_map_command_buffer_parameters.swap_chain = renderer.swap_chain;
+	allocate_render_pass_command_buffers(shadow_map_render_pass, shadow_map_command_buffer_parameters);
+
+	// Create pipeline barriers
+	std::vector<VulkanPipelineBarrier> shadow_pipeline_barriers = {};
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		VulkanPipelineBarrier floor_shadow_pipeline_barrier = {};
+		floor_shadow_pipeline_barrier.images = std::vector<VulkanTexture>(renderer.swap_chain.swap_chain_images.size(), renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)]);
+		floor_shadow_pipeline_barrier.old_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		floor_shadow_pipeline_barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		floor_shadow_pipeline_barrier.src = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		floor_shadow_pipeline_barrier.dst = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		floor_shadow_pipeline_barrier.src_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		floor_shadow_pipeline_barrier.dst_access = VK_ACCESS_SHADER_READ_BIT;
+
+		VkImageSubresourceRange image_range = {};
+		image_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		image_range.baseArrayLayer = 0;
+		image_range.baseMipLevel = 0;
+		image_range.layerCount = 6;
+		image_range.levelCount = 1;
+
+		floor_shadow_pipeline_barrier.subresource_range = image_range;
+
+		shadow_pipeline_barriers.push_back(floor_shadow_pipeline_barrier);
+	}
+
 	// Create pipelines
 	int w, h;
 
@@ -427,12 +556,15 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_pipeline(pipeline_green, pipeline_parameters);
 	pipelines["standard_green"] = pipeline_green;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_red.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_red.spv"] };
+	pipeline_parameters.num_textures = 14;
+	pipeline_parameters.pipeline_barriers = shadow_pipeline_barriers;
 
 	create_pipeline(pipeline_red, pipeline_parameters);
 	pipelines["standard_red"] = pipeline_red;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
+	pipeline_parameters.pipeline_barriers = {};
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
@@ -454,17 +586,53 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_pipeline(pipeline_text, pipeline_parameters);
 	pipelines["text"] = pipeline_text;
 
+	// Create pipelines for shadow maps
+	std::unordered_map<std::string, VulkanPipeline> shadow_map_pipelines;
+	VulkanPipelineParameters pipeline_shadow_map_parameters = {};
+	pipeline_shadow_map_parameters.attribute_descriptions = attribute_descriptions;
+	pipeline_shadow_map_parameters.binding_descriptions = binding_descriptions;
+	pipeline_shadow_map_parameters.device = renderer.device;
+	pipeline_shadow_map_parameters.glfw_window = renderer.window;
+	pipeline_shadow_map_parameters.num_textures = 0;
+	pipeline_shadow_map_parameters.num_uniform_buffers = 2;
+	pipeline_shadow_map_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_VERTEX_BIT };
+	pipeline_shadow_map_parameters.pipeline_barriers = {};
+	pipeline_shadow_map_parameters.render_pass = shadow_map_render_pass;
+	pipeline_shadow_map_parameters.shaders = { renderer.data.shaders["Resources/vert_shadow_map.spv"] };
+	pipeline_shadow_map_parameters.swap_chain = renderer.swap_chain;
+	pipeline_shadow_map_parameters.viewport_width = 512;
+	pipeline_shadow_map_parameters.viewport_height = 512;
+	pipeline_shadow_map_parameters.viewport_offset_x = 0;
+	pipeline_shadow_map_parameters.viewport_offset_y = 0;
+	pipeline_shadow_map_parameters.subpass = 0;
+	pipeline_shadow_map_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	pipeline_shadow_map_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_ORDER_CLOCKWISE | PIPELINE_DEPTH_BIAS_ENABLE);
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		pipeline_shadow_map_parameters.subpass = i;
+		VulkanPipeline shadow_pipeline = {};
+		create_pipeline(shadow_pipeline, pipeline_shadow_map_parameters);
+		shadow_map_pipelines["SHADOW_" + std::to_string(i)] = shadow_pipeline;
+	}
+
 	// Create resources
 	// None yet...
 
-	// Create render pass manager
+	// Create render pass managers
 	RenderPassManager render_pass_manager = {};
 	RenderPassManagerParameters render_pass_manager_parameters = {};
 	render_pass_manager_parameters.pass = render_pass;
 	render_pass_manager_parameters.pass_pipelines = pipelines;
 
+	RenderPassManager shadow_map_render_pass_manager = {};
+	RenderPassManagerParameters shadow_map_render_pass_manager_parameters = {};
+	shadow_map_render_pass_manager_parameters.pass = shadow_map_render_pass;
+	shadow_map_render_pass_manager_parameters.pass_pipelines = shadow_map_pipelines;
+
 	create_render_pass_manager(render_pass_manager, render_pass_manager_parameters);
-	renderer.render_passes = { render_pass_manager };
+	create_render_pass_manager(shadow_map_render_pass_manager, shadow_map_render_pass_manager_parameters);
+	renderer.render_passes = { shadow_map_render_pass_manager, render_pass_manager };
 
 	// Create materials
 	Material mat_green_cube = {};
@@ -472,45 +640,78 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_green_cube.pipelines = { "standard_green" };
 	mat_green_cube.textures = {};
 	mat_green_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_green_cube.resources = { &renderer.render_passes[0].resources[mat_green_cube.pipelines[0]] };
-	mat_green_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipelines[0]] };
-	mat_green_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_green_cube.pipelines[0]] };
+	mat_green_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_green_cube.pipelines[0]] };
+	mat_green_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_green_cube.pipelines[0]] };
+	mat_green_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_green_cube.pipelines[0]] };
 
 	Material mat_red_square = {};
 	mat_red_square.models = { &renderer.data.models["SQUARE"] };
 	mat_red_square.pipelines = { "standard_red" };
 	mat_red_square.textures = {};
 	mat_red_square.use_lights = LIGHT_USAGE_ALL;
-	mat_red_square.resources = { &renderer.render_passes[0].resources[mat_red_square.pipelines[0]] };
-	mat_red_square.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_red_square.pipelines[0]] };
-	mat_red_square.index_buffers = { &renderer.render_passes[0].index_buffers[mat_red_square.pipelines[0]] };
+	mat_red_square.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_red_square.pipelines[0]] };
+	mat_red_square.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_red_square.pipelines[0]] };
+	mat_red_square.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_red_square.pipelines[0]] };
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		std::string pipeline = "SHADOW_" + std::to_string(i);
+		mat_red_square.models.push_back(&renderer.data.models["SQUARE"]);
+		mat_red_square.pipelines.push_back(pipeline);
+		mat_red_square.textures.push_back({ renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)] });
+		mat_red_square.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].resources[pipeline]);
+		mat_red_square.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].vertex_buffers[pipeline]);
+		mat_red_square.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].index_buffers[pipeline]);
+	}
 
 	Material mat_blue_cube = {};
-	mat_blue_cube.models = { &renderer.data.models["CUBE"] };
-	mat_blue_cube.pipelines = { "standard_blue" };
+	mat_blue_cube.models = { &renderer.data.models["CUBE"]};
+	mat_blue_cube.pipelines = { "standard_blue"};
 	mat_blue_cube.textures = {};
 	mat_blue_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_blue_cube.resources = { &renderer.render_passes[0].resources[mat_blue_cube.pipelines[0]] };
-	mat_blue_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipelines[0]] };
-	mat_blue_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_blue_cube.pipelines[0]]};
+	mat_blue_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_blue_cube.pipelines[0]]};
+	mat_blue_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_blue_cube.pipelines[0]]};
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		std::string pipeline = "SHADOW_" + std::to_string(i);
+		mat_blue_cube.models.push_back(&renderer.data.models["CUBE"]);
+		mat_blue_cube.pipelines.push_back(pipeline);
+		mat_blue_cube.textures.push_back({ renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)] });
+		mat_blue_cube.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].resources[pipeline]);
+		mat_blue_cube.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].vertex_buffers[pipeline]);
+		mat_blue_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].index_buffers[pipeline]);
+	}
 
 	Material mat_yellow_cube = {};
-	mat_yellow_cube.models = { &renderer.data.models["CUBE"] };
-	mat_yellow_cube.pipelines = { "standard_yellow" };
-	mat_yellow_cube.textures = {};
+	mat_yellow_cube.models = { &renderer.data.models["CUBE"]};
+	mat_yellow_cube.pipelines = { "standard_yellow"};
+	mat_yellow_cube.textures = {  };
 	mat_yellow_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_yellow_cube.resources = { &renderer.render_passes[0].resources[mat_yellow_cube.pipelines[0]] };
-	mat_yellow_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipelines[0]] };
-	mat_yellow_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_yellow_cube.pipelines[0]] };
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		std::string pipeline = "SHADOW_" + std::to_string(i);
+		mat_yellow_cube.models.push_back(&renderer.data.models["CUBE"]);
+		mat_yellow_cube.pipelines.push_back(pipeline);
+		mat_yellow_cube.textures.push_back({ renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)] });
+		mat_yellow_cube.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].resources[pipeline]);
+		mat_yellow_cube.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].vertex_buffers[pipeline]);
+		mat_yellow_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].index_buffers[pipeline]);
+	}
 
 	Material mat_text = {};
 	mat_text.models = { &renderer.data.models["SQUARE_TEX_COORDS"] };
 	mat_text.pipelines = { "text" };
 	mat_text.textures = { {renderer.data.textures["Resources/ARIAL.png"]} };;
 	mat_text.use_lights = LIGHT_USAGE_NONE;
-	mat_text.resources = { &renderer.render_passes[0].resources[mat_text.pipelines[0]] };
-	mat_text.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_text.pipelines[0]] };
-	mat_text.index_buffers = { &renderer.render_passes[0].index_buffers[mat_text.pipelines[0]] };
+	mat_text.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_text.pipelines[0]] };
+	mat_text.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_text.pipelines[0]] };
+	mat_text.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_text.pipelines[0]] };
 
 
 	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text };
@@ -548,6 +749,16 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	UniformBufferParameters lights_buffer_parameters = {};
 	lights_buffer_parameters.size = sizeof(LightUniformBuffer);
 	renderer.light_buffers = get_uniform_buffer(renderer, lights_buffer_parameters);
+
+	// Create buffer for shadow maps
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		UniformBufferParameters shadow_map_buffer_parameters = {};
+		shadow_map_buffer_parameters.range = sizeof(ShadowMapUniformBuffer);
+		shadow_map_buffer_parameters.size = sizeof(ShadowMapUniformBuffer);
+
+		renderer.shadow_map_buffers[i] = get_uniform_buffer(renderer, shadow_map_buffer_parameters);
+	}
 }
 
 void update_image_index(Renderer &renderer, uint32_t draw_frame)
@@ -566,6 +777,48 @@ void update_image_index(Renderer &renderer, uint32_t draw_frame)
 
 void draw(Renderer &renderer, DrawParameters &parameters)
 {
+	// Update uniform buffer for creating shadow maps
+	glm::mat4 proj = glm::perspective(PI / 2.f, 1.f, 0.001f, 2.0f);
+
+	for (uint8_t j = 0; j < max_lights; j++)
+	{
+		renderer.shadow_map_uniform.light_index = j;
+
+		glm::vec3 location = renderer.lights[j].location;
+		for (uint32_t i = 0; i < 6; i++)
+		{
+			renderer.shadow_map_uniform.proj[i] = proj;
+
+			switch (i)
+			{
+			case 4:
+				renderer.shadow_map_uniform.view[i] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z + 1.0), glm::vec3(0.0, -1.0, 0.0));
+				break;
+			case 5:
+				renderer.shadow_map_uniform.view[i] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z -1.0), glm::vec3(0.0, -1.0, 0.0));
+				break;
+			case 2:
+				renderer.shadow_map_uniform.view[i] = glm::lookAt(location, glm::vec3(location.x, location.y + 1.0, location.z), glm::vec3(0.0, 0.0, 1.0));
+				break;
+			case 3:
+				renderer.shadow_map_uniform.view[i] = glm::lookAt(location, glm::vec3(location.x, location.y -1.0, location.z), glm::vec3(0.0, 0.0, -1.0));
+				break;
+			case 0:
+				renderer.shadow_map_uniform.view[i] = glm::lookAt(location, glm::vec3(location.x + 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
+				break;
+			case 1:
+				renderer.shadow_map_uniform.view[i] = glm::lookAt(location, glm::vec3(location.x -1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
+				break;
+			}
+		}
+
+		UniformBufferUpdateParameters update_parameters = {};
+		update_parameters.buffer_name = renderer.shadow_map_buffers[j];
+		update_parameters.data = &renderer.shadow_map_uniform;
+
+		update_uniform_buffer(renderer, update_parameters);
+	}
+
 	// Update lights buffer
 	LightUniformBuffer lights_data;
 
@@ -588,30 +841,36 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 
 	for (auto &render_pass : renderer.render_passes)
 	{
-		std::vector<std::vector<VulkanBuffer>> index_buffers;
-		std::vector<std::vector<VulkanBuffer>> vertex_buffers;
-		std::vector<std::vector<VulkanResource>> resources;
-		std::vector<std::vector<VulkanPipeline>> pipelines(render_pass.pass.total_subpasses);
-
 		// Information grouped according to subpass
-		std::vector<VulkanSubpassCommandBufferRecordDetails> subpasses(render_pass.pass.total_subpasses);
-		for (auto &pipeline : render_pass.pass_pipelines)
+		VulkanRenderPassCommandBufferRecordParameters record_parameters = {};
+		record_parameters.subpasses.resize(render_pass.pass.total_subpasses);
+
+		for (const auto &pipeline : render_pass.pass_pipelines)
 		{
-			subpasses[pipeline.second.subpass].vertex_buffers.emplace_back(render_pass.vertex_buffers[pipeline.first]);
-			subpasses[pipeline.second.subpass].index_buffers.emplace_back(render_pass.index_buffers[pipeline.first]);
-			subpasses[pipeline.second.subpass].resources.emplace_back(render_pass.resources[pipeline.first]);
-			subpasses[pipeline.second.subpass].pipelines.emplace_back(pipeline.second);
+			record_parameters.subpasses[pipeline.second.subpass].vertex_buffers.emplace_back(render_pass.vertex_buffers[pipeline.first]);
+			record_parameters.subpasses[pipeline.second.subpass].index_buffers.emplace_back(render_pass.index_buffers[pipeline.first]);
+			record_parameters.subpasses[pipeline.second.subpass].resources.push_back(render_pass.resources[pipeline.first]);
+			record_parameters.subpasses[pipeline.second.subpass].pipelines.emplace_back(pipeline.second);
 
 			render_pass.vertex_buffers[pipeline.first].clear();
 			render_pass.index_buffers[pipeline.first].clear();
 			render_pass.resources[pipeline.first].clear();
 		}
 
-		VulkanRenderPassCommandBufferRecordParameters record_parameters;
 		record_parameters.device = renderer.device;
-		record_parameters.subpasses = subpasses;
 		record_parameters.swap_chain = renderer.swap_chain;
 		record_parameters.framebuffer_index = renderer.image_index;
+		record_parameters.command_index = renderer.image_index;
+
+		if (render_pass.pass.framebuffers.size() == 1)
+		{
+			record_parameters.framebuffer_index = 0;
+		}
+
+		if (render_pass.pass.total_subpasses == max_lights)
+		{
+			record_parameters.clear_values = { { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f } };
+		}
 
 		record_render_pass_command_buffers(render_pass.pass, record_parameters);
 	}
@@ -786,48 +1045,46 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 	// Find pipeline
 	Material mat = renderer.data.materials[parameters.material];
 
-	std::vector<VulkanPipeline> chosen_pipelines = {};
+	std::vector<VulkanPipeline> chosen_pipelines(mat.pipelines.size());
 	uint32_t render_pass_index = 0;
 	for (uint32_t k = 0; k < mat.pipelines.size(); k++)
 	{
 		for (uint32_t i = 0; i < renderer.render_passes.size(); i++)
 		{
-			auto render_pass = renderer.render_passes[i];
-			for (auto pipeline : render_pass.pass_pipelines)
+			const auto &render_pass = renderer.render_passes[i];
+			for (const auto &pipeline : render_pass.pass_pipelines)
 			{
 				if (pipeline.first == mat.pipelines[k])
 				{
 
-					chosen_pipelines.push_back(pipeline.second);
+					chosen_pipelines[k] = pipeline.second;
 					render_pass_index = i;
 					break;
 				}
 			}
 
-			if (chosen_pipelines.size() > k)
+			if (chosen_pipelines[k].pipeline != VK_NULL_HANDLE)
 			{
 				break;
 			}
 		}
-		for (auto &chosen_pipeline : chosen_pipelines)
+
+		if (chosen_pipelines[k].device == VK_NULL_HANDLE)
 		{
-			if (chosen_pipeline.device == VK_NULL_HANDLE)
-			{
-				throw std::runtime_error("Could not find pipeline!");
-			}
+			throw std::runtime_error("Could not find pipeline!");
 		}
 	}
 
 	// Generate name
 	std::string name = std::to_string(parameters.material);
 
-	for (auto uniform_buffer : parameters.uniform_buffers)
+	for (const auto &uniform_buffer : parameters.uniform_buffers)
 	{
 		name += "_" + uniform_buffer;
 	}
 
 	// Make sure resource of this description doesn't already exist
-	for (auto render_pass : renderer.render_passes)
+	for (const auto &render_pass : renderer.render_passes)
 	{
 		if (render_pass.resources.find(name) != render_pass.resources.end())
 		{
@@ -841,22 +1098,30 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 	VulkanResourceParameters resource_parameters = {};
 	resource_parameters.device = renderer.device;
 	resource_parameters.swap_chain = renderer.swap_chain;
-	resource_parameters.textures = mat.textures;
+	uint32_t shadow_index = 0;
 
-	// NOTE: chosen_pipelines should be the same size as parameters.uniform_buffers
-	for (uint32_t i = 0; i < parameters.uniform_buffers.size(); i++)
+	// NOTE: chosen_pipelines (Minus shadow map pipelines) should be the same size as parameters.uniform_buffers
+	for (uint32_t i = 0; i < mat.pipelines.size(); i++)
 	{
 		resource_parameters.pipeline = chosen_pipelines[i];
+		resource_parameters.textures = mat.textures;
 		// If lights are not being used
 		if (mat.use_lights == LIGHT_USAGE_NONE)
 		{
 			// Submit just the one uniform buffer
 			resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffers[i]].buffers };
 		}
-		else if (mat.use_lights == LIGHT_USAGE_ALL)
+		else if (mat.use_lights == LIGHT_USAGE_ALL && mat.pipelines[i].substr(0, 6) != "SHADOW")
 		{
 			// Otherwise also use the uniform buffer with lighting information
 			resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffers[i]].buffers, renderer.data.uniform_buffers[renderer.light_buffers].buffers };
+		}
+		else if (mat.pipelines[i].substr(0, 6) == "SHADOW")
+		{
+			// If this pipeline is for shadow maps, add that uniform buffer
+			resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffers[0]].buffers, renderer.data.uniform_buffers[renderer.shadow_map_buffers[shadow_index]].buffers };
+			shadow_index++;
+			resource_parameters.textures = {};
 		}
 
 		create_resource(resource, resource_parameters);
@@ -873,15 +1138,15 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 
 void submit_instance(Renderer &renderer, InstanceSubmitParameters &parameters)
 {
-	Instance instance = renderer.instances[parameters.instance_name];
-	Material material = renderer.data.materials[instance.material];
+	const Instance &instance = renderer.instances[parameters.instance_name];
+	Material &material = renderer.data.materials[instance.material];
 
 	// Note: instance.resources must be the same size as material.resources
 	for (uint32_t i = 0; i < material.resources.size(); i++)
 	{
-		material.resources[i]->emplace_back(instance.resources[i]);
-		material.vertex_buffers[i]->emplace_back(material.models[i]->first);
-		material.index_buffers[i]->emplace_back(material.models[i]->second);
+		material.resources[i]->push_back(instance.resources[i]);
+		material.vertex_buffers[i]->push_back(material.models[i]->first);
+		material.index_buffers[i]->push_back(material.models[i]->second);
 	}
 }
 
@@ -972,6 +1237,7 @@ void create_data_manager(DataManager &data_manager, DataManagerParameters &data_
 void cleanup_data_manager(Renderer &renderer, DataManager &data_manager)
 {
 	// TODO: There's probably a better way to do this
+	// ...But it's cleanup code. Does it matter?
 	std::vector<VulkanBuffer> buffers_to_cleanup = {};
 	for (auto &model : data_manager.models)
 	{
@@ -1183,6 +1449,51 @@ void resize_swap_chain(Renderer &renderer)
 	command_buffer_parameters.swap_chain = renderer.swap_chain;
 	allocate_render_pass_command_buffers(render_pass, command_buffer_parameters);
 
+	// Create shadow map subpass and attachment descriptions
+	std::vector<VulkanRenderPassAttachment> shadow_map_attachment_descriptions = {};
+	std::vector<VulkanRenderPassSubpassDescription> shadow_map_subpass_descriptions = {};
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		VulkanRenderPassAttachment shadow_map_attachment_description = {};
+		shadow_map_attachment_description.attachment = renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)];
+		shadow_map_attachment_description.attachment_format = shadow_map_attachment_description.attachment.format;
+		shadow_map_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+		shadow_map_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		shadow_map_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
+		shadow_map_attachment_descriptions.push_back(shadow_map_attachment_description);
+
+		VulkanRenderPassSubpassDescription shadow_map_subpass_description = {};
+		shadow_map_subpass_description.depth_attachment = i;
+		shadow_map_subpass_description.use_depth = true;
+		shadow_map_subpass_description.color_attachments = {};
+		shadow_map_subpass_description.input_attachments = {};
+		shadow_map_subpass_description.resolve_attachments = {};
+		shadow_map_subpass_description.dependencies = {};
+		shadow_map_subpass_descriptions.push_back(shadow_map_subpass_description);
+	}
+
+	VulkanRenderPassSubpasses shadow_map_subpasses = {};
+	shadow_map_subpasses.attachments = shadow_map_attachment_descriptions;
+	shadow_map_subpasses.subpass_descriptions = shadow_map_subpass_descriptions;
+
+	// Create render pass for shadow maps
+	VulkanRenderPass shadow_map_render_pass = {};
+	VulkanRenderPassParameters shadow_map_render_pass_parameters = {};
+	shadow_map_render_pass_parameters.device = renderer.device;
+	shadow_map_render_pass_parameters.glfw_window = renderer.window;
+	shadow_map_render_pass_parameters.memory_manager = &renderer.memory_manager;
+	shadow_map_render_pass_parameters.swap_chain = renderer.swap_chain;
+	shadow_map_render_pass_parameters.subpasses = shadow_map_subpasses;
+	shadow_map_render_pass_parameters.flags = static_cast<RenderPassFlags>(RENDER_PASS_IGNORE_DRAW_IMAGES | RENDER_PASS_MULTIVIEW);
+	shadow_map_render_pass_parameters.num_views = 6;
+	shadow_map_render_pass_parameters.view_masks = std::vector<uint32_t>(14, 0b00111111);
+
+	create_render_pass(shadow_map_render_pass, shadow_map_render_pass_parameters);
+
+	VulkanRenderPassCommandBufferAllocateParameters shadow_map_command_buffer_parameters = {};
+	shadow_map_command_buffer_parameters.swap_chain = renderer.swap_chain;
+	allocate_render_pass_command_buffers(shadow_map_render_pass, shadow_map_command_buffer_parameters);
+
 	// Create attribute and binding description
 	struct VertexWithTexCoord
 	{
@@ -1239,6 +1550,32 @@ void resize_swap_chain(Renderer &renderer)
 	std::vector<VkVertexInputAttributeDescription> attribute_descriptions_tex_coords = { attribute_description_tex_coord_location, attribute_description_tex_coord_coord };
 	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description, attribute_description_normal };
 
+	// Create pipeline barriers
+	std::vector<VulkanPipelineBarrier> shadow_pipeline_barriers = {};
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		VulkanPipelineBarrier floor_shadow_pipeline_barrier = {};
+		floor_shadow_pipeline_barrier.images = std::vector<VulkanTexture>(renderer.swap_chain.swap_chain_images.size(), renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)]);
+		floor_shadow_pipeline_barrier.old_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		floor_shadow_pipeline_barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		floor_shadow_pipeline_barrier.src = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		floor_shadow_pipeline_barrier.dst = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		floor_shadow_pipeline_barrier.src_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		floor_shadow_pipeline_barrier.dst_access = VK_ACCESS_SHADER_READ_BIT;
+
+		VkImageSubresourceRange image_range = {};
+		image_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		image_range.baseArrayLayer = 0;
+		image_range.baseMipLevel = 0;
+		image_range.layerCount = 6;
+		image_range.levelCount = 1;
+
+		floor_shadow_pipeline_barrier.subresource_range = image_range;
+
+		shadow_pipeline_barriers.push_back(floor_shadow_pipeline_barrier);
+	}
+
 	// Create pipelines
 	int w, h;
 
@@ -1271,12 +1608,15 @@ void resize_swap_chain(Renderer &renderer)
 	create_pipeline(pipeline_green, pipeline_parameters);
 	pipelines["standard_green"] = pipeline_green;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_red.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_red.spv"] };
+	pipeline_parameters.num_textures = 14;
+	pipeline_parameters.pipeline_barriers = shadow_pipeline_barriers;
 
 	create_pipeline(pipeline_red, pipeline_parameters);
 	pipelines["standard_red"] = pipeline_red;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
+	pipeline_parameters.pipeline_barriers = {};
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
@@ -1298,14 +1638,50 @@ void resize_swap_chain(Renderer &renderer)
 	create_pipeline(pipeline_text, pipeline_parameters);
 	pipelines["text"] = pipeline_text;
 
-	// Create render pass manager
+	// Create pipelines for shadow maps
+	std::unordered_map<std::string, VulkanPipeline> shadow_map_pipelines;
+	VulkanPipelineParameters pipeline_shadow_map_parameters = {};
+	pipeline_shadow_map_parameters.attribute_descriptions = attribute_descriptions;
+	pipeline_shadow_map_parameters.binding_descriptions = binding_descriptions;
+	pipeline_shadow_map_parameters.device = renderer.device;
+	pipeline_shadow_map_parameters.glfw_window = renderer.window;
+	pipeline_shadow_map_parameters.num_textures = 0;
+	pipeline_shadow_map_parameters.num_uniform_buffers = 2;
+	pipeline_shadow_map_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_VERTEX_BIT };
+	pipeline_shadow_map_parameters.pipeline_barriers = {};
+	pipeline_shadow_map_parameters.render_pass = shadow_map_render_pass;
+	pipeline_shadow_map_parameters.shaders = { renderer.data.shaders["Resources/vert_shadow_map.spv"] };
+	pipeline_shadow_map_parameters.swap_chain = renderer.swap_chain;
+	pipeline_shadow_map_parameters.viewport_width = 512;
+	pipeline_shadow_map_parameters.viewport_height = 512;
+	pipeline_shadow_map_parameters.viewport_offset_x = 0;
+	pipeline_shadow_map_parameters.viewport_offset_y = 0;
+	pipeline_shadow_map_parameters.subpass = 0;
+	pipeline_shadow_map_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	pipeline_shadow_map_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_ORDER_CLOCKWISE | PIPELINE_DEPTH_BIAS_ENABLE);
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		pipeline_shadow_map_parameters.subpass = i;
+		VulkanPipeline shadow_pipeline = {};
+		create_pipeline(shadow_pipeline, pipeline_shadow_map_parameters);
+		shadow_map_pipelines["SHADOW_" + std::to_string(i)] = shadow_pipeline;
+	}
+
+	// Create render pass managers
 	RenderPassManager render_pass_manager = {};
 	RenderPassManagerParameters render_pass_manager_parameters = {};
 	render_pass_manager_parameters.pass = render_pass;
 	render_pass_manager_parameters.pass_pipelines = pipelines;
 
+	RenderPassManager shadow_map_render_pass_manager = {};
+	RenderPassManagerParameters shadow_map_render_pass_manager_parameters = {};
+	shadow_map_render_pass_manager_parameters.pass = shadow_map_render_pass;
+	shadow_map_render_pass_manager_parameters.pass_pipelines = shadow_map_pipelines;
+
 	create_render_pass_manager(render_pass_manager, render_pass_manager_parameters);
-	renderer.render_passes = { render_pass_manager };
+	create_render_pass_manager(shadow_map_render_pass_manager, shadow_map_render_pass_manager_parameters);
+	renderer.render_passes = { shadow_map_render_pass_manager, render_pass_manager };
 
 	// Create materials
 	Material mat_green_cube = {};
@@ -1313,45 +1689,78 @@ void resize_swap_chain(Renderer &renderer)
 	mat_green_cube.pipelines = { "standard_green" };
 	mat_green_cube.textures = {};
 	mat_green_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_green_cube.resources = { &renderer.render_passes[0].resources[mat_green_cube.pipelines[0]] };
-	mat_green_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_green_cube.pipelines[0]] };
-	mat_green_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_green_cube.pipelines[0]] };
+	mat_green_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_green_cube.pipelines[0]] };
+	mat_green_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_green_cube.pipelines[0]] };
+	mat_green_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_green_cube.pipelines[0]] };
 
 	Material mat_red_square = {};
 	mat_red_square.models = { &renderer.data.models["SQUARE"] };
 	mat_red_square.pipelines = { "standard_red" };
 	mat_red_square.textures = {};
 	mat_red_square.use_lights = LIGHT_USAGE_ALL;
-	mat_red_square.resources = { &renderer.render_passes[0].resources[mat_red_square.pipelines[0]] };
-	mat_red_square.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_red_square.pipelines[0]] };
-	mat_red_square.index_buffers = { &renderer.render_passes[0].index_buffers[mat_red_square.pipelines[0]] };
+	mat_red_square.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_red_square.pipelines[0]] };
+	mat_red_square.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_red_square.pipelines[0]] };
+	mat_red_square.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_red_square.pipelines[0]] };
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		std::string pipeline = "SHADOW_" + std::to_string(i);
+		mat_red_square.models.push_back(&renderer.data.models["SQUARE"]);
+		mat_red_square.pipelines.push_back(pipeline);
+		mat_red_square.textures.push_back({ renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)] });
+		mat_red_square.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].resources[pipeline]);
+		mat_red_square.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].vertex_buffers[pipeline]);
+		mat_red_square.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].index_buffers[pipeline]);
+	}
 
 	Material mat_blue_cube = {};
 	mat_blue_cube.models = { &renderer.data.models["CUBE"] };
 	mat_blue_cube.pipelines = { "standard_blue" };
 	mat_blue_cube.textures = {};
 	mat_blue_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_blue_cube.resources = { &renderer.render_passes[0].resources[mat_blue_cube.pipelines[0]] };
-	mat_blue_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_blue_cube.pipelines[0]] };
-	mat_blue_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_blue_cube.pipelines[0]] };
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		std::string pipeline = "SHADOW_" + std::to_string(i);
+		mat_blue_cube.models.push_back(&renderer.data.models["CUBE"]);
+		mat_blue_cube.pipelines.push_back(pipeline);
+		mat_blue_cube.textures.push_back({ renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)] });
+		mat_blue_cube.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].resources[pipeline]);
+		mat_blue_cube.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].vertex_buffers[pipeline]);
+		mat_blue_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].index_buffers[pipeline]);
+	}
 
 	Material mat_yellow_cube = {};
 	mat_yellow_cube.models = { &renderer.data.models["CUBE"] };
 	mat_yellow_cube.pipelines = { "standard_yellow" };
-	mat_yellow_cube.textures = {};
+	mat_yellow_cube.textures = {  };
 	mat_yellow_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_yellow_cube.resources = { &renderer.render_passes[0].resources[mat_yellow_cube.pipelines[0]] };
-	mat_yellow_cube.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_yellow_cube.pipelines[0]] };
-	mat_yellow_cube.index_buffers = { &renderer.render_passes[0].index_buffers[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_yellow_cube.pipelines[0]] };
+	mat_yellow_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_yellow_cube.pipelines[0]] };
+
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		std::string pipeline = "SHADOW_" + std::to_string(i);
+		mat_yellow_cube.models.push_back(&renderer.data.models["CUBE"]);
+		mat_yellow_cube.pipelines.push_back(pipeline);
+		mat_yellow_cube.textures.push_back({ renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)] });
+		mat_yellow_cube.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].resources[pipeline]);
+		mat_yellow_cube.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].vertex_buffers[pipeline]);
+		mat_yellow_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].index_buffers[pipeline]);
+	}
 
 	Material mat_text = {};
 	mat_text.models = { &renderer.data.models["SQUARE_TEX_COORDS"] };
 	mat_text.pipelines = { "text" };
 	mat_text.textures = { {renderer.data.textures["Resources/ARIAL.png"]} };;
 	mat_text.use_lights = LIGHT_USAGE_NONE;
-	mat_text.resources = { &renderer.render_passes[0].resources[mat_text.pipelines[0]] };
-	mat_text.vertex_buffers = { &renderer.render_passes[0].vertex_buffers[mat_text.pipelines[0]] };
-	mat_text.index_buffers = { &renderer.render_passes[0].index_buffers[mat_text.pipelines[0]] };
+	mat_text.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_text.pipelines[0]] };
+	mat_text.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_text.pipelines[0]] };
+	mat_text.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_text.pipelines[0]] };
 
 
 	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text };

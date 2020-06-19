@@ -11,6 +11,14 @@
 #include "CommandPool.h"
 #include "MemoryManager.h"
 
+enum TextureFlags
+{
+	TEXTURE_ARRAY = 1,
+	TEXTURE_CUBE = 2,
+	TEXTURE_SAMPLER_COMPARE_LESS_OR_EQUAL = 4,
+	TEXTURE_BORDER_WHITE = 8
+};
+
 // Contains a texture and its related information
 struct VulkanTextureData
 {
@@ -44,8 +52,10 @@ struct VulkanTextureParameters
 	VulkanTextureData data;
 	uint32_t height;
 	uint32_t width;
+	uint32_t layers;
 	VkFormat format;
 	VkSampleCountFlagBits samples;
+	TextureFlags flags;
 };
 
 struct VulkanTextureDataParameters

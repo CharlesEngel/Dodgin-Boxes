@@ -124,5 +124,11 @@
     <None Include="Resources\vert_standard_light_index.vert">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Resources\vert_shadow_map.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_empty.frag">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

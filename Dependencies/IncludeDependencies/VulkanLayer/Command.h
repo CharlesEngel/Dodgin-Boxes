@@ -54,6 +54,7 @@ struct VulkanRenderPassCommandBufferRecordParameters
 	VulkanDevice device;
 	std::vector<VkClearValue> clear_values;
 	uint32_t framebuffer_index;
+	uint32_t command_index;
 };
 
 // Initializes values in VulkanCommand

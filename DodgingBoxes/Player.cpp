@@ -22,12 +22,6 @@ Player::Player(Renderer *renderer, Input *input, bool *game_end_flag)
 
 	uniform_buffer = get_uniform_buffer(*renderer, uniform_parameters);
 
-	InstanceParameters instance_parameters = {};
-	instance_parameters.material = MATERIAL_BLUE_CUBE;
-	instance_parameters.uniform_buffers = { uniform_buffer };
-
-	instance = create_instance(*renderer, instance_parameters);
-
 	LightParameters light_parameters = {};
 	light_parameters.color = glm::vec3(0.23, 0.11, 0.96);
 	light_parameters.intensity = 0.3f;
@@ -35,6 +29,12 @@ Player::Player(Renderer *renderer, Input *input, bool *game_end_flag)
 	light_parameters.location = glm::vec3(location, 1.0);
 	light_parameters.type = LIGHT_POINT;
 	light = create_light(*renderer, light_parameters);
+
+	InstanceParameters instance_parameters = {};
+	instance_parameters.material = MATERIAL_BLUE_CUBE;
+	instance_parameters.uniform_buffers = { uniform_buffer };
+
+	instance = create_instance(*renderer, instance_parameters);
 
 	collider.set_placement(location + glm::vec2(-0.1, -0.1), glm::vec2(0.2, 0.2));
 }
@@ -170,8 +170,8 @@ void Player::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, f
 		LightUpdateParameters light_update_parameters = {};
 		light_update_parameters.light_index = light;
 		light_update_parameters.color = glm::vec3(0.23, 0.11, 0.96);
-		light_update_parameters.intensity = 0.7f;
-		light_update_parameters.max_distance = 0.8f;
+		light_update_parameters.intensity = /*2.5f*/ 0.9f /*0.f*/;
+		light_update_parameters.max_distance = 1.5f;
 
 		// -(0.5 - (scale_factor / 2.f) - 0.001f) is the distance to put the cube so that the bottom is touching the floor
 		light_update_parameters.location = glm::vec3(location, -(0.5 - (scale_factor / 2.f) - 0.001f));
