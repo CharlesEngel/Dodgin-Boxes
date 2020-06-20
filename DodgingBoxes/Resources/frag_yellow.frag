@@ -41,8 +41,7 @@ float VectorToDepth (vec3 Vec)
 }
 
 void main() {
-	float ambient_intensity = 0.9;
-	vec3 ambient_color = ambient_intensity * vec3(0.84, 0.67, 0.23);
+	vec3 camera = normalize(vec3(0.0, 0.0, 2.0) - inPosition);
 
 	vec3 diffuse_color[14];
 
@@ -66,10 +65,13 @@ void main() {
 		vec3 normal_light_vector = normalize(lights.location[i] - inPosition);
 		float dist = length(inPosition - lights.location[i]);
 		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0) * clamp(dot(normal, normal_light_vector), 0.0, 1.0);
-		diffuse_color[i] = step(1.0, lights.in_use[i]) * falloff * lights.intensity[i] * lights.color[i];
+
+		vec3 LTLight = (normalize((lights.location[i] - inPosition)) + 0.2 * normal);
+		float LTDot = pow(clamp(dot(camera, -LTLight), 0.0, 1.0), 12.0) * 2.0;
+		float LTAttenuation = 1.0 / dot(lights.location[i] - inPosition, lights.location[i] - inPosition);
+		float LT = LTAttenuation * (LTDot + 0.2) * 0.36;
+		diffuse_color[i] = falloff * lights.intensity[i] * lights.color[i] + lights.color[i] * vec3(0.42, 0.12, 0.06) * LT;
 	}
 
-	diffuse_color[lightIndex] = vec3(0.0, 0.0, 0.0);
-
-	outColor = vec4(ambient_color + depth_map_value_0 * diffuse_color[0] + depth_map_value_1 * diffuse_color[1] + depth_map_value_2 * diffuse_color[2] + depth_map_value_3 * diffuse_color[3] + depth_map_value_4 * diffuse_color[4] + depth_map_value_5 * diffuse_color[5] + depth_map_value_6 * diffuse_color[6] + depth_map_value_7 * diffuse_color[7] + depth_map_value_8 * diffuse_color[8] + depth_map_value_9 * diffuse_color[9] + depth_map_value_10 * diffuse_color[10] + depth_map_value_11 * diffuse_color[11] + depth_map_value_12 * diffuse_color[12] + depth_map_value_13 * diffuse_color[13], 1.0);
+	outColor = vec4(depth_map_value_0 * diffuse_color[0] + depth_map_value_1 * diffuse_color[1] + depth_map_value_2 * diffuse_color[2] + depth_map_value_3 * diffuse_color[3] + depth_map_value_4 * diffuse_color[4] + depth_map_value_5 * diffuse_color[5] + depth_map_value_6 * diffuse_color[6] + depth_map_value_7 * diffuse_color[7] + depth_map_value_8 * diffuse_color[8] + depth_map_value_9 * diffuse_color[9] + depth_map_value_10 * diffuse_color[10] + depth_map_value_11 * diffuse_color[11] + depth_map_value_12 * diffuse_color[12] + depth_map_value_13 * diffuse_color[13], 1.0);
 }

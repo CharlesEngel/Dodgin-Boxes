@@ -138,7 +138,7 @@ void Player::update(double time)
 	{
 		// Play death animation if dying
 		current_death_time += float(time);
-		scale = glm::scale(glm::mat4(1), glm::vec3(scale_factor, scale_factor, scale_factor)) * glm::scale(glm::mat4(1), glm::vec3((total_death_time - current_death_time) / total_death_time));
+		scale = glm::scale(glm::mat4(1), glm::vec3(scale_factor, scale_factor, scale_factor)) * glm::scale(glm::mat4(1), glm::vec3((0.1f + total_death_time - current_death_time) / (0.1f + total_death_time)));
 
 		if (current_death_time > total_death_time)
 		{
