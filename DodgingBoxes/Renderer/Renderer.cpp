@@ -174,6 +174,39 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	textures["SHADOW_MAP_ATTACHMENT_12"] = shadow_map_attachment_12;
 	textures["SHADOW_MAP_ATTACHMENT_13"] = shadow_map_attachment_13;
 
+	// Create attachment for reflection map
+	VulkanTexture reflection_map_attachment = {};
+	VulkanTextureParameters reflection_map_attachment_parameters = {};
+	reflection_map_attachment_parameters.device = renderer.device;
+	reflection_map_attachment_parameters.command_pool = renderer.device.command_pool;
+	reflection_map_attachment_parameters.memory_manager = &renderer.memory_manager;
+	reflection_map_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	reflection_map_attachment_parameters.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	reflection_map_attachment_parameters.width = 512;
+	reflection_map_attachment_parameters.height = 512;
+	reflection_map_attachment_parameters.layers = 6;
+	reflection_map_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	reflection_map_attachment_parameters.flags = TEXTURE_CUBE;
+
+	create_texture(reflection_map_attachment, reflection_map_attachment_parameters);
+	textures["REFLECTION_MAP_ATTACHMENT"] = reflection_map_attachment;
+
+	VulkanTexture reflection_map_depth_attachment = {};
+	VulkanTextureParameters reflection_map_depth_attachment_parameters = {};
+	reflection_map_depth_attachment_parameters.device = renderer.device;
+	reflection_map_depth_attachment_parameters.command_pool = renderer.device.command_pool;
+	reflection_map_depth_attachment_parameters.memory_manager = &renderer.memory_manager;
+	reflection_map_depth_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	reflection_map_depth_attachment_parameters.format = find_depth_format(renderer.device.physical_device);
+	reflection_map_depth_attachment_parameters.width = 512;
+	reflection_map_depth_attachment_parameters.height = 512;
+	reflection_map_depth_attachment_parameters.layers = 6;
+	reflection_map_depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	reflection_map_depth_attachment_parameters.flags = TEXTURE_CUBE;
+
+	create_texture(reflection_map_depth_attachment, reflection_map_depth_attachment_parameters);
+	textures["REFLECTION_MAP_DEPTH_ATTACHMENT"] = reflection_map_depth_attachment;
+
 	// Create models
 	struct VertexWithTexCoord
 	{
@@ -491,12 +524,54 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	shadow_map_render_pass_parameters.flags = static_cast<RenderPassFlags>(RENDER_PASS_IGNORE_DRAW_IMAGES | RENDER_PASS_MULTIVIEW);
 	shadow_map_render_pass_parameters.num_views = 6;
 	shadow_map_render_pass_parameters.view_masks = std::vector<uint32_t>(14, 0b00111111);
-	
+
 	create_render_pass(shadow_map_render_pass, shadow_map_render_pass_parameters);
 
 	VulkanRenderPassCommandBufferAllocateParameters shadow_map_command_buffer_parameters = {};
 	shadow_map_command_buffer_parameters.swap_chain = renderer.swap_chain;
 	allocate_render_pass_command_buffers(shadow_map_render_pass, shadow_map_command_buffer_parameters);
+
+	// Create reflection map attachments and subpasses
+	VulkanRenderPassAttachment reflection_map_attachment_description = {};
+	reflection_map_attachment_description.attachment = textures["REFLECTION_MAP_ATTACHMENT"];
+	reflection_map_attachment_description.attachment_format = reflection_map_attachment_description.attachment.format;
+	reflection_map_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	reflection_map_attachment_description.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	reflection_map_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	VulkanRenderPassAttachment reflection_map_depth_attachment_description = {};
+	reflection_map_depth_attachment_description.attachment = textures["REFLECTION_MAP_DEPTH_ATTACHMENT"];
+	reflection_map_depth_attachment_description.attachment_format = reflection_map_depth_attachment_description.attachment.format;
+	reflection_map_depth_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	reflection_map_depth_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	reflection_map_depth_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	VulkanRenderPassSubpassDescription reflection_map_subpass_description = {};
+	reflection_map_subpass_description.color_attachments = { 0 };
+	reflection_map_subpass_description.depth_attachment = 1;
+	reflection_map_subpass_description.use_depth = true;
+
+	VulkanRenderPassSubpasses reflection_map_subpasses = {};
+	reflection_map_subpasses.attachments = { reflection_map_attachment_description, reflection_map_depth_attachment_description };
+	reflection_map_subpasses.subpass_descriptions = { reflection_map_subpass_description };
+
+	// Create reflection map render pass
+	VulkanRenderPass reflection_map_render_pass = {};
+	VulkanRenderPassParameters reflection_map_render_pass_parameters = {};
+	reflection_map_render_pass_parameters.device = renderer.device;
+	reflection_map_render_pass_parameters.glfw_window = renderer.window;
+	reflection_map_render_pass_parameters.memory_manager = &renderer.memory_manager;
+	reflection_map_render_pass_parameters.swap_chain = renderer.swap_chain;
+	reflection_map_render_pass_parameters.subpasses = reflection_map_subpasses;
+	reflection_map_render_pass_parameters.flags = static_cast<RenderPassFlags>(RENDER_PASS_IGNORE_DRAW_IMAGES | RENDER_PASS_MULTIVIEW);
+	reflection_map_render_pass_parameters.num_views = 6;
+	reflection_map_render_pass_parameters.view_masks = std::vector<uint32_t>(14, 0b00111111);
+
+	create_render_pass(reflection_map_render_pass, reflection_map_render_pass_parameters);
+
+	VulkanRenderPassCommandBufferAllocateParameters reflection_map_command_buffer_parameters = {};
+	reflection_map_command_buffer_parameters.swap_chain = renderer.swap_chain;
+	allocate_render_pass_command_buffers(reflection_map_render_pass, reflection_map_command_buffer_parameters);
 
 	// Create pipeline barriers
 	std::vector<VulkanPipelineBarrier> shadow_pipeline_barriers = {};
@@ -523,6 +598,24 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 
 		shadow_pipeline_barriers.push_back(floor_shadow_pipeline_barrier);
 	}
+
+	VulkanPipelineBarrier reflection_pipeline_barrier = {};
+	reflection_pipeline_barrier.images = std::vector<VulkanTexture>(renderer.swap_chain.swap_chain_images.size(), renderer.data.textures["REFLECTION_MAP_ATTACHMENT"]);
+	reflection_pipeline_barrier.old_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	reflection_pipeline_barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	reflection_pipeline_barrier.src = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	reflection_pipeline_barrier.dst = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	reflection_pipeline_barrier.src_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	reflection_pipeline_barrier.dst_access = VK_ACCESS_SHADER_READ_BIT;
+
+	VkImageSubresourceRange image_range = {};
+	image_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	image_range.baseArrayLayer = 0;
+	image_range.baseMipLevel = 0;
+	image_range.layerCount = 6;
+	image_range.levelCount = 1;
+
+	reflection_pipeline_barrier.subresource_range = image_range;
 
 	// Create pipelines
 	int w, h;
@@ -557,19 +650,21 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipelines["standard_green"] = pipeline_green;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_red.spv"] };
-	pipeline_parameters.num_textures = 14;
-	pipeline_parameters.pipeline_barriers = shadow_pipeline_barriers;
+	pipeline_parameters.num_textures = max_lights;
 
 	create_pipeline(pipeline_red, pipeline_parameters);
 	pipelines["standard_red"] = pipeline_red;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
-	pipeline_parameters.pipeline_barriers = {};
+	pipeline_parameters.pipeline_barriers = { reflection_pipeline_barrier };
+	pipeline_parameters.num_textures += 1;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
+	pipeline_parameters.pipeline_barriers = {};
+	pipeline_parameters.num_textures -= 1;
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
@@ -616,23 +711,69 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 		shadow_map_pipelines["SHADOW_" + std::to_string(i)] = shadow_pipeline;
 	}
 
+	// Create reflection map pipelines
+	std::unordered_map<std::string, VulkanPipeline> reflection_map_pipelines;
+	VulkanPipeline pipeline_red_reflect = {};
+	VulkanPipeline pipeline_yellow_reflect = {};
+	VulkanPipelineParameters reflect_pipeline_parameters = {};
+	reflect_pipeline_parameters.attribute_descriptions = attribute_descriptions;
+	reflect_pipeline_parameters.binding_descriptions = binding_descriptions;
+	reflect_pipeline_parameters.device = renderer.device;
+	reflect_pipeline_parameters.glfw_window = renderer.window;
+	reflect_pipeline_parameters.num_textures = max_lights;
+	reflect_pipeline_parameters.num_uniform_buffers = 3;
+	reflect_pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT };
+	reflect_pipeline_parameters.pipeline_barriers = shadow_pipeline_barriers;
+	reflect_pipeline_parameters.render_pass = reflection_map_render_pass;
+	reflect_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_reflect_map.spv"], renderer.data.shaders["Resources/frag_yellow_reflect.spv"] };
+	reflect_pipeline_parameters.swap_chain = renderer.swap_chain;
+	reflect_pipeline_parameters.viewport_width = 512;
+	reflect_pipeline_parameters.viewport_height = 512;
+	reflect_pipeline_parameters.viewport_offset_x = 0;
+	reflect_pipeline_parameters.viewport_offset_y = 0;
+	reflect_pipeline_parameters.subpass = 0;
+	reflect_pipeline_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	reflect_pipeline_parameters.pipeline_flags = PIPELINE_ORDER_CLOCKWISE;
+
+	create_pipeline(pipeline_yellow_reflect, reflect_pipeline_parameters);
+	reflection_map_pipelines["REFLECT_YELLOW"] = pipeline_yellow_reflect;
+	
+	reflect_pipeline_parameters.pipeline_barriers = {};
+	reflect_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_reflect_map.spv"], renderer.data.shaders["Resources/frag_red_reflect.spv"] };
+	create_pipeline(pipeline_red_reflect, reflect_pipeline_parameters);
+	reflection_map_pipelines["REFLECT_RED"] = pipeline_red_reflect;
+
 	// Create resources
 	// None yet...
 
 	// Create render pass managers
+	std::vector<VkClearValue> clear_values(3);
+	clear_values[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clear_values[1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clear_values[2].depthStencil = { 1.0f, 0 };
+
 	RenderPassManager render_pass_manager = {};
 	RenderPassManagerParameters render_pass_manager_parameters = {};
 	render_pass_manager_parameters.pass = render_pass;
 	render_pass_manager_parameters.pass_pipelines = pipelines;
+	render_pass_manager_parameters.clear_values = clear_values;
 
 	RenderPassManager shadow_map_render_pass_manager = {};
 	RenderPassManagerParameters shadow_map_render_pass_manager_parameters = {};
 	shadow_map_render_pass_manager_parameters.pass = shadow_map_render_pass;
 	shadow_map_render_pass_manager_parameters.pass_pipelines = shadow_map_pipelines;
+	shadow_map_render_pass_manager_parameters.clear_values = { { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f } };
+
+	RenderPassManager reflection_map_render_pass_manager = {};
+	RenderPassManagerParameters reflection_map_render_pass_manager_parameters = {};
+	reflection_map_render_pass_manager_parameters.pass = reflection_map_render_pass;
+	reflection_map_render_pass_manager_parameters.pass_pipelines = reflection_map_pipelines;
+	reflection_map_render_pass_manager_parameters.clear_values = { {{0.0f, 0.0f, 0.0f, 1.0f}, {1.0f}} };
 
 	create_render_pass_manager(render_pass_manager, render_pass_manager_parameters);
 	create_render_pass_manager(shadow_map_render_pass_manager, shadow_map_render_pass_manager_parameters);
-	renderer.render_passes = { shadow_map_render_pass_manager, render_pass_manager };
+	create_render_pass_manager(reflection_map_render_pass_manager, reflection_map_render_pass_manager_parameters);
+	renderer.render_passes = { shadow_map_render_pass_manager, reflection_map_render_pass_manager, render_pass_manager };
 
 	// Create materials
 	Material mat_green_cube = {};
@@ -652,6 +793,15 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_red_square.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_red_square.pipelines[0]] };
 	mat_red_square.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_red_square.pipelines[0]] };
 	mat_red_square.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_red_square.pipelines[0]] };
+
+	{
+		std::string pipeline = "REFLECT_RED";
+		mat_red_square.models.push_back(&renderer.data.models["SQUARE"]);
+		mat_red_square.pipelines.push_back(pipeline);
+		mat_red_square.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_REFLECT].resources[pipeline]);
+		mat_red_square.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_REFLECT].vertex_buffers[pipeline]);
+		mat_red_square.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_REFLECT].index_buffers[pipeline]);
+	}
 
 	for (uint32_t i = 0; i < max_lights; i++)
 	{
@@ -684,6 +834,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 		mat_blue_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].index_buffers[pipeline]);
 	}
 
+	mat_blue_cube.textures.push_back({ renderer.data.textures["REFLECTION_MAP_ATTACHMENT"] });
+
 	Material mat_yellow_cube = {};
 	mat_yellow_cube.models = { &renderer.data.models["CUBE"]};
 	mat_yellow_cube.pipelines = { "standard_yellow"};
@@ -692,6 +844,15 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_yellow_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_yellow_cube.pipelines[0]] };
 	mat_yellow_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_yellow_cube.pipelines[0]] };
 	mat_yellow_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_yellow_cube.pipelines[0]] };
+
+	{
+		std::string pipeline = "REFLECT_YELLOW";
+		mat_yellow_cube.models.push_back(&renderer.data.models["CUBE"]);
+		mat_yellow_cube.pipelines.push_back(pipeline);
+		mat_yellow_cube.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_REFLECT].resources[pipeline]);
+		mat_yellow_cube.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_REFLECT].vertex_buffers[pipeline]);
+		mat_yellow_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_REFLECT].index_buffers[pipeline]);
+	}
 
 	for (uint32_t i = 0; i < max_lights; i++)
 	{
@@ -759,6 +920,30 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 
 		renderer.shadow_map_buffers[i] = get_uniform_buffer(renderer, shadow_map_buffer_parameters);
 	}
+
+	UniformBufferParameters reflection_map_buffer_parameters = {};
+	reflection_map_buffer_parameters.range = sizeof(ReflectionMapUniformBuffer);
+	reflection_map_buffer_parameters.size = sizeof(ReflectionMapUniformBuffer);
+	renderer.reflection_map_buffer = get_uniform_buffer(renderer, reflection_map_buffer_parameters);
+}
+
+void update_reflection_map(Renderer &renderer, glm::vec3 location)
+{
+	ReflectionMapUniformBuffer uniform_data = {};
+	uniform_data.proj = glm::perspective(PI / 2.f, 1.f, 0.0015f, 5.0f);
+
+	uniform_data.view[0] = glm::lookAt(location, glm::vec3(location.x + 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
+	uniform_data.view[1] = glm::lookAt(location, glm::vec3(location.x - 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
+	uniform_data.view[2] = glm::lookAt(location, glm::vec3(location.x, location.y + 1.0, location.z), glm::vec3(0.0, 0.0, 1.0));
+	uniform_data.view[3] = glm::lookAt(location, glm::vec3(location.x, location.y - 1.0, location.z), glm::vec3(0.0, 0.0, -1.0));
+	uniform_data.view[4] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z + 1.0), glm::vec3(0.0, -1.0, 0.0));
+	uniform_data.view[5] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z - 1.0), glm::vec3(0.0, -1.0, 0.0));
+
+	UniformBufferUpdateParameters update_parameters = {};
+	update_parameters.buffer_name = renderer.reflection_map_buffer;
+	update_parameters.data = &uniform_data;
+
+	update_uniform_buffer(renderer, update_parameters);
 }
 
 void update_image_index(Renderer &renderer, uint32_t draw_frame)
@@ -861,15 +1046,11 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 		record_parameters.swap_chain = renderer.swap_chain;
 		record_parameters.framebuffer_index = renderer.image_index;
 		record_parameters.command_index = renderer.image_index;
+		record_parameters.clear_values = render_pass.clear_values;
 
 		if (render_pass.pass.framebuffers.size() == 1)
 		{
 			record_parameters.framebuffer_index = 0;
-		}
-
-		if (render_pass.pass.total_subpasses == max_lights)
-		{
-			record_parameters.clear_values = { { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f } };
 		}
 
 		record_render_pass_command_buffers(render_pass.pass, record_parameters);
@@ -1124,6 +1305,12 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 			resource_parameters.textures = {};
 		}
 
+		// If this pipeline is reflecting, add the reflection ubo
+		if (mat.pipelines[i].substr(0, 7) == "REFLECT")
+		{
+			resource_parameters.uniform_buffers.insert(resource_parameters.uniform_buffers.begin() + 1, renderer.data.uniform_buffers[renderer.reflection_map_buffer].buffers);
+		}
+
 		create_resource(resource, resource_parameters);
 		resources.push_back(resource);
 	}
@@ -1293,6 +1480,7 @@ void create_render_pass_manager(RenderPassManager &render_pass_manager, RenderPa
 	render_pass_manager.resources = {};
 	render_pass_manager.vertex_buffers = {};
 	render_pass_manager.index_buffers = {};
+	render_pass_manager.clear_values = render_pass_manager_parameters.clear_values;
 }
 
 void cleanup_render_pass_manager(Renderer &renderer, RenderPassManager &render_pass_manager)

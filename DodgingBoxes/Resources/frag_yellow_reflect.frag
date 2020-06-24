@@ -1,7 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(binding = 1) uniform LightObject {
+layout(binding = 2) uniform LightObject {
 	vec3 location[14];
 	vec3 color[14];
 	float intensity[14];
@@ -9,20 +9,20 @@ layout(binding = 1) uniform LightObject {
 	int in_use[14];
 } lights;
 
-layout(binding = 2) uniform samplerCubeShadow depthMapSampler0;
-layout(binding = 3) uniform samplerCubeShadow depthMapSampler1;
-layout(binding = 4) uniform samplerCubeShadow depthMapSampler2;
-layout(binding = 5) uniform samplerCubeShadow depthMapSampler3;
-layout(binding = 6) uniform samplerCubeShadow depthMapSampler4;
-layout(binding = 7) uniform samplerCubeShadow depthMapSampler5;
-layout(binding = 8) uniform samplerCubeShadow depthMapSampler6;
-layout(binding = 9) uniform samplerCubeShadow depthMapSampler7;
-layout(binding = 10) uniform samplerCubeShadow depthMapSampler8;
-layout(binding = 11) uniform samplerCubeShadow depthMapSampler9;
-layout(binding = 12) uniform samplerCubeShadow depthMapSampler10;
-layout(binding = 13) uniform samplerCubeShadow depthMapSampler11;
-layout(binding = 14) uniform samplerCubeShadow depthMapSampler12;
-layout(binding = 15) uniform samplerCubeShadow depthMapSampler13;
+layout(binding = 3) uniform samplerCubeShadow depthMapSampler0;
+layout(binding = 4) uniform samplerCubeShadow depthMapSampler1;
+layout(binding = 5) uniform samplerCubeShadow depthMapSampler2;
+layout(binding = 6) uniform samplerCubeShadow depthMapSampler3;
+layout(binding = 7) uniform samplerCubeShadow depthMapSampler4;
+layout(binding = 8) uniform samplerCubeShadow depthMapSampler5;
+layout(binding = 9) uniform samplerCubeShadow depthMapSampler6;
+layout(binding = 10) uniform samplerCubeShadow depthMapSampler7;
+layout(binding = 11) uniform samplerCubeShadow depthMapSampler8;
+layout(binding = 12) uniform samplerCubeShadow depthMapSampler9;
+layout(binding = 13) uniform samplerCubeShadow depthMapSampler10;
+layout(binding = 14) uniform samplerCubeShadow depthMapSampler11;
+layout(binding = 15) uniform samplerCubeShadow depthMapSampler12;
+layout(binding = 16) uniform samplerCubeShadow depthMapSampler13;
 
 layout(location = 0) out vec4 outColor;
 layout(location = 0) in vec3 inPosition;
@@ -42,8 +42,6 @@ float VectorToDepth (vec3 Vec)
 }
 
 void main() {
-	vec3 camera = normalize(inCameraPos - inPosition);
-
 	vec3 diffuse_color[14];
 
 	float depth_map_value[14];
@@ -72,7 +70,7 @@ void main() {
 		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0) * clamp(dot(normal, normal_light_vector), 0.0, 1.0);
 
 		vec3 LTLight = (normalize((lights.location[i] - inPosition)) + 0.2 * normal);
-		float LTDot = pow(clamp(dot(camera, -LTLight), 0.0, 1.0), 12.0) * 2.0;
+		float LTDot = pow(clamp(dot(normalize(inCameraPos - inPosition), -LTLight), 0.0, 1.0), 12.0) * 2.0;
 		float LTAttenuation = 1.0 / dot(lights.location[i] - inPosition, lights.location[i] - inPosition);
 		float LT = LTAttenuation * (LTDot + 0.2) * 0.36;
 		diffuse_color[i] = falloff * lights.intensity[i] * lights.color[i] + lights.color[i] * vec3(0.42, 0.12, 0.06) * LT;

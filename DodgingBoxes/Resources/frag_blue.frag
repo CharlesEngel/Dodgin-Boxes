@@ -23,11 +23,13 @@ layout(binding = 12) uniform samplerCubeShadow depthMapSampler10;
 layout(binding = 13) uniform samplerCubeShadow depthMapSampler11;
 layout(binding = 14) uniform samplerCubeShadow depthMapSampler12;
 layout(binding = 15) uniform samplerCubeShadow depthMapSampler13;
+layout(binding = 16) uniform samplerCube reflectMapSampler;
 
 layout(location = 0) out vec4 outColor;
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) flat in int lightIndex;
 layout(location = 2) flat in vec3 normal;
+layout(location = 3) flat in vec3 inCameraPos;
 
 float VectorToDepth (vec3 Vec)
 {
@@ -38,6 +40,33 @@ float VectorToDepth (vec3 Vec)
     const float n = 0.001;
 
 	return clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - 1.0001, 0.0, 1.0);
+}
+
+vec3 IntersectWithRoom(vec3 origin, vec3 dir) {
+	float xLength = (sign(dir.x) * 1.0 - origin.x) / dir.x;
+	float yLength = (sign(dir.y) * 1.0 - origin.y) / dir.y;
+	float zLength = (sign(dir.z) * 0.5 - origin.z) / dir.z;
+
+	vec3 xVec = vec3(xLength * dir.x, xLength * dir.y, xLength * dir.z);
+	vec3 yVec = vec3(yLength * dir.x, yLength * dir.y, yLength * dir.z);
+	vec3 zVec = vec3(zLength * dir.x, zLength * dir.y, zLength * dir.z);
+
+	float distX = length(xVec);
+	float distY = length(yVec);
+	float distZ = length(zVec);
+
+	float minDist = min(distX, min(distY, distZ));
+
+	if (minDist == distX)
+	{
+		return origin + xVec;
+	}
+	else if (minDist == distY)
+	{
+		return origin + yVec;
+	}
+
+	return origin + zVec;
 }
 
 void main() {
@@ -61,15 +90,20 @@ void main() {
 	float depth_map_value_12 = texture(depthMapSampler12, vec4(normalize(inPosition - lights.location[12]), VectorToDepth(lights.location[12] - inPosition)), 0.0);
 	float depth_map_value_13 = texture(depthMapSampler13, vec4(normalize(inPosition - lights.location[13]), VectorToDepth(lights.location[13] - inPosition)), 0.0);
 
+	vec3 rNorm = reflect(normalize(inPosition - inCameraPos), normal);
+	vec3 intersect = IntersectWithRoom(inPosition, rNorm);
+	vec4 reflect_value = texture(reflectMapSampler, intersect - lights.location[lightIndex]);
+
 	for (int i = 0; i < 14; i++)
 	{
 		vec3 normal_light_vector = normalize(lights.location[i] - inPosition);
 		float dist = length(inPosition - lights.location[i]);
 		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0) * clamp(dot(normal, normal_light_vector), 0.0, 1.0);
-		diffuse_color[i] = step(1.0, lights.in_use[i]) * falloff * lights.intensity[i] * lights.color[i];
+		diffuse_color[i] = step(1.0, lights.in_use[i]) * falloff * lights.intensity[i] * lights.color[i] * (dot(reflect(normalize(inPosition - inCameraPos), normal), lights.location[lightIndex] - inPosition) / 2.0 + 0.5);
 	}
 
 	diffuse_color[lightIndex] = vec3(0.0, 0.0, 0.0);
 
-	outColor = vec4(ambient_color + depth_map_value_0 * diffuse_color[0] + depth_map_value_1 * diffuse_color[1] + depth_map_value_2 * diffuse_color[2] + depth_map_value_3 * diffuse_color[3] + depth_map_value_4 * diffuse_color[4] + depth_map_value_5 * diffuse_color[5] + depth_map_value_6 * diffuse_color[6] + depth_map_value_7 * diffuse_color[7] + depth_map_value_8 * diffuse_color[8] + depth_map_value_9 * diffuse_color[9] + depth_map_value_10 * diffuse_color[10] + depth_map_value_11 * diffuse_color[11] + depth_map_value_12 * diffuse_color[12] + depth_map_value_13 * diffuse_color[13], 1.0);
+	vec4 color = vec4(ambient_color + depth_map_value_0 * diffuse_color[0] + depth_map_value_1 * diffuse_color[1] + depth_map_value_2 * diffuse_color[2] + depth_map_value_3 * diffuse_color[3] + depth_map_value_4 * diffuse_color[4] + depth_map_value_5 * diffuse_color[5] + depth_map_value_6 * diffuse_color[6] + depth_map_value_7 * diffuse_color[7] + depth_map_value_8 * diffuse_color[8] + depth_map_value_9 * diffuse_color[9] + depth_map_value_10 * diffuse_color[10] + depth_map_value_11 * diffuse_color[11] + depth_map_value_12 * diffuse_color[12] + depth_map_value_13 * diffuse_color[13], 1.0);
+	outColor = (reflect_value + color);
 }

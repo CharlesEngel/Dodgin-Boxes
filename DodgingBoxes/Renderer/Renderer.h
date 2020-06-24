@@ -22,7 +22,8 @@ const uint8_t max_lights = 14;
 enum RenderPassIds
 {
 	RENDER_PASS_INDEX_SHADOW = 0,
-	RENDER_PASS_INDEX_DRAW = 1
+	RENDER_PASS_INDEX_REFLECT = 1,
+	RENDER_PASS_INDEX_DRAW = 2
 };
 
 enum MaterialIds
@@ -101,9 +102,15 @@ struct LightUniformBuffer
 
 struct ShadowMapUniformBuffer
 {
-	/*alignas(16)*/ glm::mat4 view[6];
-	/*alignas(16) */glm::mat4 proj[6];
+	glm::mat4 view[6];
+	glm::mat4 proj[6];
 	int light_index;
+};
+
+struct ReflectionMapUniformBuffer
+{
+	glm::mat4 view[6];
+	glm::mat4 proj;
 };
 
 struct ShadowMapFragmentUniformBuffer
@@ -112,6 +119,7 @@ struct ShadowMapFragmentUniformBuffer
 };
 
 // TODO: Is this a good name?
+// ANSWER: Not really
 struct RenderPassManager
 {
 	VulkanRenderPass pass;
@@ -120,6 +128,7 @@ struct RenderPassManager
 	std::unordered_map<std::string, std::vector<VulkanResource>> resources;
 	std::unordered_map<std::string, std::vector<VulkanBuffer>> vertex_buffers;
 	std::unordered_map<std::string, std::vector<VulkanBuffer>> index_buffers;
+	std::vector<VkClearValue> clear_values;
 };
 
 struct UniformBuffer
@@ -160,6 +169,7 @@ struct Renderer
 	std::array<std::string, max_lights> shadow_map_buffers;
 	std::array<std::string, max_lights> shadow_map_fragment_buffers;
 	ShadowMapUniformBuffer shadow_map_uniform;
+	std::string reflection_map_buffer;
 };
 
 struct RendererParameters
@@ -234,10 +244,14 @@ struct RenderPassManagerParameters
 {
 	VulkanRenderPass pass;
 	std::unordered_map<std::string, VulkanPipeline> pass_pipelines;
+	std::vector<VkClearValue> clear_values;
 };
 
 // Sets up the renderer
 void create_renderer(Renderer &renderer, RendererParameters &parameters);
+
+// Updates the uniform buffer for the reflection map
+void update_reflection_map(Renderer &renderer, glm::vec3 location);
 
 // Sets renderer.image_index to the next value
 void update_image_index(Renderer &renderer, uint32_t draw_frame);

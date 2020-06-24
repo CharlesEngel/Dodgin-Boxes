@@ -130,5 +130,14 @@
     <None Include="Resources\frag_empty.frag">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Resources\vert_reflect_map.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_red_reflect.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_yellow_reflect.frag">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

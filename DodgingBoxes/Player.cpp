@@ -166,6 +166,8 @@ void Player::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, f
 {
 	if (state != PLAYER_DEAD)
 	{
+		update_reflection_map(*renderer, glm::vec3(location, -(0.5 - (scale_factor / 2.f) - 0.001f)));
+
 		// Update light
 		LightUpdateParameters light_update_parameters = {};
 		light_update_parameters.light_index = light;

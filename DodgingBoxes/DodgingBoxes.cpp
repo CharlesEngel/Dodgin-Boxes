@@ -20,14 +20,17 @@ const std::vector<std::string> models = {
 const std::vector<std::string> shaders = {
 	"Resources/vert_standard.spv",
 	"Resources/vert_shadow_map.spv",
+	"Resources/vert_reflect_map.spv",
 	"Resources/vert_standard_tex_coord.spv",
 	"Resources/vert_standard_light_index.spv",
 	"Resources/vert_text.spv",
 	"Resources/frag_green.spv",
 	"Resources/frag_red.spv",
+	"Resources/frag_red_reflect.spv",
 	"Resources/frag_blue.spv",
 	"Resources/frag_empty.spv",
 	"Resources/frag_yellow.spv",
+	"Resources/frag_yellow_reflect.spv",
 	"Resources/frag_text.spv"
 };
 

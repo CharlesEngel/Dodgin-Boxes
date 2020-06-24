@@ -3,7 +3,7 @@
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 1) uniform LightObject {
+layout(binding = 2) uniform LightObject {
 	vec3 location[14];
 	vec3 color[14];
 	float intensity[14];
@@ -11,20 +11,20 @@ layout(binding = 1) uniform LightObject {
 	int in_use[14];
 } lights;
 
-layout(binding = 2) uniform samplerCubeShadow depthMapSampler0;
-layout(binding = 3) uniform samplerCubeShadow depthMapSampler1;
-layout(binding = 4) uniform samplerCubeShadow depthMapSampler2;
-layout(binding = 5) uniform samplerCubeShadow depthMapSampler3;
-layout(binding = 6) uniform samplerCubeShadow depthMapSampler4;
-layout(binding = 7) uniform samplerCubeShadow depthMapSampler5;
-layout(binding = 8) uniform samplerCubeShadow depthMapSampler6;
-layout(binding = 9) uniform samplerCubeShadow depthMapSampler7;
-layout(binding = 10) uniform samplerCubeShadow depthMapSampler8;
-layout(binding = 11) uniform samplerCubeShadow depthMapSampler9;
-layout(binding = 12) uniform samplerCubeShadow depthMapSampler10;
-layout(binding = 13) uniform samplerCubeShadow depthMapSampler11;
-layout(binding = 14) uniform samplerCubeShadow depthMapSampler12;
-layout(binding = 15) uniform samplerCubeShadow depthMapSampler13;
+layout(binding = 3) uniform samplerCubeShadow depthMapSampler0;
+layout(binding = 4) uniform samplerCubeShadow depthMapSampler1;
+layout(binding = 5) uniform samplerCubeShadow depthMapSampler2;
+layout(binding = 6) uniform samplerCubeShadow depthMapSampler3;
+layout(binding = 7) uniform samplerCubeShadow depthMapSampler4;
+layout(binding = 8) uniform samplerCubeShadow depthMapSampler5;
+layout(binding = 9) uniform samplerCubeShadow depthMapSampler6;
+layout(binding = 10) uniform samplerCubeShadow depthMapSampler7;
+layout(binding = 11) uniform samplerCubeShadow depthMapSampler8;
+layout(binding = 12) uniform samplerCubeShadow depthMapSampler9;
+layout(binding = 13) uniform samplerCubeShadow depthMapSampler10;
+layout(binding = 14) uniform samplerCubeShadow depthMapSampler11;
+layout(binding = 15) uniform samplerCubeShadow depthMapSampler12;
+layout(binding = 16) uniform samplerCubeShadow depthMapSampler13;
 
 float VectorToDepth (vec3 Vec)
 {
@@ -41,7 +41,6 @@ float VectorToDepth (vec3 Vec)
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) flat in int lightIndex;
 layout(location = 2) flat in vec3 normal;
-layout(location = 3) flat in vec3 inCameraPos;
 
 void main() {
 	float ambient_intensity = 0.3;

@@ -204,8 +204,11 @@
     <None Include="Resources\frag_empty.frag" />
     <None Include="Resources\frag_green.frag" />
     <None Include="Resources\frag_red.frag" />
+    <None Include="Resources\frag_red_reflect.frag" />
     <None Include="Resources\frag_text.frag" />
     <None Include="Resources\frag_yellow.frag" />
+    <None Include="Resources\frag_yellow_reflect.frag" />
+    <None Include="Resources\vert_reflect_map.vert" />
     <None Include="Resources\vert_shadow_map.vert" />
     <None Include="Resources\vert_standard.vert" />
     <None Include="Resources\vert_standard_light_index.vert" />
