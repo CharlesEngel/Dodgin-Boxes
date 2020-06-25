@@ -26,13 +26,6 @@ struct VulkanRenderPass
 	std::vector<VkFramebuffer> framebuffers;
 
 	uint32_t total_subpasses;
-
-	VkImageView color_image_view;
-	VkImageView depth_image_view;
-	VulkanMemory color_image_memory;
-	VulkanMemory depth_image_memory;
-	VkImage color_image;
-	VkImage depth_image;
 	VkExtent2D draw_extent;
 
 	std::vector<VkCommandBuffer> command_buffers;

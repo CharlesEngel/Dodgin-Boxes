@@ -14,6 +14,7 @@
 #include <VulkanLayer/Pipeline.h>
 #include <VulkanLayer/MemoryManager.h>
 #include <VulkanLayer/Resource.h>
+#include <VulkanLayer/Command.h>
 
 #include <unordered_map>
 
@@ -129,6 +130,9 @@ struct RenderPassManager
 	std::unordered_map<std::string, std::vector<VulkanBuffer>> vertex_buffers;
 	std::unordered_map<std::string, std::vector<VulkanBuffer>> index_buffers;
 	std::vector<VkClearValue> clear_values;
+
+	bool mip_map;
+	VulkanMipmapGenerationParameters mip_parameters;
 };
 
 struct UniformBuffer
@@ -245,19 +249,22 @@ struct RenderPassManagerParameters
 	VulkanRenderPass pass;
 	std::unordered_map<std::string, VulkanPipeline> pass_pipelines;
 	std::vector<VkClearValue> clear_values;
+
+	bool mip_map;
+	VulkanMipmapGenerationParameters mip_parameters;
 };
 
 // Sets up the renderer
 void create_renderer(Renderer &renderer, RendererParameters &parameters);
+
+// Draws all submitted instances
+void draw(Renderer &renderer, DrawParameters &parameters);
 
 // Updates the uniform buffer for the reflection map
 void update_reflection_map(Renderer &renderer, glm::vec3 location);
 
 // Sets renderer.image_index to the next value
 void update_image_index(Renderer &renderer, uint32_t draw_frame);
-
-// Draws all submitted instances
-void draw(Renderer &renderer, DrawParameters &parameters);
 
 // Cleans up the renderer
 void cleanup_renderer(Renderer &renderer);

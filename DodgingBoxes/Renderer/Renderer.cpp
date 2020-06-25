@@ -185,11 +185,28 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_attachment_parameters.width = 512;
 	reflection_map_attachment_parameters.height = 512;
 	reflection_map_attachment_parameters.layers = 6;
-	reflection_map_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	reflection_map_attachment_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	reflection_map_attachment_parameters.flags = TEXTURE_CUBE;
 
 	create_texture(reflection_map_attachment, reflection_map_attachment_parameters);
 	textures["REFLECTION_MAP_ATTACHMENT"] = reflection_map_attachment;
+
+	VulkanTexture reflection_map_final = {};
+	VulkanTextureParameters reflection_map_final_parameters = {};
+	reflection_map_final_parameters.device = renderer.device;
+	reflection_map_final_parameters.command_pool = renderer.device.command_pool;
+	reflection_map_final_parameters.memory_manager = &renderer.memory_manager;
+	reflection_map_final_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	reflection_map_final_parameters.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	reflection_map_final_parameters.width = 512;
+	reflection_map_final_parameters.height = 512;
+	reflection_map_final_parameters.layers = 6;
+	reflection_map_final_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	reflection_map_final_parameters.flags = TEXTURE_CUBE;
+	reflection_map_final_parameters.mip_levels = 10;
+
+	create_texture(reflection_map_final, reflection_map_final_parameters);
+	textures["REFLECTION_MAP_FINAL"] = reflection_map_final;
 
 	VulkanTexture reflection_map_depth_attachment = {};
 	VulkanTextureParameters reflection_map_depth_attachment_parameters = {};
@@ -599,24 +616,6 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 		shadow_pipeline_barriers.push_back(floor_shadow_pipeline_barrier);
 	}
 
-	VulkanPipelineBarrier reflection_pipeline_barrier = {};
-	reflection_pipeline_barrier.images = std::vector<VulkanTexture>(renderer.swap_chain.swap_chain_images.size(), renderer.data.textures["REFLECTION_MAP_ATTACHMENT"]);
-	reflection_pipeline_barrier.old_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	reflection_pipeline_barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	reflection_pipeline_barrier.src = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	reflection_pipeline_barrier.dst = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	reflection_pipeline_barrier.src_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	reflection_pipeline_barrier.dst_access = VK_ACCESS_SHADER_READ_BIT;
-
-	VkImageSubresourceRange image_range = {};
-	image_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	image_range.baseArrayLayer = 0;
-	image_range.baseMipLevel = 0;
-	image_range.layerCount = 6;
-	image_range.levelCount = 1;
-
-	reflection_pipeline_barrier.subresource_range = image_range;
-
 	// Create pipelines
 	int w, h;
 
@@ -656,14 +655,12 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipelines["standard_red"] = pipeline_red;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
-	pipeline_parameters.pipeline_barriers = { reflection_pipeline_barrier };
 	pipeline_parameters.num_textures += 1;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
-	pipeline_parameters.pipeline_barriers = {};
 	pipeline_parameters.num_textures -= 1;
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
@@ -743,9 +740,6 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_pipeline(pipeline_red_reflect, reflect_pipeline_parameters);
 	reflection_map_pipelines["REFLECT_RED"] = pipeline_red_reflect;
 
-	// Create resources
-	// None yet...
-
 	// Create render pass managers
 	std::vector<VkClearValue> clear_values(3);
 	clear_values[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -764,11 +758,17 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	shadow_map_render_pass_manager_parameters.pass_pipelines = shadow_map_pipelines;
 	shadow_map_render_pass_manager_parameters.clear_values = { { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f } };
 
+	VulkanMipmapGenerationParameters reflection_map_mipmap_parameters = {};
+	reflection_map_mipmap_parameters.src_image = renderer.data.textures["REFLECTION_MAP_ATTACHMENT"];
+	reflection_map_mipmap_parameters.dst_image = renderer.data.textures["REFLECTION_MAP_FINAL"];
+
 	RenderPassManager reflection_map_render_pass_manager = {};
 	RenderPassManagerParameters reflection_map_render_pass_manager_parameters = {};
 	reflection_map_render_pass_manager_parameters.pass = reflection_map_render_pass;
 	reflection_map_render_pass_manager_parameters.pass_pipelines = reflection_map_pipelines;
 	reflection_map_render_pass_manager_parameters.clear_values = { {{0.0f, 0.0f, 0.0f, 1.0f}, {1.0f}} };
+	reflection_map_render_pass_manager_parameters.mip_map = true;
+	reflection_map_render_pass_manager_parameters.mip_parameters = reflection_map_mipmap_parameters;
 
 	create_render_pass_manager(render_pass_manager, render_pass_manager_parameters);
 	create_render_pass_manager(shadow_map_render_pass_manager, shadow_map_render_pass_manager_parameters);
@@ -834,7 +834,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 		mat_blue_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].index_buffers[pipeline]);
 	}
 
-	mat_blue_cube.textures.push_back({ renderer.data.textures["REFLECTION_MAP_ATTACHMENT"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["REFLECTION_MAP_FINAL"] });
 
 	Material mat_yellow_cube = {};
 	mat_yellow_cube.models = { &renderer.data.models["CUBE"]};
@@ -925,39 +925,6 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_buffer_parameters.range = sizeof(ReflectionMapUniformBuffer);
 	reflection_map_buffer_parameters.size = sizeof(ReflectionMapUniformBuffer);
 	renderer.reflection_map_buffer = get_uniform_buffer(renderer, reflection_map_buffer_parameters);
-}
-
-void update_reflection_map(Renderer &renderer, glm::vec3 location)
-{
-	ReflectionMapUniformBuffer uniform_data = {};
-	uniform_data.proj = glm::perspective(PI / 2.f, 1.f, 0.0015f, 5.0f);
-
-	uniform_data.view[0] = glm::lookAt(location, glm::vec3(location.x + 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
-	uniform_data.view[1] = glm::lookAt(location, glm::vec3(location.x - 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
-	uniform_data.view[2] = glm::lookAt(location, glm::vec3(location.x, location.y + 1.0, location.z), glm::vec3(0.0, 0.0, 1.0));
-	uniform_data.view[3] = glm::lookAt(location, glm::vec3(location.x, location.y - 1.0, location.z), glm::vec3(0.0, 0.0, -1.0));
-	uniform_data.view[4] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z + 1.0), glm::vec3(0.0, -1.0, 0.0));
-	uniform_data.view[5] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z - 1.0), glm::vec3(0.0, -1.0, 0.0));
-
-	UniformBufferUpdateParameters update_parameters = {};
-	update_parameters.buffer_name = renderer.reflection_map_buffer;
-	update_parameters.data = &uniform_data;
-
-	update_uniform_buffer(renderer, update_parameters);
-}
-
-void update_image_index(Renderer &renderer, uint32_t draw_frame)
-{
-	// Get image to draw to
-	VkResult result = vkAcquireNextImageKHR(renderer.device.device, renderer.swap_chain.swap_chain, UINT64_MAX, renderer.image_available_semaphores[draw_frame], VK_NULL_HANDLE, &renderer.image_index);
-
-	if (result == VK_ERROR_OUT_OF_DATE_KHR)
-	{
-		resize_swap_chain(renderer);
-	}
-	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-		throw std::runtime_error("Failed to acquire swap chain image!");
-	}
 }
 
 void draw(Renderer &renderer, DrawParameters &parameters)
@@ -1053,6 +1020,12 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 			record_parameters.framebuffer_index = 0;
 		}
 
+		if (render_pass.mip_map)
+		{
+			record_parameters.mip_parameters = render_pass.mip_parameters;
+			record_parameters.flags = COMMAND_RECORD_GENERATE_MIPMAPS;
+		}
+
 		record_render_pass_command_buffers(render_pass.pass, record_parameters);
 	}
 
@@ -1113,6 +1086,39 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 	else if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to present swap chain image!");
 	}
+}
+
+void update_image_index(Renderer &renderer, uint32_t draw_frame)
+{
+	// Get image to draw to
+	VkResult result = vkAcquireNextImageKHR(renderer.device.device, renderer.swap_chain.swap_chain, UINT64_MAX, renderer.image_available_semaphores[draw_frame], VK_NULL_HANDLE, &renderer.image_index);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		resize_swap_chain(renderer);
+	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		throw std::runtime_error("Failed to acquire swap chain image!");
+	}
+}
+
+void update_reflection_map(Renderer &renderer, glm::vec3 location)
+{
+	ReflectionMapUniformBuffer uniform_data = {};
+	uniform_data.proj = glm::perspective(PI / 2.f, 1.f, 0.0015f, 10.0f);
+
+	uniform_data.view[0] = glm::lookAt(location, glm::vec3(location.x + 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
+	uniform_data.view[1] = glm::lookAt(location, glm::vec3(location.x - 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
+	uniform_data.view[2] = glm::lookAt(location, glm::vec3(location.x, location.y + 1.0, location.z), glm::vec3(0.0, 0.0, 1.0));
+	uniform_data.view[3] = glm::lookAt(location, glm::vec3(location.x, location.y - 1.0, location.z), glm::vec3(0.0, 0.0, -1.0));
+	uniform_data.view[4] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z + 1.0), glm::vec3(0.0, -1.0, 0.0));
+	uniform_data.view[5] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z - 1.0), glm::vec3(0.0, -1.0, 0.0));
+
+	UniformBufferUpdateParameters update_parameters = {};
+	update_parameters.buffer_name = renderer.reflection_map_buffer;
+	update_parameters.data = &uniform_data;
+
+	update_uniform_buffer(renderer, update_parameters);
 }
 
 void cleanup_renderer(Renderer &renderer)
@@ -1481,6 +1487,8 @@ void create_render_pass_manager(RenderPassManager &render_pass_manager, RenderPa
 	render_pass_manager.vertex_buffers = {};
 	render_pass_manager.index_buffers = {};
 	render_pass_manager.clear_values = render_pass_manager_parameters.clear_values;
+	render_pass_manager.mip_map = render_pass_manager_parameters.mip_map;
+	render_pass_manager.mip_parameters = render_pass_manager_parameters.mip_parameters;
 }
 
 void cleanup_render_pass_manager(Renderer &renderer, RenderPassManager &render_pass_manager)
@@ -1968,11 +1976,17 @@ void resize_swap_chain(Renderer &renderer)
 	shadow_map_render_pass_manager_parameters.pass_pipelines = shadow_map_pipelines;
 	shadow_map_render_pass_manager_parameters.clear_values = { { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f }, { 1.0f } };
 
+	VulkanMipmapGenerationParameters reflection_map_mipmap_parameters = {};
+	reflection_map_mipmap_parameters.src_image = renderer.data.textures["REFLECTION_MAP_ATTACHMENT"];
+	reflection_map_mipmap_parameters.dst_image = renderer.data.textures["REFLECTION_MAP_FINAL"];
+
 	RenderPassManager reflection_map_render_pass_manager = {};
 	RenderPassManagerParameters reflection_map_render_pass_manager_parameters = {};
 	reflection_map_render_pass_manager_parameters.pass = reflection_map_render_pass;
 	reflection_map_render_pass_manager_parameters.pass_pipelines = reflection_map_pipelines;
 	reflection_map_render_pass_manager_parameters.clear_values = { {{0.0f, 0.0f, 0.0f, 1.0f}, {1.0f}} };
+	reflection_map_render_pass_manager_parameters.mip_map = true;
+	reflection_map_render_pass_manager_parameters.mip_parameters = reflection_map_mipmap_parameters;
 
 	create_render_pass_manager(render_pass_manager, render_pass_manager_parameters);
 	create_render_pass_manager(shadow_map_render_pass_manager, shadow_map_render_pass_manager_parameters);
@@ -2038,7 +2052,7 @@ void resize_swap_chain(Renderer &renderer)
 		mat_blue_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_SHADOW].index_buffers[pipeline]);
 	}
 
-	mat_blue_cube.textures.push_back({ renderer.data.textures["REFLECTION_MAP_ATTACHMENT"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["REFLECTION_MAP_FINAL"] });
 
 	Material mat_yellow_cube = {};
 	mat_yellow_cube.models = { &renderer.data.models["CUBE"] };

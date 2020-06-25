@@ -92,7 +92,7 @@ void main() {
 
 	vec3 rNorm = reflect(normalize(inPosition - inCameraPos), normal);
 	vec3 intersect = IntersectWithRoom(inPosition, rNorm);
-	vec4 reflect_value = texture(reflectMapSampler, intersect - lights.location[lightIndex]);
+	vec4 reflect_value = textureLod(reflectMapSampler, intersect - lights.location[lightIndex], 5.5);
 
 	for (int i = 0; i < 14; i++)
 	{

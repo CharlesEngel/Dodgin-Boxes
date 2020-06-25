@@ -46,6 +46,17 @@ struct VulkanSubpassCommandBufferRecordDetails
 	std::vector<std::vector<VulkanBuffer>> index_buffers;
 };
 
+enum CommandRecordFlags
+{
+	COMMAND_RECORD_GENERATE_MIPMAPS = 1
+};
+
+struct VulkanMipmapGenerationParameters
+{
+	VulkanTexture src_image;
+	VulkanTexture dst_image;
+};
+
 struct VulkanRenderPassCommandBufferRecordParameters
 {
 	std::vector<VulkanSubpassCommandBufferRecordDetails> subpasses;
@@ -55,6 +66,10 @@ struct VulkanRenderPassCommandBufferRecordParameters
 	std::vector<VkClearValue> clear_values;
 	uint32_t framebuffer_index;
 	uint32_t command_index;
+	CommandRecordFlags flags;
+
+	// Parameters for copying framebuffer to mipmapped texture.
+	VulkanMipmapGenerationParameters mip_parameters;
 };
 
 // Initializes values in VulkanCommand

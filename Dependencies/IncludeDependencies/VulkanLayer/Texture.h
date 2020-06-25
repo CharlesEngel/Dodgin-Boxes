@@ -39,6 +39,7 @@ struct VulkanTexture
 	VkFormat format;
 
 	uint32_t mip_levels;
+	uint32_t num_layers;
 	uint32_t height;
 	uint32_t width;
 };
@@ -52,10 +53,16 @@ struct VulkanTextureParameters
 	VulkanTextureData data;
 	uint32_t height;
 	uint32_t width;
+	uint32_t mip_levels;
 	uint32_t layers;
 	VkFormat format;
 	VkSampleCountFlagBits samples;
 	TextureFlags flags;
+};
+
+struct VulkanTextureMipmapParameters
+{
+	VulkanDevice device;
 };
 
 struct VulkanTextureDataParameters
@@ -65,6 +72,9 @@ struct VulkanTextureDataParameters
 
 // Initializes values in VulkanTexture
 void create_texture(VulkanTexture &texture, VulkanTextureParameters &parameters);
+
+// Generates mipmaps for image
+void generate_mipmaps(VulkanTexture &texture, VulkanTextureMipmapParameters &parameters);
 
 // Frees memory in VulkanTexture
 void cleanup_texture(VulkanTexture &texture);

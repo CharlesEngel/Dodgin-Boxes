@@ -43,7 +43,7 @@ layout(location = 1) flat in int lightIndex;
 layout(location = 2) flat in vec3 normal;
 
 void main() {
-	float ambient_intensity = 0.3;
+	float ambient_intensity = 0.8 * step(sin(50.0 * inPosition.x), 0.0) * + 0.8 * step(sin(50.0 * inPosition.y), 0.0);
 	vec3 ambient_color = ambient_intensity * vec3(0.4, 0.1, 0.12);
 
 	vec3 diffuse_color[14];
