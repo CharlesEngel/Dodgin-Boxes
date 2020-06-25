@@ -69,6 +69,25 @@ vec3 IntersectWithRoom(vec3 origin, vec3 dir) {
 	return origin + zVec;
 }
 
+float g1(float dotNV, float k) {
+	return 1.0 / (dotNV * (1.0 - k) + k);
+}
+
+float ggx(vec3 v, vec3 l, vec3 n, float ind, float roughness) {
+	vec3 h = normalize(v + l);
+	float alpha = roughness * roughness;
+	float alphaSqr = alpha * alpha;
+	float c = dot(v, h);
+	float g = sqrt(pow(c, 2.0) + pow(ind, 2.0) - 1.0);
+
+	float F = 0.5 * (pow(g-c,2.0)/pow(g+c,2.0)) * (1.0 + (pow(c*(g+c)-1.0, 2.0)/pow(c*(g-c)+1.0, 2.0)));
+	float denominator = clamp(dot(n, h), 0.0, 1.0) * clamp(dot(n, h), 0.0, 1.0) * (alphaSqr - 1.0) + 1.0;
+	float D = alphaSqr / (3.141592 * denominator * denominator);
+	float k = alpha/2.0;
+	float visibility = g1(clamp(dot(n, l), 0.0, 1.0), k) * g1(clamp(dot(n, v), 0.0, 1.0), k);
+	return clamp(dot(n, l), 0.0, 1.0) * F * D * visibility;
+}
+
 void main() {
 	float ambient_intensity = 0.9;
 	vec3 ambient_color = ambient_intensity * vec3(0.23, 0.11, 0.96);
@@ -99,7 +118,7 @@ void main() {
 		vec3 normal_light_vector = normalize(lights.location[i] - inPosition);
 		float dist = length(inPosition - lights.location[i]);
 		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0) * clamp(dot(normal, normal_light_vector), 0.0, 1.0);
-		diffuse_color[i] = step(1.0, lights.in_use[i]) * falloff * lights.intensity[i] * lights.color[i] * (dot(reflect(normalize(inPosition - inCameraPos), normal), lights.location[lightIndex] - inPosition) / 2.0 + 0.5);
+		diffuse_color[i] = step(1.0, lights.in_use[i]) * vec3(1.0, 1.0, 1.0) * ggx(normalize(inCameraPos - inPosition), normalize(lights.location[i] - inPosition), normal, 1.3, 0.55) * falloff;
 	}
 
 	diffuse_color[lightIndex] = vec3(0.0, 0.0, 0.0);
