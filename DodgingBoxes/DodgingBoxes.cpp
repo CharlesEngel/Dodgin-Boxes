@@ -35,7 +35,10 @@ const std::vector<std::string> shaders = {
 };
 
 const std::vector<std::string> textures = {
-	"Resources/ARIAL.png"
+	"Resources/ARIAL.png",
+	"Resources/Roughness_Top.jpg",
+	"Resources/Roughness_Horiz.jpg",
+	"Resources/Roughness_Vert.jpg"
 };
 
 struct UB

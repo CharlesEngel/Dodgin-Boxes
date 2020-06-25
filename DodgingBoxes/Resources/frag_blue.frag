@@ -24,6 +24,9 @@ layout(binding = 13) uniform samplerCubeShadow depthMapSampler11;
 layout(binding = 14) uniform samplerCubeShadow depthMapSampler12;
 layout(binding = 15) uniform samplerCubeShadow depthMapSampler13;
 layout(binding = 16) uniform samplerCube reflectMapSampler;
+layout(binding = 17) uniform sampler2D roughnessSamplerTop;
+layout(binding = 17) uniform sampler2D roughnessSamplerHoriz;
+layout(binding = 17) uniform sampler2D roughnessSamplerVert;
 
 layout(location = 0) out vec4 outColor;
 layout(location = 0) in vec3 inPosition;
@@ -88,6 +91,28 @@ float ggx(vec3 v, vec3 l, vec3 n, float ind, float roughness) {
 	return clamp(dot(n, l), 0.0, 1.0) * F * D * visibility;
 }
 
+float getRoughness(vec3 vector)
+{
+	float roughness;
+
+	float maxAbs = max(abs(vector.x), max(abs(vector.y), abs(vector.z)));
+
+	if (maxAbs == abs(vector.y))
+	{
+		roughness = texture(roughnessSamplerVert, vec2(vector.x / 0.3 + 0.5, vector.z / 0.3 + 0.5)).r;
+	}
+	else if (maxAbs == abs(vector.x))
+	{
+		roughness = texture(roughnessSamplerHoriz, vec2(vector.y / 0.3 + 0.5, vector.z / 0.3 + 0.5)).r;
+	}
+	else
+	{
+		roughness = texture(roughnessSamplerTop, vec2(vector.x / 0.3 + 0.5, vector.y / 0.3 + 0.5)).r;
+	}
+
+	return pow((roughness * 1.055), 1.0 / 2.4);
+}
+
 void main() {
 	float ambient_intensity = 0.9;
 	vec3 ambient_color = ambient_intensity * vec3(0.23, 0.11, 0.96);
@@ -111,14 +136,15 @@ void main() {
 
 	vec3 rNorm = reflect(normalize(inPosition - inCameraPos), normal);
 	vec3 intersect = IntersectWithRoom(inPosition, rNorm);
-	vec4 reflect_value = textureLod(reflectMapSampler, intersect - lights.location[lightIndex], 5.5);
+	float roughness = getRoughness(inPosition - lights.location[lightIndex]);
+	vec4 reflect_value = textureLod(reflectMapSampler, intersect - lights.location[lightIndex], 10.0 * roughness);
 
 	for (int i = 0; i < 14; i++)
 	{
 		vec3 normal_light_vector = normalize(lights.location[i] - inPosition);
 		float dist = length(inPosition - lights.location[i]);
 		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0) * clamp(dot(normal, normal_light_vector), 0.0, 1.0);
-		diffuse_color[i] = step(1.0, lights.in_use[i]) * vec3(1.0, 1.0, 1.0) * ggx(normalize(inCameraPos - inPosition), normalize(lights.location[i] - inPosition), normal, 1.3, 0.55) * falloff;
+		diffuse_color[i] = step(1.0, lights.in_use[i]) * vec3(1.0, 1.0, 1.0) * ggx(normalize(inCameraPos - inPosition), normalize(lights.location[i] - inPosition), normal, 1.3, roughness) * falloff;
 	}
 
 	diffuse_color[lightIndex] = vec3(0.0, 0.0, 0.0);

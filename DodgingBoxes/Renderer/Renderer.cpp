@@ -655,13 +655,13 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipelines["standard_red"] = pipeline_red;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
-	pipeline_parameters.num_textures += 1;
+	pipeline_parameters.num_textures += 4;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
-	pipeline_parameters.num_textures -= 1;
+	pipeline_parameters.num_textures -= 4;
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
@@ -835,6 +835,9 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	}
 
 	mat_blue_cube.textures.push_back({ renderer.data.textures["REFLECTION_MAP_FINAL"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Top.jpg"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Horiz.jpg"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Vert.jpg"] });
 
 	Material mat_yellow_cube = {};
 	mat_yellow_cube.models = { &renderer.data.models["CUBE"]};
@@ -1872,14 +1875,14 @@ void resize_swap_chain(Renderer &renderer)
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
 	pipeline_parameters.pipeline_barriers = { reflection_pipeline_barrier };
-	pipeline_parameters.num_textures += 1;
+	pipeline_parameters.num_textures += 4;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
 	pipeline_parameters.pipeline_barriers = {};
-	pipeline_parameters.num_textures -= 1;
+	pipeline_parameters.num_textures -= 4;
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
@@ -2053,6 +2056,9 @@ void resize_swap_chain(Renderer &renderer)
 	}
 
 	mat_blue_cube.textures.push_back({ renderer.data.textures["REFLECTION_MAP_FINAL"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Top.jpg"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Horiz.jpg"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Vert.jpg"] });
 
 	Material mat_yellow_cube = {};
 	mat_yellow_cube.models = { &renderer.data.models["CUBE"] };
