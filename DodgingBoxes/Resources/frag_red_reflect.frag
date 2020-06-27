@@ -37,13 +37,38 @@ float VectorToDepth (vec3 Vec)
 	return clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - 1.0002, 0.0, 1.0);
 }
 
+float g1(float dotNV, float k) {
+	return 1.0 / (dotNV * (1.0 - k) + k);
+}
+
+float fresnel(vec3 v, vec3 l, float ind) {
+	vec3 h = normalize(v + l);
+	float c = dot(v, h);
+	float g = sqrt(pow(c, 2.0) + pow(ind, 2.0) - 1.0);
+
+	float F = 0.5 * (pow(g-c,2.0)/pow(g+c,2.0)) * (1.0 + (pow(c*(g+c)-1.0, 2.0)/pow(c*(g-c)+1.0, 2.0)));
+	return F;
+}
+
+vec3 diffBRDF(vec3 albedo, vec3 l, vec3 v, vec3 n, float roughness, float F0)
+{
+	vec3 h = (l + v) / 2.0;
+	float fmulti = 0.3641 * roughness;
+	float kfacing = 0.5 + 0.5 * dot(l, v);
+	float frough = kfacing * (0.9 - 0.4 * kfacing) * ((0.5 + dot(n, h)) / dot(n, h));
+	float fsmooth = (21.0 / 20.0) * (1.0 - F0) * (1.0 - pow(1.0 - dot(n, l), 5.0)) * (1.0 - pow(1.0 - dot(n, v), 5.0));
+	vec3 fdiff = step(dot(-n, l), 0.0) * step(dot(-n, v), 0.0) * (albedo / 3.141592) * ((1.0 - roughness) * fsmooth + roughness * frough + albedo * fmulti);
+	return fdiff;
+}
+
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) flat in int lightIndex;
 layout(location = 2) flat in vec3 normal;
+layout(location = 3) flat in vec3 inCameraPos;
 
 void main() {
-	float ambient_intensity = 0.8 * step(sin(50.0 * inPosition.x), 0.0) * + 0.8 * step(sin(50.0 * inPosition.y), 0.0);
+	float ambient_intensity = 0.8 * step(sin(50.0 * inPosition.x), 0.0) * + 0.8 * step(sin(50.0 * inPosition.y), 0.0) + 0.1;
 	vec3 ambient_color = ambient_intensity * vec3(0.4, 0.1, 0.12);
 
 	vec3 diffuse_color[14];
@@ -66,10 +91,14 @@ void main() {
 	for (int i = 0; i < 14; i++)
 	{
 		vec3 normal_light_vector = normalize(lights.location[i] - inPosition);
+		vec3 normal_view_vector = normalize(inCameraPos - inPosition);
 		float dist = length(inPosition - lights.location[i]);
 		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0) * clamp(dot(normal, normal_light_vector), 0.0, 1.0);
 
-		diffuse_color[i] = step(1.0, lights.in_use[i]) * falloff * lights.intensity[i] * lights.color[i];
+		float fresnel = fresnel(normal_view_vector, normal_light_vector, 1.3);
+		vec3 diffuse = diffBRDF(ambient_color, normal_light_vector, normal_view_vector, normal, 1.0, fresnel);
+
+		diffuse_color[i] = 30.0 * step(1.0, lights.in_use[i]) * falloff * lights.intensity[i] * diffuse * lights.color[i];
 	}
 
 	outColor = vec4(ambient_color + depth_map_value_0 * diffuse_color[0] + depth_map_value_1 * diffuse_color[1] + depth_map_value_2 * diffuse_color[2] + depth_map_value_3 * diffuse_color[3] + depth_map_value_4 * diffuse_color[4] + depth_map_value_5 * diffuse_color[5] + depth_map_value_6 * diffuse_color[6] + depth_map_value_7 * diffuse_color[7] + depth_map_value_8 * diffuse_color[8] + depth_map_value_9 * diffuse_color[9] + depth_map_value_10 * diffuse_color[10] + depth_map_value_11 * diffuse_color[11] + depth_map_value_12 * diffuse_color[12] + depth_map_value_13 * diffuse_color[13], 1.0);
