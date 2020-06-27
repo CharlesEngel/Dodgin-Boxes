@@ -115,7 +115,7 @@ void GameManager::resolve_collisions()
 
 void GameManager::submit_for_rendering(uint32_t width, uint32_t height)
 {
-	proj = glm::perspective(glm::radians(45.0f), /* This will probably need to change: */1.0f, 0.1f, 10.0f);
+	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 10.0f);
 	proj[1][1] *= -1;
 
 	for (auto object : objects)

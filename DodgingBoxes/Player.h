@@ -38,6 +38,7 @@ private:
 	std::string instance;
 	std::string uniform_buffer;
 	uint8_t light;
+	glm::vec2 light_location;
 
 	glm::mat4 scale;
 	Rectangle collider;

@@ -24,15 +24,18 @@ layout(binding = 13) uniform samplerCubeShadow depthMapSampler11;
 layout(binding = 14) uniform samplerCubeShadow depthMapSampler12;
 layout(binding = 15) uniform samplerCubeShadow depthMapSampler13;
 layout(binding = 16) uniform samplerCube reflectMapSampler;
-layout(binding = 17) uniform sampler2D roughnessSamplerTop;
-layout(binding = 17) uniform sampler2D roughnessSamplerHoriz;
-layout(binding = 17) uniform sampler2D roughnessSamplerVert;
+layout(binding = 17) uniform samplerCube boxInternalsSampler;
+layout(binding = 18) uniform sampler2D roughnessSamplerTop;
+layout(binding = 19) uniform sampler2D roughnessSamplerHoriz;
+layout(binding = 20) uniform sampler2D roughnessSamplerVert;
 
 layout(location = 0) out vec4 outColor;
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) flat in int lightIndex;
 layout(location = 2) flat in vec3 normal;
 layout(location = 3) flat in vec3 inCameraPos;
+layout(location = 4) in vec3 inModelPos;
+layout(location = 5) flat in vec3 inCenterPos;
 
 float VectorToDepth (vec3 Vec)
 {
@@ -95,27 +98,31 @@ float getRoughness(vec3 vector)
 {
 	float roughness;
 
-	float maxAbs = max(abs(vector.x), max(abs(vector.y), abs(vector.z)));
+	float xSqr = vector.x * vector.x;
+	float ySqr = vector.y * vector.y;
+	float zSqr = vector.z * vector.z;
 
-	if (maxAbs == abs(vector.y))
+	float maxSqr = max(xSqr, max(ySqr, zSqr));
+
+	if (maxSqr == ySqr)
 	{
-		roughness = texture(roughnessSamplerVert, vec2(vector.x / 0.3 + 0.5, vector.z / 0.3 + 0.5)).r;
+		roughness = texture(roughnessSamplerVert, vec2(vector.x, vector.z)).r;
 	}
-	else if (maxAbs == abs(vector.x))
+	else if (maxSqr == xSqr)
 	{
-		roughness = texture(roughnessSamplerHoriz, vec2(vector.y / 0.3 + 0.5, vector.z / 0.3 + 0.5)).r;
+		roughness = texture(roughnessSamplerHoriz, vec2(vector.y, vector.z)).r;
 	}
 	else
 	{
-		roughness = texture(roughnessSamplerTop, vec2(vector.x / 0.3 + 0.5, vector.y / 0.3 + 0.5)).r;
+		roughness = texture(roughnessSamplerTop, vec2(vector.x, vector.y)).r;
 	}
 
 	return pow((roughness * 1.055), 1.0 / 2.4);
 }
 
 void main() {
-	float ambient_intensity = 0.9;
-	vec3 ambient_color = ambient_intensity * vec3(0.23, 0.11, 0.96);
+	/*float ambient_intensity = 0.9;
+	vec3 ambient_color = ambient_intensity * vec3(0.23, 0.11, 0.96)*/;
 
 	vec3 diffuse_color[14];
 
@@ -136,15 +143,16 @@ void main() {
 
 	vec3 rNorm = reflect(normalize(inPosition - inCameraPos), normal);
 	vec3 intersect = IntersectWithRoom(inPosition, rNorm);
-	float roughness = getRoughness(inPosition - lights.location[lightIndex]);
-	vec4 reflect_value = textureLod(reflectMapSampler, intersect - lights.location[lightIndex], 10.0 * roughness);
+	float roughness = getRoughness(inModelPos);
+	vec4 reflect_value = textureLod(reflectMapSampler, intersect - (inCenterPos), 10.0 * roughness);
+	vec3 ambient_color = textureLod(boxInternalsSampler, inModelPos, 3.0 + 7.0 * roughness).xyz;
 
 	for (int i = 0; i < 14; i++)
 	{
 		vec3 normal_light_vector = normalize(lights.location[i] - inPosition);
 		float dist = length(inPosition - lights.location[i]);
 		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0) * clamp(dot(normal, normal_light_vector), 0.0, 1.0);
-		diffuse_color[i] = step(1.0, lights.in_use[i]) * vec3(1.0, 1.0, 1.0) * ggx(normalize(inCameraPos - inPosition), normalize(lights.location[i] - inPosition), normal, 1.3, roughness) * falloff;
+		diffuse_color[i] = step(1.0, lights.in_use[i]) * vec3(1.0, 1.0, 1.0) * ggx(normalize(inCameraPos - inPosition), normal_light_vector, normal, 1.3, roughness) * falloff;
 	}
 
 	diffuse_color[lightIndex] = vec3(0.0, 0.0, 0.0);

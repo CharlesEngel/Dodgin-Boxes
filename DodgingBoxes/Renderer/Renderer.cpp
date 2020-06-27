@@ -185,7 +185,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_attachment_parameters.width = 512;
 	reflection_map_attachment_parameters.height = 512;
 	reflection_map_attachment_parameters.layers = 6;
-	reflection_map_attachment_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	reflection_map_attachment_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	reflection_map_attachment_parameters.flags = TEXTURE_CUBE;
 
 	create_texture(reflection_map_attachment, reflection_map_attachment_parameters);
@@ -218,11 +218,61 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_depth_attachment_parameters.width = 512;
 	reflection_map_depth_attachment_parameters.height = 512;
 	reflection_map_depth_attachment_parameters.layers = 6;
-	reflection_map_depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	reflection_map_depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	reflection_map_depth_attachment_parameters.flags = TEXTURE_CUBE;
 
 	create_texture(reflection_map_depth_attachment, reflection_map_depth_attachment_parameters);
 	textures["REFLECTION_MAP_DEPTH_ATTACHMENT"] = reflection_map_depth_attachment;
+
+	// Create texture for internals of glass box
+	VulkanTexture box_internals_attachment = {};
+	VulkanTextureParameters box_internals_attachment_parameters = {};
+	box_internals_attachment_parameters.device = renderer.device;
+	box_internals_attachment_parameters.command_pool = renderer.device.command_pool;
+	box_internals_attachment_parameters.memory_manager = &renderer.memory_manager;
+	box_internals_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	box_internals_attachment_parameters.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	box_internals_attachment_parameters.width = 512;
+	box_internals_attachment_parameters.height = 512;
+	box_internals_attachment_parameters.layers = 6;
+	box_internals_attachment_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	box_internals_attachment_parameters.flags = TEXTURE_CUBE;
+
+	create_texture(box_internals_attachment, box_internals_attachment_parameters);
+	textures["BOX_INTERNALS_ATTACHMENT"] = box_internals_attachment;
+
+	VulkanTexture box_internals_final = {};
+	VulkanTextureParameters box_internals_final_parameters = {};
+	box_internals_final_parameters.device = renderer.device;
+	box_internals_final_parameters.command_pool = renderer.device.command_pool;
+	box_internals_final_parameters.memory_manager = &renderer.memory_manager;
+	box_internals_final_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	box_internals_final_parameters.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	box_internals_final_parameters.width = 512;
+	box_internals_final_parameters.height = 512;
+	box_internals_final_parameters.layers = 6;
+	box_internals_final_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	box_internals_final_parameters.flags = TEXTURE_CUBE;
+	box_internals_final_parameters.mip_levels = 10;
+
+	create_texture(box_internals_final, box_internals_final_parameters);
+	textures["BOX_INTERNALS_FINAL"] = box_internals_final;
+
+	VulkanTexture box_internals_depth_attachment = {};
+	VulkanTextureParameters box_internals_attachment_depth_parameters = {};
+	box_internals_attachment_depth_parameters.device = renderer.device;
+	box_internals_attachment_depth_parameters.command_pool = renderer.device.command_pool;
+	box_internals_attachment_depth_parameters.memory_manager = &renderer.memory_manager;
+	box_internals_attachment_depth_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+	box_internals_attachment_depth_parameters.format = find_depth_format(renderer.device.physical_device);
+	box_internals_attachment_depth_parameters.width = 512;
+	box_internals_attachment_depth_parameters.height = 512;
+	box_internals_attachment_depth_parameters.layers = 6;
+	box_internals_attachment_depth_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	box_internals_attachment_depth_parameters.flags = TEXTURE_CUBE;
+
+	create_texture(box_internals_depth_attachment, box_internals_attachment_depth_parameters);
+	textures["BOX_INTERNALS_DEPTH_ATTACHMENT"] = box_internals_depth_attachment;
 
 	// Create models
 	struct VertexWithTexCoord
@@ -281,10 +331,10 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	std::vector<VkVertexInputAttributeDescription> attribute_descriptions = { attribute_description, attribute_description_normal };
 
 	std::vector<VertexWithNormal> square_vertices_data = {
-		{{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-		{{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-		{{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-		{{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		{{-0.5f, -0.5f, 0.f}, {0.0f, 0.0f, 1.0f}},
+		{{0.5f, -0.5f, 0.f}, {0.0f, 0.0f, 1.0f}},
+		{{0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}},
+		{{-0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}}
 	};
 
 	std::vector<VertexWithTexCoord> square_vertices_tex_coords_data = {
@@ -590,6 +640,48 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_command_buffer_parameters.swap_chain = renderer.swap_chain;
 	allocate_render_pass_command_buffers(reflection_map_render_pass, reflection_map_command_buffer_parameters);
 
+	// Create box internals attachments and subpasses
+	VulkanRenderPassAttachment box_internals_attachment_description = {};
+	box_internals_attachment_description.attachment = renderer.data.textures["BOX_INTERNALS_ATTACHMENT"];
+	box_internals_attachment_description.attachment_format = box_internals_attachment_description.attachment.format;
+	box_internals_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	box_internals_attachment_description.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	box_internals_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	VulkanRenderPassAttachment box_internals_depth_attachment_description = {};
+	box_internals_depth_attachment_description.attachment = renderer.data.textures["BOX_INTERNALS_DEPTH_ATTACHMENT"];
+	box_internals_depth_attachment_description.attachment_format = box_internals_depth_attachment_description.attachment.format;
+	box_internals_depth_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	box_internals_depth_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	box_internals_depth_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	VulkanRenderPassSubpassDescription box_internals_subpass_description = {};
+	box_internals_subpass_description.color_attachments = { 0 };
+	box_internals_subpass_description.depth_attachment = 1;
+	box_internals_subpass_description.use_depth = true;
+
+	VulkanRenderPassSubpasses box_internals_subpasses = {};
+	box_internals_subpasses.attachments = { box_internals_attachment_description, box_internals_depth_attachment_description };
+	box_internals_subpasses.subpass_descriptions = { box_internals_subpass_description };
+
+	// Create box internals render pass
+	VulkanRenderPass box_internals_render_pass = {};
+	VulkanRenderPassParameters box_internals_render_pass_parameters = {};
+	box_internals_render_pass_parameters.device = renderer.device;
+	box_internals_render_pass_parameters.glfw_window = renderer.window;
+	box_internals_render_pass_parameters.memory_manager = &renderer.memory_manager;
+	box_internals_render_pass_parameters.swap_chain = renderer.swap_chain;
+	box_internals_render_pass_parameters.subpasses = box_internals_subpasses;
+	box_internals_render_pass_parameters.flags = static_cast<RenderPassFlags>(RENDER_PASS_IGNORE_DRAW_IMAGES | RENDER_PASS_MULTIVIEW);
+	box_internals_render_pass_parameters.num_views = 6;
+	box_internals_render_pass_parameters.view_masks = std::vector<uint32_t>(14, 0b00111111);
+
+	create_render_pass(box_internals_render_pass, box_internals_render_pass_parameters);
+
+	VulkanRenderPassCommandBufferAllocateParameters box_internals_command_buffer_parameters = {};
+	box_internals_command_buffer_parameters.swap_chain = renderer.swap_chain;
+	allocate_render_pass_command_buffers(box_internals_render_pass, box_internals_command_buffer_parameters);
+
 	// Create pipeline barriers
 	std::vector<VulkanPipelineBarrier> shadow_pipeline_barriers = {};
 
@@ -655,13 +747,13 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipelines["standard_red"] = pipeline_red;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
-	pipeline_parameters.num_textures += 4;
+	pipeline_parameters.num_textures += 5;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
-	pipeline_parameters.num_textures -= 4;
+	pipeline_parameters.num_textures -= 5;
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
@@ -740,6 +832,31 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_pipeline(pipeline_red_reflect, reflect_pipeline_parameters);
 	reflection_map_pipelines["REFLECT_RED"] = pipeline_red_reflect;
 
+	// Create pipelines for box internals
+	std::unordered_map<std::string, VulkanPipeline> box_internals_pipelines = {};
+	VulkanPipeline box_internals_pipeline = {};
+	VulkanPipelineParameters box_internals_pipeline_parameters = {};
+	box_internals_pipeline_parameters.attribute_descriptions = attribute_descriptions;
+	box_internals_pipeline_parameters.binding_descriptions = binding_descriptions;
+	box_internals_pipeline_parameters.device = renderer.device;
+	box_internals_pipeline_parameters.glfw_window = renderer.window;
+	box_internals_pipeline_parameters.num_textures = 0;
+	box_internals_pipeline_parameters.num_uniform_buffers = 2;
+	box_internals_pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT };
+	box_internals_pipeline_parameters.pipeline_barriers = {};
+	box_internals_pipeline_parameters.render_pass = box_internals_render_pass;
+	box_internals_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_box_internals.spv"], renderer.data.shaders["Resources/frag_box_internals.spv"] };
+	box_internals_pipeline_parameters.swap_chain = renderer.swap_chain;
+	box_internals_pipeline_parameters.viewport_width = 512;
+	box_internals_pipeline_parameters.viewport_height = 512;
+	box_internals_pipeline_parameters.viewport_offset_x = 0;
+	box_internals_pipeline_parameters.viewport_offset_y = 0;
+	box_internals_pipeline_parameters.subpass = 0;
+	box_internals_pipeline_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	create_pipeline(box_internals_pipeline, box_internals_pipeline_parameters);
+	box_internals_pipelines["BOX_INTERNALS"] = box_internals_pipeline;
+
 	// Create render pass managers
 	std::vector<VkClearValue> clear_values(3);
 	clear_values[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -770,10 +887,23 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_render_pass_manager_parameters.mip_map = true;
 	reflection_map_render_pass_manager_parameters.mip_parameters = reflection_map_mipmap_parameters;
 
+	VulkanMipmapGenerationParameters box_internals_mipmap_parameters = {};
+	box_internals_mipmap_parameters.src_image = renderer.data.textures["BOX_INTERNALS_ATTACHMENT"];
+	box_internals_mipmap_parameters.dst_image = renderer.data.textures["BOX_INTERNALS_FINAL"];
+
+	RenderPassManager box_internals_render_pass_manager = {};
+	RenderPassManagerParameters box_internals_render_pass_manager_parameters = {};
+	box_internals_render_pass_manager_parameters.pass = box_internals_render_pass;
+	box_internals_render_pass_manager_parameters.pass_pipelines = box_internals_pipelines;
+	box_internals_render_pass_manager_parameters.clear_values = { {{0.0f, 0.0f, 0.0f, 1.0f}, {1.0f}} };
+	box_internals_render_pass_manager_parameters.mip_map = true;
+	box_internals_render_pass_manager_parameters.mip_parameters = box_internals_mipmap_parameters;
+
 	create_render_pass_manager(render_pass_manager, render_pass_manager_parameters);
 	create_render_pass_manager(shadow_map_render_pass_manager, shadow_map_render_pass_manager_parameters);
 	create_render_pass_manager(reflection_map_render_pass_manager, reflection_map_render_pass_manager_parameters);
-	renderer.render_passes = { shadow_map_render_pass_manager, reflection_map_render_pass_manager, render_pass_manager };
+	create_render_pass_manager(box_internals_render_pass_manager, box_internals_render_pass_manager_parameters);
+	renderer.render_passes = { shadow_map_render_pass_manager, reflection_map_render_pass_manager, box_internals_render_pass_manager, render_pass_manager };
 
 	// Create materials
 	Material mat_green_cube = {};
@@ -823,6 +953,15 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_blue_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_blue_cube.pipelines[0]]};
 	mat_blue_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_blue_cube.pipelines[0]]};
 
+	{
+		std::string pipeline = "BOX_INTERNALS";
+		mat_blue_cube.models.push_back(&renderer.data.models["SQUARE"]);
+		mat_blue_cube.pipelines.push_back(pipeline);
+		mat_blue_cube.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_BOX_INTERNALS].resources[pipeline]);
+		mat_blue_cube.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_BOX_INTERNALS].vertex_buffers[pipeline]);
+		mat_blue_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_BOX_INTERNALS].index_buffers[pipeline]);
+	}
+
 	for (uint32_t i = 0; i < max_lights; i++)
 	{
 		std::string pipeline = "SHADOW_" + std::to_string(i);
@@ -835,6 +974,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	}
 
 	mat_blue_cube.textures.push_back({ renderer.data.textures["REFLECTION_MAP_FINAL"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["BOX_INTERNALS_FINAL"] });
 	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Top.jpg"] });
 	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Horiz.jpg"] });
 	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Vert.jpg"] });
@@ -928,6 +1068,11 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_buffer_parameters.range = sizeof(ReflectionMapUniformBuffer);
 	reflection_map_buffer_parameters.size = sizeof(ReflectionMapUniformBuffer);
 	renderer.reflection_map_buffer = get_uniform_buffer(renderer, reflection_map_buffer_parameters);
+
+	UniformBufferParameters box_internals_buffer_parameters = {};
+	box_internals_buffer_parameters.range = sizeof(BoxInternalsUniformBuffer);
+	box_internals_buffer_parameters.size = sizeof(BoxInternalsUniformBuffer);
+	renderer.box_internals_buffer = get_uniform_buffer(renderer, box_internals_buffer_parameters);
 }
 
 void draw(Renderer &renderer, DrawParameters &parameters)
@@ -1107,21 +1252,68 @@ void update_image_index(Renderer &renderer, uint32_t draw_frame)
 
 void update_reflection_map(Renderer &renderer, glm::vec3 location)
 {
-	ReflectionMapUniformBuffer uniform_data = {};
-	uniform_data.proj = glm::perspective(PI / 2.f, 1.f, 0.0015f, 10.0f);
+	// Update reflection map uniform buffer
+	{
+		ReflectionMapUniformBuffer uniform_data = {};
+		uniform_data.proj = glm::perspective(PI / 2.f, 1.f, 0.0015f, 10.0f);
 
-	uniform_data.view[0] = glm::lookAt(location, glm::vec3(location.x + 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
-	uniform_data.view[1] = glm::lookAt(location, glm::vec3(location.x - 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
-	uniform_data.view[2] = glm::lookAt(location, glm::vec3(location.x, location.y + 1.0, location.z), glm::vec3(0.0, 0.0, 1.0));
-	uniform_data.view[3] = glm::lookAt(location, glm::vec3(location.x, location.y - 1.0, location.z), glm::vec3(0.0, 0.0, -1.0));
-	uniform_data.view[4] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z + 1.0), glm::vec3(0.0, -1.0, 0.0));
-	uniform_data.view[5] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z - 1.0), glm::vec3(0.0, -1.0, 0.0));
+		uniform_data.view[0] = glm::lookAt(location, glm::vec3(location.x + 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
+		uniform_data.view[1] = glm::lookAt(location, glm::vec3(location.x - 1.0, location.y, location.z), glm::vec3(0.0, -1.0, 0.0));
+		uniform_data.view[2] = glm::lookAt(location, glm::vec3(location.x, location.y + 1.0, location.z), glm::vec3(0.0, 0.0, 1.0));
+		uniform_data.view[3] = glm::lookAt(location, glm::vec3(location.x, location.y - 1.0, location.z), glm::vec3(0.0, 0.0, -1.0));
+		uniform_data.view[4] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z + 1.0), glm::vec3(0.0, -1.0, 0.0));
+		uniform_data.view[5] = glm::lookAt(location, glm::vec3(location.x, location.y, location.z - 1.0), glm::vec3(0.0, -1.0, 0.0));
 
-	UniformBufferUpdateParameters update_parameters = {};
-	update_parameters.buffer_name = renderer.reflection_map_buffer;
-	update_parameters.data = &uniform_data;
+		UniformBufferUpdateParameters update_parameters = {};
+		update_parameters.buffer_name = renderer.reflection_map_buffer;
+		update_parameters.data = &uniform_data;
 
-	update_uniform_buffer(renderer, update_parameters);
+		update_uniform_buffer(renderer, update_parameters);
+	}
+
+	// Update box internals uniform buffer
+	{
+		BoxInternalsUniformBuffer uniform_data = {};
+		uniform_data.proj = glm::perspective(PI / 2.f, 1.f, 0.0145f, 1.0f);
+		uniform_data.proj[1][1] *= -1;
+
+		glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.3, 0.3, 1.0));
+		glm::mat4 rotate[6];
+		rotate[0] = glm::rotate(glm::mat4(1.0f), PI / 2.f, glm::vec3(0.f, 1.f, 0.f));
+		rotate[1] = glm::rotate(glm::mat4(1.0f), -PI / 2.f, glm::vec3(0.f, 1.f, 0.f));
+		rotate[2] = glm::rotate(glm::mat4(1.0f), -PI / 2.f, glm::vec3(1.f, 0.f, 0.f));
+		rotate[3] = glm::rotate(glm::mat4(1.0f), PI / 2.f, glm::vec3(1.f, 0.f, 0.f));
+		rotate[4] = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.f, 0.f, 0.f));
+		rotate[5] = glm::rotate(glm::mat4(1.0f), PI, glm::vec3(1.f, 0.f, 0.f));
+
+		glm::mat4 translate[6];
+		translate[0] = glm::translate(glm::mat4(1.f), glm::vec3(location.x + 0.15, location.y, location.z));
+		translate[1] = glm::translate(glm::mat4(1.f), glm::vec3(location.x - 0.15, location.y, location.z));
+		translate[2] = glm::translate(glm::mat4(1.f), glm::vec3(location.x, location.y + 0.15, location.z));
+		translate[3] = glm::translate(glm::mat4(1.f), glm::vec3(location.x, location.y - 0.15, location.z));
+		translate[4] = glm::translate(glm::mat4(1.f), glm::vec3(location.x, location.y, location.z + 0.15));
+		translate[5] = glm::translate(glm::mat4(1.f), glm::vec3(location.x, location.y, location.z - 0.15));
+
+		uniform_data.model[0] = translate[0] * rotate[0] * scale;
+		uniform_data.model[1] = translate[1] * rotate[1] * scale;
+		uniform_data.model[2] = translate[2] * rotate[2] * scale;
+		uniform_data.model[3] = translate[3] * rotate[3] * scale;
+		uniform_data.model[4] = translate[4] * rotate[4] * scale;
+		uniform_data.model[5] = translate[5] * rotate[5] * scale;
+
+		uniform_data.view[0] = glm::lookAt(glm::vec3(location.x + 0.3, location.y, location.z), glm::vec3(location.x - 1.0, location.y, location.z), glm::vec3(0.0, 1.0, 0.0));
+		uniform_data.view[1] = glm::lookAt(glm::vec3(location.x - 0.3, location.y, location.z), glm::vec3(location.x + 1.0, location.y, location.z), glm::vec3(0.0, 1.0, 0.0));
+		uniform_data.view[2] = glm::lookAt(glm::vec3(location.x, location.y + 0.3, location.z), glm::vec3(location.x, location.y - 1.0, location.z), glm::vec3(0.0, 0.0, -1.0));
+		uniform_data.view[3] = glm::lookAt(glm::vec3(location.x, location.y - 0.3, location.z), glm::vec3(location.x, location.y + 1.0, location.z), glm::vec3(0.0, 0.0, 1.0));
+		uniform_data.view[4] = glm::lookAt(glm::vec3(location.x, location.y, location.z + 0.3), glm::vec3(location.x, location.y, location.z - 1.0), glm::vec3(0.0, 1.0, 0.0));
+		uniform_data.view[5] = glm::lookAt(glm::vec3(location.x, location.y, location.z - 0.3), glm::vec3(location.x, location.y, location.z + 1.0), glm::vec3(0.0, 1.0, 0.0));
+
+		UniformBufferUpdateParameters update_parameters = {};
+		update_parameters.buffer_name = renderer.box_internals_buffer;
+		update_parameters.data = &uniform_data;
+
+		update_uniform_buffer(renderer, update_parameters);
+	}
 }
 
 void cleanup_renderer(Renderer &renderer)
@@ -1318,6 +1510,11 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 		if (mat.pipelines[i].substr(0, 7) == "REFLECT")
 		{
 			resource_parameters.uniform_buffers.insert(resource_parameters.uniform_buffers.begin() + 1, renderer.data.uniform_buffers[renderer.reflection_map_buffer].buffers);
+		}
+		else if (mat.pipelines[i] == "BOX_INTERNALS")
+		{
+			resource_parameters.uniform_buffers[0] = renderer.data.uniform_buffers[renderer.box_internals_buffer].buffers;
+			resource_parameters.textures = {};
 		}
 
 		create_resource(resource, resource_parameters);
@@ -1735,6 +1932,48 @@ void resize_swap_chain(Renderer &renderer)
 	reflection_map_command_buffer_parameters.swap_chain = renderer.swap_chain;
 	allocate_render_pass_command_buffers(reflection_map_render_pass, reflection_map_command_buffer_parameters);
 
+	// Create box internals attachments and subpasses
+	VulkanRenderPassAttachment box_internals_attachment_description = {};
+	box_internals_attachment_description.attachment = renderer.data.textures["BOX_INTERNALS_ATTACHMENT"];
+	box_internals_attachment_description.attachment_format = box_internals_attachment_description.attachment.format;
+	box_internals_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	box_internals_attachment_description.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	box_internals_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	VulkanRenderPassAttachment box_internals_depth_attachment_description = {};
+	box_internals_depth_attachment_description.attachment = renderer.data.textures["BOX_INTERNALS_DEPTH_ATTACHMENT"];
+	box_internals_depth_attachment_description.attachment_format = box_internals_depth_attachment_description.attachment.format;
+	box_internals_depth_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	box_internals_depth_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	box_internals_depth_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	VulkanRenderPassSubpassDescription box_internals_subpass_description = {};
+	box_internals_subpass_description.color_attachments = { 0 };
+	box_internals_subpass_description.depth_attachment = 1;
+	box_internals_subpass_description.use_depth = true;
+
+	VulkanRenderPassSubpasses box_internals_subpasses = {};
+	box_internals_subpasses.attachments = { box_internals_attachment_description, box_internals_depth_attachment_description };
+	box_internals_subpasses.subpass_descriptions = { box_internals_subpass_description };
+
+	// Create box internals render pass
+	VulkanRenderPass box_internals_render_pass = {};
+	VulkanRenderPassParameters box_internals_render_pass_parameters = {};
+	box_internals_render_pass_parameters.device = renderer.device;
+	box_internals_render_pass_parameters.glfw_window = renderer.window;
+	box_internals_render_pass_parameters.memory_manager = &renderer.memory_manager;
+	box_internals_render_pass_parameters.swap_chain = renderer.swap_chain;
+	box_internals_render_pass_parameters.subpasses = box_internals_subpasses;
+	box_internals_render_pass_parameters.flags = static_cast<RenderPassFlags>(RENDER_PASS_IGNORE_DRAW_IMAGES | RENDER_PASS_MULTIVIEW);
+	box_internals_render_pass_parameters.num_views = 6;
+	box_internals_render_pass_parameters.view_masks = std::vector<uint32_t>(14, 0b00111111);
+
+	create_render_pass(box_internals_render_pass, box_internals_render_pass_parameters);
+
+	VulkanRenderPassCommandBufferAllocateParameters box_internals_command_buffer_parameters = {};
+	box_internals_command_buffer_parameters.swap_chain = renderer.swap_chain;
+	allocate_render_pass_command_buffers(box_internals_render_pass, box_internals_command_buffer_parameters);
+
 	// Create attribute and binding description
 	struct VertexWithTexCoord
 	{
@@ -1817,24 +2056,6 @@ void resize_swap_chain(Renderer &renderer)
 		shadow_pipeline_barriers.push_back(floor_shadow_pipeline_barrier);
 	}
 
-	VulkanPipelineBarrier reflection_pipeline_barrier = {};
-	reflection_pipeline_barrier.images = std::vector<VulkanTexture>(renderer.swap_chain.swap_chain_images.size(), renderer.data.textures["REFLECTION_MAP_ATTACHMENT"]);
-	reflection_pipeline_barrier.old_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	reflection_pipeline_barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	reflection_pipeline_barrier.src = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	reflection_pipeline_barrier.dst = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	reflection_pipeline_barrier.src_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	reflection_pipeline_barrier.dst_access = VK_ACCESS_SHADER_READ_BIT;
-
-	VkImageSubresourceRange image_range = {};
-	image_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	image_range.baseArrayLayer = 0;
-	image_range.baseMipLevel = 0;
-	image_range.layerCount = 6;
-	image_range.levelCount = 1;
-
-	reflection_pipeline_barrier.subresource_range = image_range;
-
 	// Create pipelines
 	int w, h;
 
@@ -1874,15 +2095,13 @@ void resize_swap_chain(Renderer &renderer)
 	pipelines["standard_red"] = pipeline_red;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
-	pipeline_parameters.pipeline_barriers = { reflection_pipeline_barrier };
-	pipeline_parameters.num_textures += 4;
+	pipeline_parameters.num_textures += 5;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
 	pipelines["standard_blue"] = pipeline_blue;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
-	pipeline_parameters.pipeline_barriers = {};
-	pipeline_parameters.num_textures -= 4;
+	pipeline_parameters.num_textures -= 5;
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
@@ -1961,6 +2180,31 @@ void resize_swap_chain(Renderer &renderer)
 	create_pipeline(pipeline_red_reflect, reflect_pipeline_parameters);
 	reflection_map_pipelines["REFLECT_RED"] = pipeline_red_reflect;
 
+	// Create pipelines for box internals
+	std::unordered_map<std::string, VulkanPipeline> box_internals_pipelines = {};
+	VulkanPipeline box_internals_pipeline = {};
+	VulkanPipelineParameters box_internals_pipeline_parameters = {};
+	box_internals_pipeline_parameters.attribute_descriptions = attribute_descriptions;
+	box_internals_pipeline_parameters.binding_descriptions = binding_descriptions;
+	box_internals_pipeline_parameters.device = renderer.device;
+	box_internals_pipeline_parameters.glfw_window = renderer.window;
+	box_internals_pipeline_parameters.num_textures = 0;
+	box_internals_pipeline_parameters.num_uniform_buffers = 2;
+	box_internals_pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT };
+	box_internals_pipeline_parameters.pipeline_barriers = {};
+	box_internals_pipeline_parameters.render_pass = box_internals_render_pass;
+	box_internals_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_box_internals.spv"], renderer.data.shaders["Resources/frag_box_internals.spv"] };
+	box_internals_pipeline_parameters.swap_chain = renderer.swap_chain;
+	box_internals_pipeline_parameters.viewport_width = 512;
+	box_internals_pipeline_parameters.viewport_height = 512;
+	box_internals_pipeline_parameters.viewport_offset_x = 0;
+	box_internals_pipeline_parameters.viewport_offset_y = 0;
+	box_internals_pipeline_parameters.subpass = 0;
+	box_internals_pipeline_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	create_pipeline(box_internals_pipeline, box_internals_pipeline_parameters);
+	box_internals_pipelines["BOX_INTERNALS"] = box_internals_pipeline;
+
 	// Create render pass managers
 	std::vector<VkClearValue> clear_values(3);
 	clear_values[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -1991,10 +2235,23 @@ void resize_swap_chain(Renderer &renderer)
 	reflection_map_render_pass_manager_parameters.mip_map = true;
 	reflection_map_render_pass_manager_parameters.mip_parameters = reflection_map_mipmap_parameters;
 
+	VulkanMipmapGenerationParameters box_internals_mipmap_parameters = {};
+	box_internals_mipmap_parameters.src_image = renderer.data.textures["BOX_INTERNALS_ATTACHMENT"];
+	box_internals_mipmap_parameters.dst_image = renderer.data.textures["BOX_INTERNALS_FINAL"];
+
+	RenderPassManager box_internals_render_pass_manager = {};
+	RenderPassManagerParameters box_internals_render_pass_manager_parameters = {};
+	box_internals_render_pass_manager_parameters.pass = box_internals_render_pass;
+	box_internals_render_pass_manager_parameters.pass_pipelines = box_internals_pipelines;
+	box_internals_render_pass_manager_parameters.clear_values = { {{0.0f, 0.0f, 0.0f, 1.0f}, {1.0f}} };
+	box_internals_render_pass_manager_parameters.mip_map = true;
+	box_internals_render_pass_manager_parameters.mip_parameters = box_internals_mipmap_parameters;
+
 	create_render_pass_manager(render_pass_manager, render_pass_manager_parameters);
 	create_render_pass_manager(shadow_map_render_pass_manager, shadow_map_render_pass_manager_parameters);
 	create_render_pass_manager(reflection_map_render_pass_manager, reflection_map_render_pass_manager_parameters);
-	renderer.render_passes = { shadow_map_render_pass_manager, reflection_map_render_pass_manager, render_pass_manager };
+	create_render_pass_manager(box_internals_render_pass_manager, box_internals_render_pass_manager_parameters);
+	renderer.render_passes = { shadow_map_render_pass_manager, reflection_map_render_pass_manager, box_internals_render_pass_manager, render_pass_manager };
 
 	// Create materials
 	Material mat_green_cube = {};
@@ -2044,6 +2301,15 @@ void resize_swap_chain(Renderer &renderer)
 	mat_blue_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_blue_cube.pipelines[0]] };
 	mat_blue_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_blue_cube.pipelines[0]] };
 
+	{
+		std::string pipeline = "BOX_INTERNALS";
+		mat_blue_cube.models.push_back(&renderer.data.models["SQUARE"]);
+		mat_blue_cube.pipelines.push_back(pipeline);
+		mat_blue_cube.resources.push_back(&renderer.render_passes[RENDER_PASS_INDEX_BOX_INTERNALS].resources[pipeline]);
+		mat_blue_cube.vertex_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_BOX_INTERNALS].vertex_buffers[pipeline]);
+		mat_blue_cube.index_buffers.push_back(&renderer.render_passes[RENDER_PASS_INDEX_BOX_INTERNALS].index_buffers[pipeline]);
+	}
+
 	for (uint32_t i = 0; i < max_lights; i++)
 	{
 		std::string pipeline = "SHADOW_" + std::to_string(i);
@@ -2056,6 +2322,7 @@ void resize_swap_chain(Renderer &renderer)
 	}
 
 	mat_blue_cube.textures.push_back({ renderer.data.textures["REFLECTION_MAP_FINAL"] });
+	mat_blue_cube.textures.push_back({ renderer.data.textures["BOX_INTERNALS_FINAL"] });
 	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Top.jpg"] });
 	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Horiz.jpg"] });
 	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Vert.jpg"] });

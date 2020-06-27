@@ -139,5 +139,11 @@
     <None Include="Resources\frag_yellow_reflect.frag">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Resources\frag_box_internals.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\vert_box_internals.vert">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

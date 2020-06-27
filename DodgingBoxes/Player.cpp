@@ -32,7 +32,7 @@ Player::Player(Renderer *renderer, Input *input, bool *game_end_flag)
 
 	InstanceParameters instance_parameters = {};
 	instance_parameters.material = MATERIAL_BLUE_CUBE;
-	instance_parameters.uniform_buffers = { uniform_buffer };
+	instance_parameters.uniform_buffers = { uniform_buffer, uniform_buffer };
 
 	instance = create_instance(*renderer, instance_parameters);
 
@@ -56,22 +56,45 @@ void Player::update(double time)
 	{
 		glm::vec2 direction(0.0);
 
+		light_location -= float(time) * 0.6f * light_location;
+
 		// Find direction
 		if (input->up)
 		{
-			direction += glm::vec2(0.0, 1);
+			light_location.y += 0.9f * float(time);
+			direction += glm::vec2(0.0f, 1);
 		}
 		if (input->down)
 		{
-			direction += glm::vec2(0.0, -1);
+			light_location.y -= 0.9f * float(time);
+			direction += glm::vec2(0.0f, -1);
 		}
 		if (input->left)
 		{
-			direction += glm::vec2(-1, 0.0);
+			light_location.x -= 0.9f * float(time);
+			direction += glm::vec2(-1, 0.0f);
 		}
 		if (input->right)
 		{
-			direction += glm::vec2(1, 0.0);
+			light_location.x += 0.9f * float(time);
+			direction += glm::vec2(1, 0.0f);
+		}
+
+		if (light_location.x > scale_factor - 0.2f)
+		{
+			light_location.x = scale_factor - 0.2f;
+		}
+		if (light_location.x < -scale_factor + 0.2f)
+		{
+			light_location.x = -scale_factor + 0.2f;
+		}
+		if (light_location.y > scale_factor - 0.2f)
+		{
+			light_location.y = scale_factor - 0.2f;
+		}
+		if (light_location.y < -scale_factor + 0.2f)
+		{
+			light_location.y = -scale_factor + 0.2f;
 		}
 
 		// Normalize direction vector
@@ -140,6 +163,8 @@ void Player::update(double time)
 		current_death_time += float(time);
 		scale = glm::scale(glm::mat4(1), glm::vec3(scale_factor, scale_factor, scale_factor)) * glm::scale(glm::mat4(1), glm::vec3((0.1f + total_death_time - current_death_time) / (0.1f + total_death_time)));
 
+		light_location = (current_death_time / total_death_time) * glm::vec2(0.0f, 0.0f) + ((total_death_time - current_death_time) / total_death_time) * light_location;
+
 		if (current_death_time > total_death_time)
 		{
 			// Once you're done with the animation, you're dead
@@ -176,7 +201,7 @@ void Player::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, f
 		light_update_parameters.max_distance = 1.5f;
 
 		// -(0.5 - (scale_factor / 2.f) - 0.001f) is the distance to put the cube so that the bottom is touching the floor
-		light_update_parameters.location = glm::vec3(location, -(0.5 - (scale_factor / 2.f) - 0.001f));
+		light_update_parameters.location = glm::vec3(location + light_location, -(0.5 - (scale_factor / 2.f) - 0.001f));
 		update_light(*renderer, light_update_parameters);
 
 		// Update uniform buffer

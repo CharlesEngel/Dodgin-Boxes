@@ -24,7 +24,8 @@ enum RenderPassIds
 {
 	RENDER_PASS_INDEX_SHADOW = 0,
 	RENDER_PASS_INDEX_REFLECT = 1,
-	RENDER_PASS_INDEX_DRAW = 2
+	RENDER_PASS_INDEX_BOX_INTERNALS = 2,
+	RENDER_PASS_INDEX_DRAW = 3
 };
 
 enum MaterialIds
@@ -119,6 +120,14 @@ struct ShadowMapFragmentUniformBuffer
 	glm::vec3 location;
 };
 
+struct BoxInternalsUniformBuffer
+{
+	glm::mat4 model[6];
+	glm::mat4 view[6];
+	glm::mat4 proj;
+	int light_index;
+};
+
 // TODO: Is this a good name?
 // ANSWER: Not really
 struct RenderPassManager
@@ -174,6 +183,7 @@ struct Renderer
 	std::array<std::string, max_lights> shadow_map_fragment_buffers;
 	ShadowMapUniformBuffer shadow_map_uniform;
 	std::string reflection_map_buffer;
+	std::string box_internals_buffer;
 };
 
 struct RendererParameters

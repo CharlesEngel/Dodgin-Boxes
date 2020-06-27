@@ -6,7 +6,7 @@ Floor::Floor(Renderer *renderer)
 {
 	this->renderer = renderer;
 	//transform = glm::scale(glm::mat4(1), glm::vec3(100.0, 100.0, 100.0));
-	transform = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.0, 0.0, -1.0)), glm::vec3(100.0, 100.0, 1.0));
+	transform = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.0, 0.0, -0.5)), glm::vec3(100.0, 100.0, 1.0));
 
 	UniformBufferParameters uniform_parameters = {};
 	uniform_parameters.size = sizeof(FloorUniform);
