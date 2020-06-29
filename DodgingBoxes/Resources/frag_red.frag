@@ -68,7 +68,24 @@ layout(location = 2) flat in vec3 normal;
 layout(location = 3) flat in vec3 inCameraPos;
 
 void main() {
-	float ambient_intensity = 0.8 * step(sin(50.0 * inPosition.x), 0.0) * + 0.8 * step(sin(50.0 * inPosition.y), 0.0) + 0.1;
+	float numGridCells = 14.0;
+
+	float xGridCell = floor(((inPosition.x + 1.0355) / 2.071) * numGridCells);
+	float yGridCell = floor(((inPosition.y + 1.0355) / 2.071) * numGridCells);
+
+	float xCellPosition = ((inPosition.x + 1.0355) / 2.071) - (xGridCell / numGridCells);
+	float yCellPosition = ((inPosition.y + 1.0355) / 2.071) - (yGridCell / numGridCells);
+
+	float xCellWidth = 1.0355 / numGridCells;
+	float yCellWidth = 1.0355 / numGridCells;
+
+	float xCellLeftBound = xCellWidth * .1;
+	float xCellRightBound = xCellWidth - xCellLeftBound;
+
+	float yCellLowBound = yCellWidth * .1;
+	float yCellHighBound = yCellWidth - yCellLowBound;
+
+	float ambient_intensity = 0.8 * step(xCellLeftBound, xCellPosition) * step(xCellPosition, xCellRightBound) * step(yCellLowBound, yCellPosition) * step(yCellPosition, yCellHighBound) + 0.1;
 	vec3 ambient_color = ambient_intensity * vec3(0.4, 0.1, 0.12);
 
 	vec3 diffuse_color[14];
