@@ -153,6 +153,7 @@ void main() {
 		float dist = length(inPosition - lights.location[i]);
 		float falloff = pow(clamp(1.0 - pow(dist / lights.max_distance[i], 4.0), 0.0, 1.0), 2.0) * clamp(dot(normal, normal_light_vector), 0.0, 1.0);
 		diffuse_color[i] = step(1.0, lights.in_use[i]) * vec3(1.0, 1.0, 1.0) * ggx(normalize(inCameraPos - inPosition), normal_light_vector, normal, 1.3, roughness) * falloff;
+		diffuse_color[i] = vec3(0.0, 0.0, 0.0);
 	}
 
 	diffuse_color[lightIndex] = vec3(0.0, 0.0, 0.0);
