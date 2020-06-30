@@ -742,9 +742,13 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_red.spv"] };
 	pipeline_parameters.num_textures = max_lights;
+	pipeline_parameters.num_uniform_buffers += 1;
+	pipeline_parameters.access_stages.push_back(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	create_pipeline(pipeline_red, pipeline_parameters);
 	pipelines["standard_red"] = pipeline_red;
+
+	pipeline_parameters.num_uniform_buffers -= 1;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
 	pipeline_parameters.num_textures += 5;
@@ -829,6 +833,9 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	
 	reflect_pipeline_parameters.pipeline_barriers = {};
 	reflect_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_reflect_map.spv"], renderer.data.shaders["Resources/frag_red_reflect.spv"] };
+	reflect_pipeline_parameters.access_stages.push_back(VK_SHADER_STAGE_FRAGMENT_BIT);
+	reflect_pipeline_parameters.num_uniform_buffers += 1;
+
 	create_pipeline(pipeline_red_reflect, reflect_pipeline_parameters);
 	reflection_map_pipelines["REFLECT_RED"] = pipeline_red_reflect;
 
@@ -1460,8 +1467,9 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 	// Generate name
 	std::string name = std::to_string(parameters.material);
 
-	for (const auto &uniform_buffer : parameters.uniform_buffers)
+	for (const auto &uniform_buffers : parameters.uniform_buffers)
 	{
+		for (const auto &uniform_buffer : uniform_buffers)
 		name += "_" + uniform_buffer;
 	}
 
@@ -1487,21 +1495,29 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 	{
 		resource_parameters.pipeline = chosen_pipelines[i];
 		resource_parameters.textures = mat.textures;
+		resource_parameters.uniform_buffers = {};
 		// If lights are not being used
 		if (mat.use_lights == LIGHT_USAGE_NONE)
 		{
-			// Submit just the one uniform buffer
-			resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffers[i]].buffers };
+			// Submit just the normal uniform buffers
+			for (uint32_t j = 0; j < parameters.uniform_buffers[i].size(); j++)
+			{
+				resource_parameters.uniform_buffers.push_back(renderer.data.uniform_buffers[parameters.uniform_buffers[i][j]].buffers);
+			}
 		}
 		else if (mat.use_lights == LIGHT_USAGE_ALL && mat.pipelines[i].substr(0, 6) != "SHADOW")
 		{
 			// Otherwise also use the uniform buffer with lighting information
-			resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffers[i]].buffers, renderer.data.uniform_buffers[renderer.light_buffers].buffers };
+			for (uint32_t j = 0; j < parameters.uniform_buffers[i].size(); j++)
+			{
+				resource_parameters.uniform_buffers.push_back(renderer.data.uniform_buffers[parameters.uniform_buffers[i][j]].buffers);
+			}
+			resource_parameters.uniform_buffers.push_back({ renderer.data.uniform_buffers[renderer.light_buffers].buffers });
 		}
 		else if (mat.pipelines[i].substr(0, 6) == "SHADOW")
 		{
-			// If this pipeline is for shadow maps, add that uniform buffer
-			resource_parameters.uniform_buffers = { renderer.data.uniform_buffers[parameters.uniform_buffers[0]].buffers, renderer.data.uniform_buffers[renderer.shadow_map_buffers[shadow_index]].buffers };
+			// If this pipeline is for shadow maps, use that uniform buffer
+			resource_parameters.uniform_buffers = { (renderer.data.uniform_buffers[parameters.uniform_buffers[0][0]].buffers) ,  renderer.data.uniform_buffers[renderer.shadow_map_buffers[shadow_index]].buffers };
 			shadow_index++;
 			resource_parameters.textures = {};
 		}
@@ -2090,9 +2106,13 @@ void resize_swap_chain(Renderer &renderer)
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_red.spv"] };
 	pipeline_parameters.num_textures = max_lights;
+	pipeline_parameters.num_uniform_buffers += 1;
+	pipeline_parameters.access_stages.push_back(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	create_pipeline(pipeline_red, pipeline_parameters);
 	pipelines["standard_red"] = pipeline_red;
+
+	pipeline_parameters.num_uniform_buffers -= 1;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
 	pipeline_parameters.num_textures += 5;
@@ -2177,6 +2197,9 @@ void resize_swap_chain(Renderer &renderer)
 
 	reflect_pipeline_parameters.pipeline_barriers = {};
 	reflect_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_reflect_map.spv"], renderer.data.shaders["Resources/frag_red_reflect.spv"] };
+	reflect_pipeline_parameters.access_stages.push_back(VK_SHADER_STAGE_FRAGMENT_BIT);
+	reflect_pipeline_parameters.num_uniform_buffers += 1;
+
 	create_pipeline(pipeline_red_reflect, reflect_pipeline_parameters);
 	reflection_map_pipelines["REFLECT_RED"] = pipeline_red_reflect;
 

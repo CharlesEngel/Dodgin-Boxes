@@ -2,7 +2,6 @@
 #include "GameManager.h"
 #include "Player.h"
 #include "EnemyManager.h"
-#include "Floor.h"
 #include "Text.h"
 
 #include "glm/gtc/matrix_transform.hpp"
@@ -15,7 +14,7 @@ GameManager::GameManager(Renderer *renderer, uint32_t width, uint32_t height)
 	game_should_end = false;
 
 	view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	proj = glm::perspective(glm::radians(45.0f), /*width / (float)height*/ 1.0f, 0.1f, 10.0f);
+	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 10.0f);
 	proj[1][1] *= -1;
 
 	view_height = 2.5f * tan(glm::radians(45.0f / 2.0f));
@@ -23,11 +22,38 @@ GameManager::GameManager(Renderer *renderer, uint32_t width, uint32_t height)
 
 	objects.push_back(new Player(renderer, &input, &game_should_end));
 	objects.push_back(new EnemyManager(renderer));
-	objects.push_back(new Floor(renderer));
+
+	transform = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.0, 0.0, -0.5)), glm::vec3(2.071, 2.071, 1.0));
+
+	UniformBufferParameters uniform_parameters = {};
+	uniform_parameters.size = sizeof(FloorVertUniform);
+	
+	vert_uniform_buffer = get_uniform_buffer(*renderer, uniform_parameters);
+
+	for (uint32_t i = 0; i < 196; i++)
+	{
+		active_tiles[i] = 0.f;
+	}
+
+	uniform_parameters.size = sizeof(FloorFragUniform);
+	frag_uniform_buffer = get_uniform_buffer(*renderer, uniform_parameters);
+
+	InstanceParameters instance_parameters = {};
+	instance_parameters.material = MATERIAL_RED_SQUARE;
+	instance_parameters.uniform_buffers = { { vert_uniform_buffer, frag_uniform_buffer }, { vert_uniform_buffer, frag_uniform_buffer } };
+
+	instance = create_instance(*renderer, instance_parameters);
 }
 
 GameManager::~GameManager()
 {
+	if (renderer->device.device != VK_NULL_HANDLE)
+	{
+		free_uniform_buffer(*renderer, vert_uniform_buffer);
+		free_uniform_buffer(*renderer, frag_uniform_buffer);
+		free_instance(*renderer, instance);
+	}
+
 	for (auto object : objects)
 	{
 		delete object;
@@ -86,6 +112,39 @@ void GameManager::handle_input(GLFWwindow *window, int key, int scancode, int ac
 
 void GameManager::update(double time, uint32_t width, uint32_t height)
 {
+	// For every object
+	for (uint32_t i = 0; i < objects.size(); i++)
+	{
+		// For every collider the object contains
+		for (auto& collider : objects[i]->get_collider())
+		{
+			// For every floor tile
+			for (uint32_t k = 0; k < 14; k++)
+			{
+				for (uint32_t f = 0; f < 14; f++)
+				{
+					// Check if they collide
+					Rectangle floor_rect;
+					floor_rect.set_placement(glm::vec2(-halfWidth + k * tileWidth, -halfWidth + f * tileWidth), glm::vec2(tileWidth, tileWidth));
+					if (check_collision_rect_rect(collider, &floor_rect))
+					{
+						active_tiles[k * 14 + f] = 1.f;
+					}
+				}
+			}
+		}
+	}
+
+	// For every floor tile
+	for (uint32_t k = 0; k < 14; k++)
+	{
+		for (uint32_t f = 0; f < 14; f++)
+		{
+			// Subtract the time
+			active_tiles[k * 14 + f] = std::max(0.0f, active_tiles[k * 14 + f] - float(time));
+		}
+	}
+
 	for (auto object : objects)
 	{
 		object->update(time);
@@ -122,6 +181,34 @@ void GameManager::submit_for_rendering(uint32_t width, uint32_t height)
 	{
 		object->submit_for_rendering(view, proj, view_width, view_height);
 	}
+
+	FloorVertUniform buffer_data = {};
+	buffer_data.model = transform;
+	buffer_data.proj = proj;
+	buffer_data.view = view;
+	buffer_data.light_index = -1;
+
+	UniformBufferUpdateParameters update_parameters = {};
+	update_parameters.buffer_name = vert_uniform_buffer;
+	update_parameters.data = &buffer_data;
+
+	update_uniform_buffer(*renderer, update_parameters);
+
+	FloorFragUniform frag_buffer_data = {};
+	for (uint32_t i = 0; i < 196; i++)
+	{
+		frag_buffer_data.active_tiles[i].value = active_tiles[i];
+	}
+
+	update_parameters.buffer_name = frag_uniform_buffer;
+	update_parameters.data = &frag_buffer_data;
+
+	update_uniform_buffer(*renderer, update_parameters);
+
+	InstanceSubmitParameters submit_parameters = {};
+	submit_parameters.instance_name = instance;
+
+	submit_instance(*renderer, submit_parameters);
 }
 
 bool GameManager::game_has_ended()

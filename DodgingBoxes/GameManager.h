@@ -9,6 +9,25 @@ struct Input
 	bool w;
 };
 
+struct FloorVertUniform
+{
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+	int light_index;
+};
+
+struct FloorFragUniform
+{
+	AlignedFloat active_tiles[196];
+};
+
+// Width of floor tile
+const float tileWidth = 2.071f / 14;
+
+// Width of half the floor 
+const float halfWidth = 1.0355f;
+
 class GameManager
 {
 public:
@@ -27,11 +46,16 @@ private:
 	std::vector<GameObject *> objects;
 	Renderer *renderer;
 	static Input input;
+	std::string vert_uniform_buffer;
+	std::string frag_uniform_buffer;
+	std::string instance;
 
 	glm::mat4 view;
 	glm::mat4 proj;
+	glm::mat4 transform;
 	float view_width;
 	float view_height;
+	float active_tiles[196];
 
 	bool game_should_end;
 };

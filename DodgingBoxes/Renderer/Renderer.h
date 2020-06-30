@@ -217,7 +217,7 @@ struct UniformBufferUpdateParameters
 
 struct InstanceParameters
 {
-	std::vector<std::string> uniform_buffers;
+	std::vector<std::vector<std::string>> uniform_buffers;
 	uint32_t material;
 	int light_index;
 };

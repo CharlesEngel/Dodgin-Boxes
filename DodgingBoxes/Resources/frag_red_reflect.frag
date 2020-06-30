@@ -3,7 +3,11 @@
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 2) uniform LightObject {
+layout(binding = 2) uniform ActiveTiles {
+	float isActive[196];
+} tiles;
+
+layout(binding = 3) uniform LightObject {
 	vec3 location[14];
 	vec3 color[14];
 	float intensity[14];
@@ -11,20 +15,20 @@ layout(binding = 2) uniform LightObject {
 	int in_use[14];
 } lights;
 
-layout(binding = 3) uniform samplerCubeShadow depthMapSampler0;
-layout(binding = 4) uniform samplerCubeShadow depthMapSampler1;
-layout(binding = 5) uniform samplerCubeShadow depthMapSampler2;
-layout(binding = 6) uniform samplerCubeShadow depthMapSampler3;
-layout(binding = 7) uniform samplerCubeShadow depthMapSampler4;
-layout(binding = 8) uniform samplerCubeShadow depthMapSampler5;
-layout(binding = 9) uniform samplerCubeShadow depthMapSampler6;
-layout(binding = 10) uniform samplerCubeShadow depthMapSampler7;
-layout(binding = 11) uniform samplerCubeShadow depthMapSampler8;
-layout(binding = 12) uniform samplerCubeShadow depthMapSampler9;
-layout(binding = 13) uniform samplerCubeShadow depthMapSampler10;
-layout(binding = 14) uniform samplerCubeShadow depthMapSampler11;
-layout(binding = 15) uniform samplerCubeShadow depthMapSampler12;
-layout(binding = 16) uniform samplerCubeShadow depthMapSampler13;
+layout(binding = 4) uniform samplerCubeShadow depthMapSampler0;
+layout(binding = 5) uniform samplerCubeShadow depthMapSampler1;
+layout(binding = 6) uniform samplerCubeShadow depthMapSampler2;
+layout(binding = 7) uniform samplerCubeShadow depthMapSampler3;
+layout(binding = 8) uniform samplerCubeShadow depthMapSampler4;
+layout(binding = 9) uniform samplerCubeShadow depthMapSampler5;
+layout(binding = 10) uniform samplerCubeShadow depthMapSampler6;
+layout(binding = 11) uniform samplerCubeShadow depthMapSampler7;
+layout(binding = 12) uniform samplerCubeShadow depthMapSampler8;
+layout(binding = 13) uniform samplerCubeShadow depthMapSampler9;
+layout(binding = 14) uniform samplerCubeShadow depthMapSampler10;
+layout(binding = 15) uniform samplerCubeShadow depthMapSampler11;
+layout(binding = 16) uniform samplerCubeShadow depthMapSampler12;
+layout(binding = 17) uniform samplerCubeShadow depthMapSampler13;
 
 float VectorToDepth (vec3 Vec)
 {
@@ -85,8 +89,8 @@ void main() {
 	float yCellLowBound = yCellWidth * .1;
 	float yCellHighBound = yCellWidth - yCellLowBound;
 
-	float ambient_intensity = 0.8 * step(xCellLeftBound, xCellPosition) * step(xCellPosition, xCellRightBound) * step(yCellLowBound, yCellPosition) * step(yCellPosition, yCellHighBound) + 0.1;
-	vec3 ambient_color = ambient_intensity * vec3(0.4, 0.1, 0.12);
+	float ambient_intensity = 0.8 * tiles.isActive[int(xGridCell * 14 + yGridCell)] * step(xCellLeftBound, xCellPosition) * step(xCellPosition, xCellRightBound) * step(yCellLowBound, yCellPosition) * step(yCellPosition, yCellHighBound) + 0.125;
+	vec3 ambient_color = ambient_intensity * vec3(0.65, 0.1, 0.12);
 
 	vec3 diffuse_color[14];
 
