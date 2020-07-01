@@ -123,7 +123,7 @@ void Enemy::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, fl
 	LightUpdateParameters light_update_parameters = {};
 	light_update_parameters.light_index = light;
 	light_update_parameters.color = glm::vec3(0.84, 0.67, 0.23);
-	light_update_parameters.intensity = 0.4f /*2.5f*/ /*0.f*/;
+	light_update_parameters.intensity = 0.8f /*2.5f*/ /*0.f*/;
 	light_update_parameters.max_distance = /*0.9f*/ 2.5f;
 
 	light_update_parameters.location = glm::vec3(location, -(0.5 - (scale_factor / 2.f) - 0.001f));
@@ -161,19 +161,19 @@ void Enemy::get_direction()
 
 	if (direction == 0)
 	{
-		location = glm::vec2(rand_location, 1.3);
+		location = glm::vec2(rand_location, 1.2);
 	}
 	else if (direction == 1)
 	{
-		location = glm::vec2(rand_location, -1.3);
+		location = glm::vec2(rand_location, -1.2);
 	}
 	else if (direction == 2)
 	{
-		location = glm::vec2(1.3, rand_location);
+		location = glm::vec2(1.2, rand_location);
 	}
 	else
 	{
-		location = glm::vec2(-1.3, rand_location);
+		location = glm::vec2(-1.2, rand_location);
 	}
 
 	// Reset speed

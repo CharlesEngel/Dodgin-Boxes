@@ -205,6 +205,7 @@
     <None Include="Resources\frag_red.frag" />
     <None Include="Resources\frag_red_reflect.frag" />
     <None Include="Resources\frag_text.frag" />
+    <None Include="Resources\frag_volume.frag" />
     <None Include="Resources\frag_yellow.frag" />
     <None Include="Resources\frag_yellow_reflect.frag" />
     <None Include="Resources\vert_box_internals.vert" />

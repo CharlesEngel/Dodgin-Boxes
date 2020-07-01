@@ -96,12 +96,27 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	color_attachment_parameters.format = renderer.swap_chain.swap_chain_format;
 	color_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
 	color_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
-	color_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	color_attachment_parameters.samples = renderer.device.max_sample_count;
+	color_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+	color_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	create_texture(color_attachment, color_attachment_parameters);
 
 	textures["RENDER_PASS_ATTACHMENT_COLOR"] = color_attachment;
+
+	VulkanTexture volume_attachment = {};
+	VulkanTextureParameters volume_attachment_parameters = {};
+	volume_attachment_parameters.device = renderer.device;
+	volume_attachment_parameters.command_pool = renderer.device.command_pool;
+	volume_attachment_parameters.memory_manager = &renderer.memory_manager;
+	volume_attachment_parameters.format = renderer.swap_chain.swap_chain_format;
+	volume_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
+	volume_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
+	volume_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	volume_attachment_parameters.samples = renderer.device.max_sample_count;
+
+	create_texture(volume_attachment, volume_attachment_parameters);
+
+	textures["RENDER_PASS_ATTACHMENT_VOLUME"] = volume_attachment;
 
 	VulkanTexture depth_attachment = {};
 	VulkanTextureParameters depth_attachment_parameters = {};
@@ -111,12 +126,27 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	depth_attachment_parameters.format = find_depth_format(renderer.device.physical_device);
 	depth_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
 	depth_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
-	depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-	depth_attachment_parameters.samples = renderer.device.max_sample_count;
+	depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+	depth_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	create_texture(depth_attachment, depth_attachment_parameters);
 
 	textures["RENDER_PASS_ATTACHMENT_DEPTH"] = depth_attachment;
+
+	VulkanTexture volume_depth_attachment = {};
+	VulkanTextureParameters volume_depth_attachment_parameters = {};
+	volume_depth_attachment_parameters.device = renderer.device;
+	volume_depth_attachment_parameters.command_pool = renderer.device.command_pool;
+	volume_depth_attachment_parameters.memory_manager = &renderer.memory_manager;
+	volume_depth_attachment_parameters.format = find_depth_format(renderer.device.physical_device);
+	volume_depth_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
+	volume_depth_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
+	volume_depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	volume_depth_attachment_parameters.samples = renderer.device.max_sample_count;
+
+	create_texture(volume_depth_attachment, volume_depth_attachment_parameters);
+
+	textures["RENDER_PASS_ATTACHMENT_VOLUME_DEPTH"] = volume_depth_attachment;
 
 	VulkanTexture shadow_map_attachment_0 = {};
 	VulkanTexture shadow_map_attachment_1 = {};
@@ -485,7 +515,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	color_attachment_description.attachment_format = color_attachment_description.attachment.format;
 	color_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	color_attachment_description.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	color_attachment_description.samples = renderer.device.max_sample_count;
+	color_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	// Description for depth attachment
 	VulkanRenderPassAttachment depth_attachment_description = {};
@@ -493,56 +523,79 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	depth_attachment_description.attachment_format = depth_attachment_description.attachment.format;
 	depth_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	depth_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	depth_attachment_description.samples = renderer.device.max_sample_count;
+	depth_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
 
-	// Dependency between external commands and opaque subpass
-	VkSubpassDependency opaque_dependency = {};
-	opaque_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	opaque_dependency.dstSubpass = 0;
-	opaque_dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	opaque_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	opaque_dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	opaque_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	opaque_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	// Description for volumetric lighting color attachment
+	VulkanRenderPassAttachment volume_attachment_description = {};
+	volume_attachment_description.attachment = renderer.data.textures["RENDER_PASS_ATTACHMENT_VOLUME"];
+	volume_attachment_description.attachment_format = volume_attachment_description.attachment.format;
+	volume_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	volume_attachment_description.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	volume_attachment_description.samples = renderer.device.max_sample_count;
 
-	// Dependency between opaque subpass and transparent subpass
-	VkSubpassDependency transparent_opaque_dependency = {};
-	transparent_opaque_dependency.srcSubpass = 0;
-	transparent_opaque_dependency.dstSubpass = 1;
-	transparent_opaque_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	transparent_opaque_dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	transparent_opaque_dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	transparent_opaque_dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	transparent_opaque_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	// Description for volumetric lighting depth attachment
+	VulkanRenderPassAttachment volume_depth_attachment_description = {};
+	volume_depth_attachment_description.attachment = renderer.data.textures["RENDER_PASS_ATTACHMENT_VOLUME_DEPTH"];
+	volume_depth_attachment_description.attachment_format = volume_depth_attachment_description.attachment.format;
+	volume_depth_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	volume_depth_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	volume_depth_attachment_description.samples = renderer.device.max_sample_count;
 
-	// Dependency between transparent subpass and external commands
-	VkSubpassDependency transparent_external_dependency = {};
-	transparent_external_dependency.srcSubpass = 0;
-	transparent_external_dependency.dstSubpass = VK_SUBPASS_EXTERNAL;
-	transparent_external_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	transparent_external_dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	transparent_external_dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	transparent_external_dependency.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	transparent_external_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	// Dependency between volumetric lighting subpass and text subpass
+	VkSubpassDependency volume_text_dependency = {};
+	volume_text_dependency.srcSubpass = 1;
+	volume_text_dependency.dstSubpass = 2;
+	volume_text_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	volume_text_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	volume_text_dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	volume_text_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	volume_text_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	// Dependency between opaque subpass and volume subpass
+	VkSubpassDependency opaque_volume_color_dependency = {};
+	opaque_volume_color_dependency.srcSubpass = 0;
+	opaque_volume_color_dependency.dstSubpass = 1;
+	opaque_volume_color_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	opaque_volume_color_dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	opaque_volume_color_dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	opaque_volume_color_dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	opaque_volume_color_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	VkSubpassDependency opaque_volume_depth_dependency = {};
+	opaque_volume_depth_dependency.srcSubpass = 0;
+	opaque_volume_depth_dependency.dstSubpass = 1;
+	opaque_volume_depth_dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	opaque_volume_depth_dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	opaque_volume_depth_dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	opaque_volume_depth_dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	opaque_volume_depth_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	// Description of opaque subpass
 	VulkanRenderPassSubpassDescription subpass_opaque_description = {};
 	subpass_opaque_description.color_attachments = { 1 };
 	subpass_opaque_description.depth_attachment = 2;
 	subpass_opaque_description.use_depth = true;
-	subpass_opaque_description.dependencies = { opaque_dependency };
+	subpass_opaque_description.dependencies = {};
 
-	// Description of transparent subpass
-	VulkanRenderPassSubpassDescription subpass_transparent_description = {};
-	subpass_transparent_description.color_attachments = { 1 };
-	subpass_transparent_description.resolve_attachments = { 0 };
-	subpass_transparent_description.depth_attachment = { 2 };
-	subpass_transparent_description.use_depth = true;
-	subpass_transparent_description.dependencies = { transparent_opaque_dependency, transparent_external_dependency };
+	// Description of volumetric lighting subpass
+	VulkanRenderPassSubpassDescription subpass_volume_description = {};
+	subpass_volume_description.color_attachments = { 3 };
+	subpass_volume_description.depth_attachment = 4;
+	subpass_volume_description.input_attachments = { 1, 2 };
+	subpass_volume_description.use_depth = true;
+	subpass_volume_description.dependencies = { opaque_volume_color_dependency, opaque_volume_depth_dependency };
+
+	// Description of text subpass
+	VulkanRenderPassSubpassDescription subpass_text_description = {};
+	subpass_text_description.color_attachments = { 3 };
+	subpass_text_description.resolve_attachments = { 0 };
+	subpass_text_description.depth_attachment = { 4 };
+	subpass_text_description.use_depth = true;
+	subpass_text_description.dependencies = { volume_text_dependency };
 
 	VulkanRenderPassSubpasses subpasses = {};
-	subpasses.attachments = { resolve_attachment_description, color_attachment_description, depth_attachment_description };
-	subpasses.subpass_descriptions = { subpass_opaque_description, subpass_transparent_description };
+	subpasses.attachments = { resolve_attachment_description, color_attachment_description, depth_attachment_description, volume_attachment_description, volume_depth_attachment_description };
+	subpasses.subpass_descriptions = { subpass_opaque_description, subpass_volume_description, subpass_text_description };
 
 	render_pass_parameters.subpasses = subpasses;
 
@@ -708,6 +761,24 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 		shadow_pipeline_barriers.push_back(floor_shadow_pipeline_barrier);
 	}
 
+	VulkanPipelineBarrier depth_pipeline_barrier = {};
+	depth_pipeline_barrier.images = std::vector<VulkanTexture>(renderer.swap_chain.swap_chain_images.size(), renderer.data.textures["RENDER_PASS_ATTACHMENT_DEPTH"]);
+	depth_pipeline_barrier.old_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	depth_pipeline_barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	depth_pipeline_barrier.src = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	depth_pipeline_barrier.dst = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	depth_pipeline_barrier.src_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	depth_pipeline_barrier.dst_access = VK_ACCESS_SHADER_READ_BIT;
+
+	VkImageSubresourceRange image_range = {};
+	image_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	image_range.baseArrayLayer = 0;
+	image_range.baseMipLevel = 0;
+	image_range.layerCount = 1;
+	image_range.levelCount = 1;
+
+	depth_pipeline_barrier.subresource_range = image_range;
+
 	// Create pipelines
 	int w, h;
 
@@ -719,6 +790,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	VulkanPipeline pipeline_blue = {};
 	VulkanPipeline pipeline_yellow = {};
 	VulkanPipeline pipeline_text = {};
+	VulkanPipeline pipeline_volume = {};
 	VulkanPipelineParameters pipeline_parameters = {};
 	pipeline_parameters.attribute_descriptions = attribute_descriptions;
 	pipeline_parameters.binding_descriptions = binding_descriptions;
@@ -736,6 +808,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.viewport_offset_x = (w - pipeline_parameters.viewport_width) / 2;
 	pipeline_parameters.viewport_offset_y = (h - pipeline_parameters.viewport_height) / 2;
 	pipeline_parameters.subpass = 0;
+	pipeline_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	create_pipeline(pipeline_green, pipeline_parameters);
 	pipelines["standard_green"] = pipeline_green;
@@ -751,6 +824,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.num_uniform_buffers -= 1;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
+	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT };
 	pipeline_parameters.num_textures += 5;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
@@ -762,11 +836,22 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
 
+	pipeline_parameters.subpass = 1;
+	pipeline_parameters.num_uniform_buffers = 2;
+	pipeline_parameters.num_input_attachments = 2;
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_volume.spv"] };
+	pipeline_parameters.pipeline_barriers = { /*depth_pipeline_barrier*/ };
+	pipeline_parameters.samples = VkSampleCountFlagBits(0);
+
+	create_pipeline(pipeline_volume, pipeline_parameters);
+	pipelines["volume"] = pipeline_volume;
+
+	pipeline_parameters.pipeline_barriers = {};
 	pipeline_parameters.attribute_descriptions = attribute_descriptions_tex_coords;
 	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
 	pipeline_parameters.num_textures = 1;
 	pipeline_parameters.num_uniform_buffers = 1;
-	pipeline_parameters.subpass = 1;
+	pipeline_parameters.subpass = 2;
 	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT };
 	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
@@ -865,10 +950,12 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	box_internals_pipelines["BOX_INTERNALS"] = box_internals_pipeline;
 
 	// Create render pass managers
-	std::vector<VkClearValue> clear_values(3);
+	std::vector<VkClearValue> clear_values(5);
 	clear_values[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 	clear_values[1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 	clear_values[2].depthStencil = { 1.0f, 0 };
+	clear_values[3].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clear_values[4].depthStencil = { 1.0f, 0 };
 
 	RenderPassManager render_pass_manager = {};
 	RenderPassManagerParameters render_pass_manager_parameters = {};
@@ -1024,8 +1111,22 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_text.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_text.pipelines[0]] };
 	mat_text.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_text.pipelines[0]] };
 
+	Material mat_volume = {};
+	mat_volume.models = { &renderer.data.models["SQUARE"] };
+	mat_volume.pipelines = { "volume" };
+	mat_volume.textures = {};
+	mat_volume.input_attachments = { renderer.data.textures["RENDER_PASS_ATTACHMENT_COLOR"], renderer.data.textures["RENDER_PASS_ATTACHMENT_DEPTH"] };
+	mat_volume.use_lights = LIGHT_USAGE_ALL;
+	mat_volume.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_volume.pipelines[0]] };
+	mat_volume.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_volume.pipelines[0]] };
+	mat_volume.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_volume.pipelines[0]] };
 
-	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text };
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		mat_volume.textures.push_back({ renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)] });
+	}
+
+	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text, mat_volume };
 
 	// Create semaphores/fences
 	renderer.image_available_semaphores.resize(parameters.max_frames);
@@ -1080,10 +1181,38 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	box_internals_buffer_parameters.range = sizeof(BoxInternalsUniformBuffer);
 	box_internals_buffer_parameters.size = sizeof(BoxInternalsUniformBuffer);
 	renderer.box_internals_buffer = get_uniform_buffer(renderer, box_internals_buffer_parameters);
+
+	UniformBufferParameters volume_buffer_parameters = {};
+	volume_buffer_parameters.range = sizeof(VolumeUniformBuffer);
+	volume_buffer_parameters.size = sizeof(VolumeUniformBuffer);
+	renderer.volume_buffer = get_uniform_buffer(renderer, volume_buffer_parameters);
+
+	InstanceParameters volume_instance_parameters = {};
+	volume_instance_parameters.light_index = -1;
+	volume_instance_parameters.material = MATERiAL_VOLUME;
+	volume_instance_parameters.uniform_buffers = { {renderer.volume_buffer} };
+
+	renderer.volume_instance = create_instance(renderer, volume_instance_parameters);
 }
 
 void draw(Renderer &renderer, DrawParameters &parameters)
 {
+	VolumeUniformBuffer volume_data = {};
+	volume_data.model = glm::scale(glm::mat4(1), glm::vec3(10.0, 10.0, 1.0));
+	volume_data.view = glm::lookAt(glm::vec3(0.0, 0.0, 2.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+	volume_data.proj = glm::perspective(PI / 2.f, 1.f, 0.001f, 3.0f);
+	volume_data.proj[1][1] *= -1;
+
+	UniformBufferUpdateParameters volume_update_parameters = {};
+	volume_update_parameters.buffer_name = renderer.volume_buffer;
+	volume_update_parameters.data = &volume_data;
+
+	update_uniform_buffer(renderer, volume_update_parameters);
+
+	InstanceSubmitParameters volume_submit_parameters = {};
+	volume_submit_parameters.instance_name = renderer.volume_instance;
+	submit_instance(renderer, volume_submit_parameters);
+
 	// Update uniform buffer for creating shadow maps
 	glm::mat4 proj = glm::perspective(PI / 2.f, 1.f, 0.001f, 2.0f);
 
@@ -1496,6 +1625,7 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 		resource_parameters.pipeline = chosen_pipelines[i];
 		resource_parameters.textures = mat.textures;
 		resource_parameters.uniform_buffers = {};
+		resource_parameters.input_attachments = mat.input_attachments;
 		// If lights are not being used
 		if (mat.use_lights == LIGHT_USAGE_NONE)
 		{
@@ -1750,6 +1880,8 @@ void resize_swap_chain(Renderer &renderer)
 	// Recreate attachments
 	cleanup_texture(renderer.data.textures["RENDER_PASS_ATTACHMENT_COLOR"]);
 	cleanup_texture(renderer.data.textures["RENDER_PASS_ATTACHMENT_DEPTH"]);
+	cleanup_texture(renderer.data.textures["RENDER_PASS_ATTACHMENT_VOLUME"]);
+	cleanup_texture(renderer.data.textures["RENDER_PASS_ATTACHMENT_VOLUME_DEPTH"]);
 
 	VulkanTexture color_attachment = {};
 	VulkanTextureParameters color_attachment_parameters = {};
@@ -1759,12 +1891,27 @@ void resize_swap_chain(Renderer &renderer)
 	color_attachment_parameters.format = renderer.swap_chain.swap_chain_format;
 	color_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
 	color_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
-	color_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	color_attachment_parameters.samples = renderer.device.max_sample_count;
+	color_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+	color_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	create_texture(color_attachment, color_attachment_parameters);
 
 	renderer.data.textures["RENDER_PASS_ATTACHMENT_COLOR"] = color_attachment;
+
+	VulkanTexture volume_attachment = {};
+	VulkanTextureParameters volume_attachment_parameters = {};
+	volume_attachment_parameters.device = renderer.device;
+	volume_attachment_parameters.command_pool = renderer.device.command_pool;
+	volume_attachment_parameters.memory_manager = &renderer.memory_manager;
+	volume_attachment_parameters.format = renderer.swap_chain.swap_chain_format;
+	volume_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
+	volume_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
+	volume_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	volume_attachment_parameters.samples = renderer.device.max_sample_count;
+
+	create_texture(volume_attachment, volume_attachment_parameters);
+
+	renderer.data.textures["RENDER_PASS_ATTACHMENT_VOLUME"] = volume_attachment;
 
 	VulkanTexture depth_attachment = {};
 	VulkanTextureParameters depth_attachment_parameters = {};
@@ -1774,12 +1921,27 @@ void resize_swap_chain(Renderer &renderer)
 	depth_attachment_parameters.format = find_depth_format(renderer.device.physical_device);
 	depth_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
 	depth_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
-	depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-	depth_attachment_parameters.samples = renderer.device.max_sample_count;
+	depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+	depth_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	create_texture(depth_attachment, depth_attachment_parameters);
 
 	renderer.data.textures["RENDER_PASS_ATTACHMENT_DEPTH"] = depth_attachment;
+
+	VulkanTexture volume_depth_attachment = {};
+	VulkanTextureParameters volume_depth_attachment_parameters = {};
+	volume_depth_attachment_parameters.device = renderer.device;
+	volume_depth_attachment_parameters.command_pool = renderer.device.command_pool;
+	volume_depth_attachment_parameters.memory_manager = &renderer.memory_manager;
+	volume_depth_attachment_parameters.format = find_depth_format(renderer.device.physical_device);
+	volume_depth_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
+	volume_depth_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
+	volume_depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	volume_depth_attachment_parameters.samples = renderer.device.max_sample_count;
+
+	create_texture(volume_depth_attachment, volume_depth_attachment_parameters);
+
+	renderer.data.textures["RENDER_PASS_ATTACHMENT_VOLUME_DEPTH"] = volume_depth_attachment;
 
 	// Create render passes
 	VulkanRenderPass render_pass = {};
@@ -1789,69 +1951,100 @@ void resize_swap_chain(Renderer &renderer)
 	render_pass_parameters.memory_manager = &(renderer.memory_manager);
 	render_pass_parameters.swap_chain = renderer.swap_chain;
 
+	// Description for swap chain image attachment
 	VulkanRenderPassAttachment resolve_attachment_description = {};
 	resolve_attachment_description.attachment_format = renderer.swap_chain.swap_chain_format;
 	resolve_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	resolve_attachment_description.final_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	resolve_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
 
+	// Description for color attachment (Before downsampling)
 	VulkanRenderPassAttachment color_attachment_description = {};
 	color_attachment_description.attachment = renderer.data.textures["RENDER_PASS_ATTACHMENT_COLOR"];
 	color_attachment_description.attachment_format = color_attachment_description.attachment.format;
 	color_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	color_attachment_description.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	color_attachment_description.samples = renderer.device.max_sample_count;
+	color_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
 
+	// Description for depth attachment
 	VulkanRenderPassAttachment depth_attachment_description = {};
 	depth_attachment_description.attachment = renderer.data.textures["RENDER_PASS_ATTACHMENT_DEPTH"];
 	depth_attachment_description.attachment_format = depth_attachment_description.attachment.format;
 	depth_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	depth_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	depth_attachment_description.samples = renderer.device.max_sample_count;
+	depth_attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
 
-	VkSubpassDependency opaque_dependency = {};
-	opaque_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	opaque_dependency.dstSubpass = 0;
-	opaque_dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	opaque_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	opaque_dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	opaque_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	opaque_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	// Description for volumetric lighting color attachment
+	VulkanRenderPassAttachment volume_attachment_description = {};
+	volume_attachment_description.attachment = renderer.data.textures["RENDER_PASS_ATTACHMENT_VOLUME"];
+	volume_attachment_description.attachment_format = volume_attachment_description.attachment.format;
+	volume_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	volume_attachment_description.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	volume_attachment_description.samples = renderer.device.max_sample_count;
 
-	VkSubpassDependency transparent_opaque_dependency = {};
-	transparent_opaque_dependency.srcSubpass = 0;
-	transparent_opaque_dependency.dstSubpass = 1;
-	transparent_opaque_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	transparent_opaque_dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	transparent_opaque_dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	transparent_opaque_dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	transparent_opaque_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	// Description for volumetric lighting depth attachment
+	VulkanRenderPassAttachment volume_depth_attachment_description = {};
+	volume_depth_attachment_description.attachment = renderer.data.textures["RENDER_PASS_ATTACHMENT_VOLUME_DEPTH"];
+	volume_depth_attachment_description.attachment_format = volume_depth_attachment_description.attachment.format;
+	volume_depth_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	volume_depth_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	volume_depth_attachment_description.samples = renderer.device.max_sample_count;
 
-	VkSubpassDependency transparent_external_dependency = {};
-	transparent_external_dependency.srcSubpass = 0;
-	transparent_external_dependency.dstSubpass = VK_SUBPASS_EXTERNAL;
-	transparent_external_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	transparent_external_dependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	transparent_external_dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	transparent_external_dependency.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	transparent_external_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	// Dependency between volumetric lighting subpass and text subpass
+	VkSubpassDependency volume_text_dependency = {};
+	volume_text_dependency.srcSubpass = 1;
+	volume_text_dependency.dstSubpass = 2;
+	volume_text_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	volume_text_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	volume_text_dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	volume_text_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	volume_text_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
+	// Dependency between opaque subpass and volume subpass
+	VkSubpassDependency opaque_volume_color_dependency = {};
+	opaque_volume_color_dependency.srcSubpass = 0;
+	opaque_volume_color_dependency.dstSubpass = 1;
+	opaque_volume_color_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	opaque_volume_color_dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	opaque_volume_color_dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	opaque_volume_color_dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	opaque_volume_color_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	VkSubpassDependency opaque_volume_depth_dependency = {};
+	opaque_volume_depth_dependency.srcSubpass = 0;
+	opaque_volume_depth_dependency.dstSubpass = 1;
+	opaque_volume_depth_dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	opaque_volume_depth_dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	opaque_volume_depth_dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	opaque_volume_depth_dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	opaque_volume_depth_dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	// Description of opaque subpass
 	VulkanRenderPassSubpassDescription subpass_opaque_description = {};
 	subpass_opaque_description.color_attachments = { 1 };
 	subpass_opaque_description.depth_attachment = 2;
 	subpass_opaque_description.use_depth = true;
-	subpass_opaque_description.dependencies = { opaque_dependency };
+	subpass_opaque_description.dependencies = {};
 
-	VulkanRenderPassSubpassDescription subpass_transparent_description = {};
-	subpass_transparent_description.color_attachments = { 1 };
-	subpass_transparent_description.resolve_attachments = { 0 };
-	subpass_transparent_description.depth_attachment = { 2 };
-	subpass_transparent_description.use_depth = true;
-	subpass_transparent_description.dependencies = { transparent_opaque_dependency, transparent_external_dependency };
+	// Description of volumetric lighting subpass
+	VulkanRenderPassSubpassDescription subpass_volume_description = {};
+	subpass_volume_description.color_attachments = { 3 };
+	subpass_volume_description.depth_attachment = 4;
+	subpass_volume_description.input_attachments = { 1, 2 };
+	subpass_volume_description.use_depth = true;
+	subpass_volume_description.dependencies = { opaque_volume_color_dependency, opaque_volume_depth_dependency };
+
+	// Description of text subpass
+	VulkanRenderPassSubpassDescription subpass_text_description = {};
+	subpass_text_description.color_attachments = { 3 };
+	subpass_text_description.resolve_attachments = { 0 };
+	subpass_text_description.depth_attachment = { 4 };
+	subpass_text_description.use_depth = true;
+	subpass_text_description.dependencies = { volume_text_dependency };
 
 	VulkanRenderPassSubpasses subpasses = {};
-	subpasses.attachments = { resolve_attachment_description, color_attachment_description, depth_attachment_description };
-	subpasses.subpass_descriptions = { subpass_opaque_description, subpass_transparent_description };
+	subpasses.attachments = { resolve_attachment_description, color_attachment_description, depth_attachment_description, volume_attachment_description, volume_depth_attachment_description };
+	subpasses.subpass_descriptions = { subpass_opaque_description, subpass_volume_description, subpass_text_description };
 
 	render_pass_parameters.subpasses = subpasses;
 
@@ -2083,6 +2276,7 @@ void resize_swap_chain(Renderer &renderer)
 	VulkanPipeline pipeline_blue = {};
 	VulkanPipeline pipeline_yellow = {};
 	VulkanPipeline pipeline_text = {};
+	VulkanPipeline pipeline_volume = {};
 	VulkanPipelineParameters pipeline_parameters = {};
 	pipeline_parameters.attribute_descriptions = attribute_descriptions;
 	pipeline_parameters.binding_descriptions = binding_descriptions;
@@ -2100,6 +2294,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.viewport_offset_x = (w - pipeline_parameters.viewport_width) / 2;
 	pipeline_parameters.viewport_offset_y = (h - pipeline_parameters.viewport_height) / 2;
 	pipeline_parameters.subpass = 0;
+	pipeline_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	create_pipeline(pipeline_green, pipeline_parameters);
 	pipelines["standard_green"] = pipeline_green;
@@ -2115,6 +2310,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.num_uniform_buffers -= 1;
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_blue.spv"] };
+	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT };
 	pipeline_parameters.num_textures += 5;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
@@ -2126,11 +2322,22 @@ void resize_swap_chain(Renderer &renderer)
 	create_pipeline(pipeline_yellow, pipeline_parameters);
 	pipelines["standard_yellow"] = pipeline_yellow;
 
+	pipeline_parameters.subpass = 1;
+	pipeline_parameters.num_uniform_buffers = 2;
+	pipeline_parameters.num_input_attachments = 2;
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_volume.spv"] };
+	pipeline_parameters.pipeline_barriers = { /*depth_pipeline_barrier*/ };
+	pipeline_parameters.samples = VkSampleCountFlagBits(0);
+
+	create_pipeline(pipeline_volume, pipeline_parameters);
+	pipelines["volume"] = pipeline_volume;
+
+	pipeline_parameters.pipeline_barriers = {};
 	pipeline_parameters.attribute_descriptions = attribute_descriptions_tex_coords;
 	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
 	pipeline_parameters.num_textures = 1;
 	pipeline_parameters.num_uniform_buffers = 1;
-	pipeline_parameters.subpass = 1;
+	pipeline_parameters.subpass = 2;
 	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT };
 	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
@@ -2229,10 +2436,12 @@ void resize_swap_chain(Renderer &renderer)
 	box_internals_pipelines["BOX_INTERNALS"] = box_internals_pipeline;
 
 	// Create render pass managers
-	std::vector<VkClearValue> clear_values(3);
+	std::vector<VkClearValue> clear_values(5);
 	clear_values[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 	clear_values[1].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 	clear_values[2].depthStencil = { 1.0f, 0 };
+	clear_values[3].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clear_values[4].depthStencil = { 1.0f, 0 };
 
 	RenderPassManager render_pass_manager = {};
 	RenderPassManagerParameters render_pass_manager_parameters = {};
@@ -2388,6 +2597,30 @@ void resize_swap_chain(Renderer &renderer)
 	mat_text.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_text.pipelines[0]] };
 	mat_text.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_text.pipelines[0]] };
 
+	Material mat_volume = {};
+	mat_volume.models = { &renderer.data.models["SQUARE"] };
+	mat_volume.pipelines = { "volume" };
+	mat_volume.textures = {};
+	mat_volume.input_attachments = { renderer.data.textures["RENDER_PASS_ATTACHMENT_COLOR"], renderer.data.textures["RENDER_PASS_ATTACHMENT_DEPTH"] };
+	mat_volume.use_lights = LIGHT_USAGE_ALL;
+	mat_volume.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_volume.pipelines[0]] };
+	mat_volume.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_volume.pipelines[0]] };
+	mat_volume.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_volume.pipelines[0]] };
 
-	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text };
+	for (uint32_t i = 0; i < max_lights; i++)
+	{
+		mat_volume.textures.push_back({ renderer.data.textures["SHADOW_MAP_ATTACHMENT_" + std::to_string(i)] });
+	}
+
+	renderer.data.materials = { mat_green_cube, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text, mat_volume };
+
+
+	// Recreate instance for volumetric fog
+	free_instance(renderer, renderer.volume_instance);
+
+	InstanceParameters volume_instance_parameters = {};
+	volume_instance_parameters.light_index = -1;
+	volume_instance_parameters.material = MATERiAL_VOLUME;
+	volume_instance_parameters.uniform_buffers = { {renderer.volume_buffer} };
+	renderer.volume_instance = create_instance(renderer, volume_instance_parameters);
 }

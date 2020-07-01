@@ -139,5 +139,8 @@
     <None Include="Resources\vert_box_internals.vert">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Resources\frag_volume.frag">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

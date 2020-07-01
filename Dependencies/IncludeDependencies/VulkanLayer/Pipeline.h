@@ -61,6 +61,7 @@ struct VulkanPipelineParameters
 	std::vector<VkVertexInputAttributeDescription> attribute_descriptions;
 	uint32_t num_textures;
 	uint32_t num_uniform_buffers;
+	uint32_t num_input_attachments;
 
 	// Represents stages at which uniform buffers can be accessed
 	std::vector<VkShaderStageFlags> access_stages;

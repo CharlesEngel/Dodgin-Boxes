@@ -31,6 +31,7 @@ const std::vector<std::string> shaders = {
 	"Resources/frag_blue.spv",
 	"Resources/frag_box_internals.spv",
 	"Resources/frag_empty.spv",
+	"Resources/frag_volume.spv",
 	"Resources/frag_yellow.spv",
 	"Resources/frag_yellow_reflect.spv",
 	"Resources/frag_text.spv"

@@ -34,7 +34,8 @@ enum MaterialIds
 	MATERIAL_RED_SQUARE = 1,
 	MATERIAL_BLUE_CUBE = 2,
 	MATERIAL_YELLOW_CUBE = 3,
-	MATERIAL_TEXT = 4
+	MATERIAL_TEXT = 4,
+	MATERiAL_VOLUME = 5
 };
 
 enum LightType
@@ -61,6 +62,7 @@ struct Material
 
 	// Not a pointer because this needs to be passes as-is
 	std::vector<std::vector<VulkanTexture>> textures;
+	std::vector<VulkanTexture> input_attachments;
 	LightUsage use_lights;
 
 	std::vector<std::vector<VulkanResource>*> resources;
@@ -113,6 +115,14 @@ struct ReflectionMapUniformBuffer
 {
 	glm::mat4 view[6];
 	glm::mat4 proj;
+};
+
+struct VolumeUniformBuffer
+{
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+	int light_index;
 };
 
 struct ShadowMapFragmentUniformBuffer
@@ -184,6 +194,8 @@ struct Renderer
 	ShadowMapUniformBuffer shadow_map_uniform;
 	std::string reflection_map_buffer;
 	std::string box_internals_buffer;
+	std::string volume_buffer;
+	std::string volume_instance;
 };
 
 struct RendererParameters

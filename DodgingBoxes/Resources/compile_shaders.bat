@@ -11,6 +11,7 @@ C:/VulkanSDK/1.2.141.2/Bin32/glslc.exe frag_red_reflect.frag -o frag_red_reflect
 C:/VulkanSDK/1.2.141.2/Bin32/glslc.exe frag_blue.frag -o frag_blue.spv
 C:/VulkanSDK/1.2.141.2/Bin32/glslc.exe frag_box_internals.frag -o frag_box_internals.spv
 C:/VulkanSDK/1.2.141.2/Bin32/glslc.exe frag_empty.frag -o frag_empty.spv
+C:/VulkanSDK/1.2.141.2/Bin32/glslc.exe frag_volume.frag -o frag_volume.spv
 C:/VulkanSDK/1.2.141.2/Bin32/glslc.exe frag_yellow.frag -o frag_yellow.spv
 C:/VulkanSDK/1.2.141.2/Bin32/glslc.exe frag_yellow_reflect.frag -o frag_yellow_reflect.spv
 C:/VulkanSDK/1.2.141.2/Bin32/glslc.exe frag_text.frag -o frag_text.spv

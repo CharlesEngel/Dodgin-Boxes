@@ -159,5 +159,5 @@ void main() {
 	diffuse_color[lightIndex] = vec3(0.0, 0.0, 0.0);
 
 	vec4 color = vec4(ambient_color + depth_map_value_0 * diffuse_color[0] + depth_map_value_1 * diffuse_color[1] + depth_map_value_2 * diffuse_color[2] + depth_map_value_3 * diffuse_color[3] + depth_map_value_4 * diffuse_color[4] + depth_map_value_5 * diffuse_color[5] + depth_map_value_6 * diffuse_color[6] + depth_map_value_7 * diffuse_color[7] + depth_map_value_8 * diffuse_color[8] + depth_map_value_9 * diffuse_color[9] + depth_map_value_10 * diffuse_color[10] + depth_map_value_11 * diffuse_color[11] + depth_map_value_12 * diffuse_color[12] + depth_map_value_13 * diffuse_color[13], 1.0);
-	outColor = (0.5 * reflect_value + color);
+	outColor = (0.4 * reflect_value + color);
 }

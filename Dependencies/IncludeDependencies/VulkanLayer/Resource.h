@@ -12,8 +12,8 @@ struct VulkanResource
 	VulkanPipeline pipeline;
 	VkDescriptorPool descriptor_pool;
 	std::vector<VkDescriptorSet> descriptor_sets;
-	std::vector<std::vector<VulkanBuffer>> uniform_buffers;
-	std::vector<std::vector<VulkanTexture>> textures;
+	/*std::vector<std::vector<VulkanBuffer>> uniform_buffers;
+	std::vector<std::vector<VulkanTexture>> textures;*/
 };
 
 struct VulkanResourceParameters
@@ -23,6 +23,7 @@ struct VulkanResourceParameters
 	VulkanSwapChain swap_chain;
 	std::vector<std::vector<VulkanBuffer>> uniform_buffers;
 	std::vector<std::vector<VulkanTexture>> textures;
+	std::vector<VulkanTexture> input_attachments;
 };
 
 // Initializes values in VulkanResource
