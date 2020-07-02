@@ -851,6 +851,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
 	pipeline_parameters.num_textures = 1;
 	pipeline_parameters.num_uniform_buffers = 1;
+	pipeline_parameters.num_input_attachments = 0;
 	pipeline_parameters.subpass = 2;
 	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT };
 	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);
@@ -2326,7 +2327,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.num_uniform_buffers = 2;
 	pipeline_parameters.num_input_attachments = 2;
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_volume.spv"] };
-	pipeline_parameters.pipeline_barriers = { /*depth_pipeline_barrier*/ };
+	pipeline_parameters.pipeline_barriers = {  };
 	pipeline_parameters.samples = VkSampleCountFlagBits(0);
 
 	create_pipeline(pipeline_volume, pipeline_parameters);
@@ -2337,6 +2338,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.binding_descriptions = binding_descriptions_tex_coords;
 	pipeline_parameters.num_textures = 1;
 	pipeline_parameters.num_uniform_buffers = 1;
+	pipeline_parameters.num_input_attachments = 0;
 	pipeline_parameters.subpass = 2;
 	pipeline_parameters.access_stages = { VK_SHADER_STAGE_VERTEX_BIT };
 	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE | PIPELINE_BACKFACE_CULL_DISABLE | PIPELINE_DEPTH_TEST_DISABLE);

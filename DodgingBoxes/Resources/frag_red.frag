@@ -41,9 +41,9 @@ float VectorToDepth (vec3 Vec)
 	return clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - 1.0002, 0.0, 1.0);
 }
 
-float g1(float dotNV, float k) {
+/*float g1(float dotNV, float k) {
 	return 1.0 / (dotNV * (1.0 - k) + k);
-}
+}*/
 
 float fresnel(vec3 v, vec3 l, float ind) {
 	vec3 h = normalize(v + l);
@@ -89,7 +89,7 @@ void main() {
 	float yCellLowBound = yCellWidth * .1;
 	float yCellHighBound = yCellWidth - yCellLowBound;
 
-	float ambient_intensity = 0.8 * tiles.isActive[int(xGridCell * 14 + yGridCell)] * step(xCellLeftBound, xCellPosition) * step(xCellPosition, xCellRightBound) * step(yCellLowBound, yCellPosition) * step(yCellPosition, yCellHighBound) + 0.125;
+	float ambient_intensity = 0.6 * tiles.isActive[int(xGridCell * 14 + yGridCell)] * step(xCellLeftBound, xCellPosition) * step(xCellPosition, xCellRightBound) * step(yCellLowBound, yCellPosition) * step(yCellPosition, yCellHighBound) + 0.17;
 	vec3 ambient_color = ambient_intensity * vec3(0.65, 0.1, 0.12);
 
 	vec3 diffuse_color[14];

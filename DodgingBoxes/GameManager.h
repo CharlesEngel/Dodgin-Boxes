@@ -23,10 +23,10 @@ struct FloorFragUniform
 };
 
 // Width of floor tile
-const float tileWidth = 2.071f / 14;
+const float tileWidth = (5.f * tan(glm::radians(45.f / 2.f))) / 14;
 
 // Width of half the floor 
-const float halfWidth = 1.0355f;
+const float halfWidth = (2.5f * tan(glm::radians(45.f / 2.f)));
 
 class GameManager
 {

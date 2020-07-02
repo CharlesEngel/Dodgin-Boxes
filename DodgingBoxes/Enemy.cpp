@@ -95,7 +95,7 @@ void Enemy::update(double time)
 		location += static_cast<float>(time) * velocity;
 
 		// Update position
-		collider.set_placement(location + glm::vec2(-scale_factor / 2.f, -scale_factor / 2.f), glm::vec2(scale_factor, scale_factor));
+		collider.set_placement(location + .90f * glm::vec2(-scale_factor / 2.f, -scale_factor / 2.f), .90f * glm::vec2(scale_factor, scale_factor));
 	}
 	else if (state == ENEMY_DYING)
 	{
