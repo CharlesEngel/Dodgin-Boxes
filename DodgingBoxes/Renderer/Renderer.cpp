@@ -167,8 +167,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	shadow_map_attachment_parameters.command_pool = renderer.device.command_pool;
 	shadow_map_attachment_parameters.memory_manager = &renderer.memory_manager;
 	shadow_map_attachment_parameters.format = find_depth_format(renderer.device.physical_device);
-	shadow_map_attachment_parameters.width = 512;
-	shadow_map_attachment_parameters.height = 512;
+	shadow_map_attachment_parameters.width = 256;
+	shadow_map_attachment_parameters.height = 256;
 	shadow_map_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	shadow_map_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 	shadow_map_attachment_parameters.layers = 6;
@@ -212,8 +212,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_attachment_parameters.memory_manager = &renderer.memory_manager;
 	reflection_map_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 	reflection_map_attachment_parameters.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	reflection_map_attachment_parameters.width = 512;
-	reflection_map_attachment_parameters.height = 512;
+	reflection_map_attachment_parameters.width = 128;
+	reflection_map_attachment_parameters.height = 128;
 	reflection_map_attachment_parameters.layers = 6;
 	reflection_map_attachment_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	reflection_map_attachment_parameters.flags = TEXTURE_CUBE;
@@ -228,12 +228,12 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_final_parameters.memory_manager = &renderer.memory_manager;
 	reflection_map_final_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 	reflection_map_final_parameters.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	reflection_map_final_parameters.width = 512;
-	reflection_map_final_parameters.height = 512;
+	reflection_map_final_parameters.width = 128;
+	reflection_map_final_parameters.height = 128;
 	reflection_map_final_parameters.layers = 6;
 	reflection_map_final_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	reflection_map_final_parameters.flags = TEXTURE_CUBE;
-	reflection_map_final_parameters.mip_levels = 10;
+	reflection_map_final_parameters.mip_levels = 8;
 
 	create_texture(reflection_map_final, reflection_map_final_parameters);
 	textures["REFLECTION_MAP_FINAL"] = reflection_map_final;
@@ -245,8 +245,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflection_map_depth_attachment_parameters.memory_manager = &renderer.memory_manager;
 	reflection_map_depth_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 	reflection_map_depth_attachment_parameters.format = find_depth_format(renderer.device.physical_device);
-	reflection_map_depth_attachment_parameters.width = 512;
-	reflection_map_depth_attachment_parameters.height = 512;
+	reflection_map_depth_attachment_parameters.width = 128;
+	reflection_map_depth_attachment_parameters.height = 128;
 	reflection_map_depth_attachment_parameters.layers = 6;
 	reflection_map_depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	reflection_map_depth_attachment_parameters.flags = TEXTURE_CUBE;
@@ -262,8 +262,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	box_internals_attachment_parameters.memory_manager = &renderer.memory_manager;
 	box_internals_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 	box_internals_attachment_parameters.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	box_internals_attachment_parameters.width = 512;
-	box_internals_attachment_parameters.height = 512;
+	box_internals_attachment_parameters.width = 64;
+	box_internals_attachment_parameters.height = 64;
 	box_internals_attachment_parameters.layers = 6;
 	box_internals_attachment_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	box_internals_attachment_parameters.flags = TEXTURE_CUBE;
@@ -278,12 +278,12 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	box_internals_final_parameters.memory_manager = &renderer.memory_manager;
 	box_internals_final_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 	box_internals_final_parameters.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	box_internals_final_parameters.width = 512;
-	box_internals_final_parameters.height = 512;
+	box_internals_final_parameters.width = 64;
+	box_internals_final_parameters.height = 64;
 	box_internals_final_parameters.layers = 6;
 	box_internals_final_parameters.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	box_internals_final_parameters.flags = TEXTURE_CUBE;
-	box_internals_final_parameters.mip_levels = 10;
+	box_internals_final_parameters.mip_levels = 7;
 
 	create_texture(box_internals_final, box_internals_final_parameters);
 	textures["BOX_INTERNALS_FINAL"] = box_internals_final;
@@ -295,8 +295,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	box_internals_attachment_depth_parameters.memory_manager = &renderer.memory_manager;
 	box_internals_attachment_depth_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 	box_internals_attachment_depth_parameters.format = find_depth_format(renderer.device.physical_device);
-	box_internals_attachment_depth_parameters.width = 512;
-	box_internals_attachment_depth_parameters.height = 512;
+	box_internals_attachment_depth_parameters.width = 64;
+	box_internals_attachment_depth_parameters.height = 64;
 	box_internals_attachment_depth_parameters.layers = 6;
 	box_internals_attachment_depth_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	box_internals_attachment_depth_parameters.flags = TEXTURE_CUBE;
@@ -874,8 +874,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_shadow_map_parameters.render_pass = shadow_map_render_pass;
 	pipeline_shadow_map_parameters.shaders = { renderer.data.shaders["Resources/vert_shadow_map.spv"] };
 	pipeline_shadow_map_parameters.swap_chain = renderer.swap_chain;
-	pipeline_shadow_map_parameters.viewport_width = 512;
-	pipeline_shadow_map_parameters.viewport_height = 512;
+	pipeline_shadow_map_parameters.viewport_width = 256;
+	pipeline_shadow_map_parameters.viewport_height = 256;
 	pipeline_shadow_map_parameters.viewport_offset_x = 0;
 	pipeline_shadow_map_parameters.viewport_offset_y = 0;
 	pipeline_shadow_map_parameters.subpass = 0;
@@ -906,8 +906,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflect_pipeline_parameters.render_pass = reflection_map_render_pass;
 	reflect_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_reflect_map.spv"], renderer.data.shaders["Resources/frag_yellow_reflect.spv"] };
 	reflect_pipeline_parameters.swap_chain = renderer.swap_chain;
-	reflect_pipeline_parameters.viewport_width = 512;
-	reflect_pipeline_parameters.viewport_height = 512;
+	reflect_pipeline_parameters.viewport_width = 128;
+	reflect_pipeline_parameters.viewport_height = 128;
 	reflect_pipeline_parameters.viewport_offset_x = 0;
 	reflect_pipeline_parameters.viewport_offset_y = 0;
 	reflect_pipeline_parameters.subpass = 0;
@@ -940,8 +940,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	box_internals_pipeline_parameters.render_pass = box_internals_render_pass;
 	box_internals_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_box_internals.spv"], renderer.data.shaders["Resources/frag_box_internals.spv"] };
 	box_internals_pipeline_parameters.swap_chain = renderer.swap_chain;
-	box_internals_pipeline_parameters.viewport_width = 512;
-	box_internals_pipeline_parameters.viewport_height = 512;
+	box_internals_pipeline_parameters.viewport_width = 64;
+	box_internals_pipeline_parameters.viewport_height = 64;
 	box_internals_pipeline_parameters.viewport_offset_x = 0;
 	box_internals_pipeline_parameters.viewport_offset_y = 0;
 	box_internals_pipeline_parameters.subpass = 0;
@@ -2327,7 +2327,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.num_uniform_buffers = 2;
 	pipeline_parameters.num_input_attachments = 2;
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_volume.spv"] };
-	pipeline_parameters.pipeline_barriers = {  };
+	pipeline_parameters.pipeline_barriers = { /*depth_pipeline_barrier*/ };
 	pipeline_parameters.samples = VkSampleCountFlagBits(0);
 
 	create_pipeline(pipeline_volume, pipeline_parameters);
@@ -2361,8 +2361,8 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_shadow_map_parameters.render_pass = shadow_map_render_pass;
 	pipeline_shadow_map_parameters.shaders = { renderer.data.shaders["Resources/vert_shadow_map.spv"] };
 	pipeline_shadow_map_parameters.swap_chain = renderer.swap_chain;
-	pipeline_shadow_map_parameters.viewport_width = 512;
-	pipeline_shadow_map_parameters.viewport_height = 512;
+	pipeline_shadow_map_parameters.viewport_width = 256;
+	pipeline_shadow_map_parameters.viewport_height = 256;
 	pipeline_shadow_map_parameters.viewport_offset_x = 0;
 	pipeline_shadow_map_parameters.viewport_offset_y = 0;
 	pipeline_shadow_map_parameters.subpass = 0;
@@ -2393,8 +2393,8 @@ void resize_swap_chain(Renderer &renderer)
 	reflect_pipeline_parameters.render_pass = reflection_map_render_pass;
 	reflect_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_reflect_map.spv"], renderer.data.shaders["Resources/frag_yellow_reflect.spv"] };
 	reflect_pipeline_parameters.swap_chain = renderer.swap_chain;
-	reflect_pipeline_parameters.viewport_width = 512;
-	reflect_pipeline_parameters.viewport_height = 512;
+	reflect_pipeline_parameters.viewport_width = 128;
+	reflect_pipeline_parameters.viewport_height = 128;
 	reflect_pipeline_parameters.viewport_offset_x = 0;
 	reflect_pipeline_parameters.viewport_offset_y = 0;
 	reflect_pipeline_parameters.subpass = 0;
@@ -2427,8 +2427,8 @@ void resize_swap_chain(Renderer &renderer)
 	box_internals_pipeline_parameters.render_pass = box_internals_render_pass;
 	box_internals_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_box_internals.spv"], renderer.data.shaders["Resources/frag_box_internals.spv"] };
 	box_internals_pipeline_parameters.swap_chain = renderer.swap_chain;
-	box_internals_pipeline_parameters.viewport_width = 512;
-	box_internals_pipeline_parameters.viewport_height = 512;
+	box_internals_pipeline_parameters.viewport_width = 64;
+	box_internals_pipeline_parameters.viewport_height = 64;
 	box_internals_pipeline_parameters.viewport_offset_x = 0;
 	box_internals_pipeline_parameters.viewport_offset_y = 0;
 	box_internals_pipeline_parameters.subpass = 0;

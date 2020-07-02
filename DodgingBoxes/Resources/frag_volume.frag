@@ -39,7 +39,7 @@ float VectorToDepth (vec3 Vec)
     const float f = 2.0;
     const float n = 0.001;
 
-	return clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - 1.0, 0.0, 1.0);
+	return clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - 1.0002, 0.0, 1.0);
 }
 
 float depthLinear(float depth)
@@ -60,7 +60,7 @@ void main()
 	vec3 end = vec3(inPosition.xy / 2.071, depth);
 	vec3 origin = vec3(inPosition.xy / 2.071, 2.0);
 
-	float numSteps = 10.0;
+	float numSteps = 8.0;
 
 	float distToEnd = distance(origin, end);
 	float stepSize = distToEnd / numSteps;

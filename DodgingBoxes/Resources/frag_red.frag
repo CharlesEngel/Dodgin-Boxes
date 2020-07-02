@@ -38,12 +38,8 @@ float VectorToDepth (vec3 Vec)
     const float f = 2.0;
     const float n = 0.001;
 
-	return clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - 1.0002, 0.0, 1.0);
+	return clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - 1.00025, 0.0, 1.0);
 }
-
-/*float g1(float dotNV, float k) {
-	return 1.0 / (dotNV * (1.0 - k) + k);
-}*/
 
 float fresnel(vec3 v, vec3 l, float ind) {
 	vec3 h = normalize(v + l);

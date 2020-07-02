@@ -144,8 +144,8 @@ void main() {
 	vec3 rNorm = reflect(normalize(inPosition - inCameraPos), normal);
 	vec3 intersect = IntersectWithRoom(inPosition, rNorm);
 	float roughness = getRoughness(inModelPos);
-	vec4 reflect_value = textureLod(reflectMapSampler, intersect - (inCenterPos), 10.0 * roughness);
-	vec3 ambient_color = textureLod(boxInternalsSampler, inModelPos, 3.0 + 7.0 * roughness).xyz;
+	vec4 reflect_value = textureLod(reflectMapSampler, intersect - (inCenterPos), 6.0 * roughness);
+	vec3 ambient_color = textureLod(boxInternalsSampler, inModelPos, 7.0 * roughness).xyz;
 
 	for (int i = 0; i < 14; i++)
 	{
