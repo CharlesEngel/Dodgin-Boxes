@@ -3,8 +3,8 @@
 #include <iostream>
 #include "Utilities.h"
 
-EnemyManager::EnemyManager(Renderer *renderer)
-	:	score_text_font(FONT_ARIAL), score_text(renderer, &score_text_font, glm::vec2(-0.95f, 0.93f), 1.0f, "SCORE:"), score_number_text(renderer, &score_text_font, glm::vec2(-0.5f, 0.93f), 1.0f, "0")
+EnemyManager::EnemyManager(Renderer *renderer, Font *font)
+	: score_text_font(font), score_text(renderer, score_text_font, glm::vec2(-0.95f, 0.93f), 1.0f, "SCORE:"), score_number_text(renderer, score_text_font, glm::vec2(-0.5f, 0.93f), 1.0f, "0")
 {
 	this->renderer = renderer;
 	type = 1;

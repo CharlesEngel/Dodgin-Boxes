@@ -151,7 +151,7 @@ kerning first= 89 second= 113 amount= -3
 kerning first= 89 second= 58 amount= -2
 kerning first= 87 second= 45 amount= -1
 kerning first= 86 second= 117 amount= -1
-kerning first= 80 second= 65 amount= -2
+kerning first= 80 second= 65 amount= -3
 kerning first= 89 second= 105 amount= -1
 kerning first= 87 second= 58 amount= -1
 kerning first= 32 second= 89 amount= -1
@@ -193,5 +193,7 @@ kerning first= 86 second= 121 amount= -1
 kerning first= 65 second= 87 amount= -1
 kerning first= 87 second= 117 amount= -1
 kerning first= 65 second= 32 amount= -2
+kerning first= 65 second= 85 amount= -3
+kerning first= 85 second= 83 amount= -2
 kerning first= 65 second= 121 amount= -1
 kerning first= 86 second= 45 amount= -2

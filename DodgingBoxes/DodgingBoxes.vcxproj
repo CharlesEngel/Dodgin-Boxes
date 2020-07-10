@@ -178,6 +178,7 @@
     <ClCompile Include="EnemyManager.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="GameManager.cpp" />
+    <ClCompile Include="PauseScreen.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="Text.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="Font.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="PauseScreen.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Renderer\Renderer.h" />
     <ClInclude Include="Text.h" />
@@ -200,6 +202,7 @@
     <None Include="Resources\compile_shaders.bat" />
     <None Include="Resources\frag_blue.frag" />
     <None Include="Resources\frag_box_internals.frag" />
+    <None Include="Resources\frag_darken.frag" />
     <None Include="Resources\frag_empty.frag" />
     <None Include="Resources\frag_green.frag" />
     <None Include="Resources\frag_red.frag" />
@@ -215,6 +218,7 @@
     <None Include="Resources\vert_standard_light_index.vert" />
     <None Include="Resources\vert_standard_tex_coord.vert" />
     <None Include="Resources\vert_text.vert" />
+    <None Include="Resources\vert_darken.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

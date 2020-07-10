@@ -51,6 +51,9 @@
     <ClCompile Include="Text.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PauseScreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer\Renderer.h">
@@ -84,6 +87,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PauseScreen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -140,6 +146,12 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="Resources\frag_volume.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_darken.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\vert_darken.vert">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

@@ -8,7 +8,7 @@
 class EnemyManager : public GameObject
 {
 public:
-	EnemyManager(Renderer *renderer);
+	EnemyManager(Renderer *renderer, Font *font);
 	virtual ~EnemyManager();
 
 	virtual void update(double time);
@@ -27,7 +27,7 @@ private:
 	double spawn_time;
 
 	// TODO: Kinda weird for the EnemyManager to be the one doing this
-	Font score_text_font;
+	Font *score_text_font;
 	Text score_text;
 	Text score_number_text;
 };

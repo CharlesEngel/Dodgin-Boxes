@@ -2,11 +2,19 @@
 
 #include "GameObject.h"
 #include "Renderer/Renderer.h"
+#include "PauseScreen.h"
+
+enum GameState
+{
+	GAME_STATE_DEFAULT = 0,
+	GAME_STATE_PAUSED = 1
+};
 
 struct Input
 {
 	bool up, down, left, right;
 	bool w;
+	bool esc;
 };
 
 struct FloorVertUniform
@@ -57,5 +65,12 @@ private:
 	float view_height;
 	float active_tiles[196];
 
+	Font *font;
+
+	PauseScreen *pause_screen;
+
+	GameState state;
+
 	bool game_should_end;
+	bool esc_released;
 };

@@ -58,7 +58,7 @@ void main()
 
 	float depth = depthLinear(subpassLoad(inDepth).r) / 2.5;
 	vec3 end = vec3(inPosition.xy / 2.071, depth);
-	vec3 origin = vec3(inPosition.xy / 2.071, 2.0);
+	vec3 origin = vec3(inPosition.xy / 2.071, 2.4);
 
 	float numSteps = 8.0;
 
@@ -66,7 +66,7 @@ void main()
 	float stepSize = distToEnd / numSteps;
 	vec3 dir = normalize(end - origin);
 	vec3 pos = origin;
-	float overallOpacity = 1.0 / exp(distToEnd * 0.7);
+	float overallOpacity = 1.0 / exp(distToEnd * 0.6);
 
 	float depth_map_value[14];
 
@@ -89,7 +89,7 @@ void main()
 		depth_map_value[12] = texture(depthMapSampler12, vec4(normalize(pos - lights.location[12]), VectorToDepth(lights.location[12] - pos)));
 		depth_map_value[13] = texture(depthMapSampler13, vec4(normalize(pos - lights.location[13]), VectorToDepth(lights.location[13] - pos)));
 
-		float opacity = 1.0 / exp(distance(pos, origin) * 0.7);
+		float opacity = 1.0 / exp(distance(pos, origin) * 0.6);
 
 		vec3 lightValue = vec3(0.2, 0.2, 0.2);
 		for (int j = 0; j < 14; j++)
