@@ -4,7 +4,7 @@
 #include <string>
 #include <stack>
 
-struct SquareUniform
+struct DeathUniform
 {
 	glm::mat4 model;
 	glm::mat4 view;
@@ -12,34 +12,44 @@ struct SquareUniform
 	float time;
 };
 
-struct PauseDarkenUniform
+struct DeathDarkenUniform
 {
 	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 proj;
 };
 
-class PauseScreen : public GameObject
+class DeathScreen : public GameObject
 {
 public:
-	PauseScreen(Renderer *renderer, Font *font);
-	virtual ~PauseScreen();
+	DeathScreen(Renderer *renderer, Font *font, double *score_holder);
+	virtual ~DeathScreen();
 	virtual void update(double time);
 	virtual std::vector<Rectangle *> get_collider();
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const;
 	virtual void handle_external_collisions(const Rectangle *collider, const GameObject *other);
+
+	void write_high_score();
 
 private:
 	Renderer *renderer;
 
 	glm::vec3 location;
 
-	Text text;
+	Text game_over_text;
+	Text score_text;
+	Text score_number_text;
+	Text high_score_text;
+	Text high_score_number_text;
+	Text esc_restart_text;
+	Text enter_quit_text;
 	std::string square_uniform_buffer;
 	std::string square_instance;
 
 	std::string screen_darken_uniform_buffer;
 	std::string screen_darken_instance;
 
+	double *score;
+	double high_score;
 	float run_time;
 };

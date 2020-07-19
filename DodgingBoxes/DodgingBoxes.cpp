@@ -19,6 +19,7 @@ const std::vector<std::string> models = {
 
 const std::vector<std::string> shaders = {
 	"Resources/vert_standard.spv",
+	"Resources/vert_menu_screen.spv",
 	"Resources/vert_shadow_map.spv",
 	"Resources/vert_reflect_map.spv",
 	"Resources/vert_box_internals.spv",
@@ -26,7 +27,8 @@ const std::vector<std::string> shaders = {
 	"Resources/vert_standard_tex_coord.spv",
 	"Resources/vert_standard_light_index.spv",
 	"Resources/vert_text.spv",
-	"Resources/frag_green.spv",
+	"Resources/frag_pause_screen.spv",
+	"Resources/frag_death_screen.spv",
 	"Resources/frag_red.spv",
 	"Resources/frag_red_reflect.spv",
 	"Resources/frag_blue.spv",
@@ -87,7 +89,7 @@ int main()
 
 	uint16_t frame_count = 0;
 
-	while (!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(window) && !(game_manager->should_quit()))
 	{
 		glfwPollEvents();
 

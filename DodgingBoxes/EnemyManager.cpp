@@ -3,12 +3,13 @@
 #include <iostream>
 #include "Utilities.h"
 
-EnemyManager::EnemyManager(Renderer *renderer, Font *font)
+EnemyManager::EnemyManager(Renderer *renderer, Font *font, double *score_holder)
 	: score_text_font(font), score_text(renderer, score_text_font, glm::vec2(-0.95f, 0.93f), 1.0f, "SCORE:"), score_number_text(renderer, score_text_font, glm::vec2(-0.5f, 0.93f), 1.0f, "0")
 {
 	this->renderer = renderer;
 	type = 1;
 	score = 0;
+	score = score_holder;
 
 	enemies.push_back(new Enemy(renderer));
 	colliders.push_back(enemies[0]->get_collider()[0]);
@@ -27,7 +28,7 @@ EnemyManager::~EnemyManager()
 void EnemyManager::update(double time)
 {
 	spawn_time += time;
-	score += time * enemies.size();
+	*score += time * enemies.size();
 
 	auto enemy = enemies.begin();
 	while (enemy != enemies.end())
@@ -60,7 +61,7 @@ void EnemyManager::update(double time)
 		spawn_time = 0;
 	}
 
-	score_number_text.update_string(std::to_string(int(score)));
+	score_number_text.update_string(std::to_string(int(*score)));
 }
 
 std::vector<Rectangle *> EnemyManager::get_collider()

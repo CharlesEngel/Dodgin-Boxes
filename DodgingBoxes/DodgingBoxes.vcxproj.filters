@@ -54,6 +54,9 @@
     <ClCompile Include="PauseScreen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DeathScreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer\Renderer.h">
@@ -92,15 +95,15 @@
     <ClInclude Include="PauseScreen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DeathScreen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\frag_blue.frag">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="Resources\compile_shaders.bat">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="Resources\frag_green.frag">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="Resources\frag_red.frag">
@@ -152,6 +155,15 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="Resources\vert_darken.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\vert_menu_screen.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_pause_screen.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\frag_death_screen.frag">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

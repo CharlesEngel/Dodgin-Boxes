@@ -16,6 +16,7 @@ public:
 	virtual void handle_external_collisions(const Rectangle *collider, const GameObject *other);
 
 	void update_string(std::string string);
+	void update_position(glm::vec3 new_location);
 private:
 	Renderer *renderer;
 

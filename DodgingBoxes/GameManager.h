@@ -3,11 +3,13 @@
 #include "GameObject.h"
 #include "Renderer/Renderer.h"
 #include "PauseScreen.h"
+#include "DeathScreen.h"
 
 enum GameState
 {
 	GAME_STATE_DEFAULT = 0,
-	GAME_STATE_PAUSED = 1
+	GAME_STATE_PAUSED = 1,
+	GAME_STATE_OVER = 2
 };
 
 struct Input
@@ -15,6 +17,7 @@ struct Input
 	bool up, down, left, right;
 	bool w;
 	bool esc;
+	bool enter;
 };
 
 struct FloorVertUniform
@@ -46,7 +49,8 @@ public:
 	void update(double time, uint32_t width, uint32_t height);
 	void resolve_collisions();
 	void submit_for_rendering(uint32_t width, uint32_t height);
-	bool game_has_ended();
+	bool game_has_ended() const;
+	bool should_quit() const;
 
 	GameManager(const GameManager&) = delete;
 
@@ -64,13 +68,17 @@ private:
 	float view_width;
 	float view_height;
 	float active_tiles[196];
+	double score;
 
 	Font *font;
 
 	PauseScreen *pause_screen;
+	DeathScreen *death_screen;
 
 	GameState state;
 
 	bool game_should_end;
+	bool start_new_game;
 	bool esc_released;
+	bool user_quit;
 };

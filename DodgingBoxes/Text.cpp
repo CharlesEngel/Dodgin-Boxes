@@ -113,3 +113,8 @@ void Text::update_string(std::string string)
 		}
 	}
 }
+
+void Text::update_position(glm::vec3 new_location)
+{
+	location = new_location;
+}

@@ -7,3 +7,15 @@ int random_int(int low, int high)
 
 	return distribution(generator);
 }
+
+int num_digits(int value)
+{
+	int num = 0;
+	while (value != 0)
+	{
+		num++;
+		value /= 10;
+	}
+
+	return num;
+}

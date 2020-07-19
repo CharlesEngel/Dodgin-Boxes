@@ -784,8 +784,9 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 
 	glfwGetFramebufferSize(renderer.window, &w, &h);
 
-	std::unordered_map<std::string, VulkanPipeline> pipelines;
-	VulkanPipeline pipeline_green = {};
+	std::vector<std::pair<std::string, VulkanPipeline>> pipelines;
+	VulkanPipeline pipeline_pause_screen = {};
+	VulkanPipeline pipeline_death_screen = {};
 	VulkanPipeline pipeline_red = {};
 	VulkanPipeline pipeline_blue = {};
 	VulkanPipeline pipeline_yellow = {};
@@ -816,7 +817,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.access_stages.push_back(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	create_pipeline(pipeline_red, pipeline_parameters);
-	pipelines["standard_red"] = pipeline_red;
+	pipelines.push_back({ "standard_red", pipeline_red });
 
 	pipeline_parameters.num_uniform_buffers -= 1;
 
@@ -825,13 +826,13 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.num_textures += 5;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
-	pipelines["standard_blue"] = pipeline_blue;
+	pipelines.push_back({ "standard_blue", pipeline_blue });
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
 	pipeline_parameters.num_textures -= 5;
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
-	pipelines["standard_yellow"] = pipeline_yellow;
+	pipelines.push_back({ "standard_yellow", pipeline_yellow });
 
 	pipeline_parameters.subpass = 1;
 	pipeline_parameters.num_uniform_buffers = 2;
@@ -841,7 +842,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.samples = VkSampleCountFlagBits(0);
 
 	create_pipeline(pipeline_volume, pipeline_parameters);
-	pipelines["volume"] = pipeline_volume;
+	pipelines.push_back({ "volume", pipeline_volume });
 
 	pipeline_parameters.pipeline_barriers = {};
 	pipeline_parameters.attribute_descriptions = attribute_descriptions_tex_coords;
@@ -855,24 +856,30 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
 
 	create_pipeline(pipeline_text, pipeline_parameters);
-	pipelines["text"] = pipeline_text;
 
 	pipeline_parameters.attribute_descriptions = attribute_descriptions;
 	pipeline_parameters.binding_descriptions = binding_descriptions;
 	pipeline_parameters.num_textures = 0;
 	pipeline_parameters.pipeline_flags = static_cast<PipelineFlags>(PIPELINE_BLEND_ENABLE);
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_darken.spv"], renderer.data.shaders["Resources/frag_darken.spv"] };
-	
+
 	create_pipeline(pipeline_darken, pipeline_parameters);
-	pipelines["darken"] = pipeline_darken;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_green.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_menu_screen.spv"], renderer.data.shaders["Resources/frag_pause_screen.spv"] };
 
-	create_pipeline(pipeline_green, pipeline_parameters);
-	pipelines["standard_green"] = pipeline_green;
+	create_pipeline(pipeline_pause_screen, pipeline_parameters);
+
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_menu_screen.spv"], renderer.data.shaders["Resources/frag_death_screen.spv"] };
+
+	create_pipeline(pipeline_death_screen, pipeline_parameters);
+
+	pipelines.push_back({ "standard_pause", pipeline_pause_screen });
+	pipelines.push_back({ "standard_death", pipeline_death_screen });
+	pipelines.push_back({ "text", pipeline_text });
+	pipelines.push_back({ "darken", pipeline_darken });
 
 	// Create pipelines for shadow maps
-	std::unordered_map<std::string, VulkanPipeline> shadow_map_pipelines;
+	std::vector<std::pair<std::string, VulkanPipeline>> shadow_map_pipelines;
 	VulkanPipelineParameters pipeline_shadow_map_parameters = {};
 	pipeline_shadow_map_parameters.attribute_descriptions = attribute_descriptions;
 	pipeline_shadow_map_parameters.binding_descriptions = binding_descriptions;
@@ -898,11 +905,11 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 		pipeline_shadow_map_parameters.subpass = i;
 		VulkanPipeline shadow_pipeline = {};
 		create_pipeline(shadow_pipeline, pipeline_shadow_map_parameters);
-		shadow_map_pipelines["SHADOW_" + std::to_string(i)] = shadow_pipeline;
+		shadow_map_pipelines.push_back({ "SHADOW_" + std::to_string(i), shadow_pipeline });
 	}
 
 	// Create reflection map pipelines
-	std::unordered_map<std::string, VulkanPipeline> reflection_map_pipelines;
+	std::vector<std::pair<std::string, VulkanPipeline>> reflection_map_pipelines;
 	VulkanPipeline pipeline_red_reflect = {};
 	VulkanPipeline pipeline_yellow_reflect = {};
 	VulkanPipelineParameters reflect_pipeline_parameters = {};
@@ -926,18 +933,18 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	reflect_pipeline_parameters.pipeline_flags = PIPELINE_ORDER_CLOCKWISE;
 
 	create_pipeline(pipeline_yellow_reflect, reflect_pipeline_parameters);
-	reflection_map_pipelines["REFLECT_YELLOW"] = pipeline_yellow_reflect;
-	
+	reflection_map_pipelines.push_back({ "REFLECT_YELLOW", pipeline_yellow_reflect });
+
 	reflect_pipeline_parameters.pipeline_barriers = {};
 	reflect_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_reflect_map.spv"], renderer.data.shaders["Resources/frag_red_reflect.spv"] };
 	reflect_pipeline_parameters.access_stages.push_back(VK_SHADER_STAGE_FRAGMENT_BIT);
 	reflect_pipeline_parameters.num_uniform_buffers += 1;
 
 	create_pipeline(pipeline_red_reflect, reflect_pipeline_parameters);
-	reflection_map_pipelines["REFLECT_RED"] = pipeline_red_reflect;
+	reflection_map_pipelines.push_back({ "REFLECT_RED", pipeline_red_reflect });
 
 	// Create pipelines for box internals
-	std::unordered_map<std::string, VulkanPipeline> box_internals_pipelines = {};
+	std::vector<std::pair<std::string, VulkanPipeline>> box_internals_pipelines = {};
 	VulkanPipeline box_internals_pipeline = {};
 	VulkanPipelineParameters box_internals_pipeline_parameters = {};
 	box_internals_pipeline_parameters.attribute_descriptions = attribute_descriptions;
@@ -959,7 +966,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	box_internals_pipeline_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	create_pipeline(box_internals_pipeline, box_internals_pipeline_parameters);
-	box_internals_pipelines["BOX_INTERNALS"] = box_internals_pipeline;
+	box_internals_pipelines.push_back({ "BOX_INTERNALS", box_internals_pipeline });
 
 	// Create render pass managers
 	std::vector<VkClearValue> clear_values(5);
@@ -1012,14 +1019,23 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	renderer.render_passes = { shadow_map_render_pass_manager, reflection_map_render_pass_manager, box_internals_render_pass_manager, render_pass_manager };
 
 	// Create materials
-	Material mat_green_square = {};
-	mat_green_square.models = { &renderer.data.models["SQUARE"] };
-	mat_green_square.pipelines = { "standard_green" };
-	mat_green_square.textures = {};
-	mat_green_square.use_lights = LIGHT_USAGE_NONE;
-	mat_green_square.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_green_square.pipelines[0]] };
-	mat_green_square.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_green_square.pipelines[0]] };
-	mat_green_square.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_green_square.pipelines[0]] };
+	Material mat_pause_screen = {};
+	mat_pause_screen.models = { &renderer.data.models["SQUARE"] };
+	mat_pause_screen.pipelines = { "standard_pause" };
+	mat_pause_screen.textures = {};
+	mat_pause_screen.use_lights = LIGHT_USAGE_NONE;
+	mat_pause_screen.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_pause_screen.pipelines[0]] };
+	mat_pause_screen.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_pause_screen.pipelines[0]] };
+	mat_pause_screen.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_pause_screen.pipelines[0]] };
+
+	Material mat_death_screen = {};
+	mat_death_screen.models = { &renderer.data.models["SQUARE"] };
+	mat_death_screen.pipelines = { "standard_death" };
+	mat_death_screen.textures = {};
+	mat_death_screen.use_lights = LIGHT_USAGE_NONE;
+	mat_death_screen.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_death_screen.pipelines[0]] };
+	mat_death_screen.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_death_screen.pipelines[0]] };
+	mat_death_screen.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_death_screen.pipelines[0]] };
 
 	Material mat_red_square = {};
 	mat_red_square.models = { &renderer.data.models["SQUARE"] };
@@ -1051,13 +1067,13 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	}
 
 	Material mat_blue_cube = {};
-	mat_blue_cube.models = { &renderer.data.models["CUBE"]};
-	mat_blue_cube.pipelines = { "standard_blue"};
+	mat_blue_cube.models = { &renderer.data.models["CUBE"] };
+	mat_blue_cube.pipelines = { "standard_blue" };
 	mat_blue_cube.textures = {};
 	mat_blue_cube.use_lights = LIGHT_USAGE_ALL;
-	mat_blue_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_blue_cube.pipelines[0]]};
-	mat_blue_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_blue_cube.pipelines[0]]};
-	mat_blue_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_blue_cube.pipelines[0]]};
+	mat_blue_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_blue_cube.pipelines[0]] };
+	mat_blue_cube.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_blue_cube.pipelines[0]] };
 
 	{
 		std::string pipeline = "BOX_INTERNALS";
@@ -1086,8 +1102,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_blue_cube.textures.push_back({ renderer.data.textures["Resources/Roughness_Vert.jpg"] });
 
 	Material mat_yellow_cube = {};
-	mat_yellow_cube.models = { &renderer.data.models["CUBE"]};
-	mat_yellow_cube.pipelines = { "standard_yellow"};
+	mat_yellow_cube.models = { &renderer.data.models["CUBE"] };
+	mat_yellow_cube.pipelines = { "standard_yellow" };
 	mat_yellow_cube.textures = {  };
 	mat_yellow_cube.use_lights = LIGHT_USAGE_ALL;
 	mat_yellow_cube.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_yellow_cube.pipelines[0]] };
@@ -1148,7 +1164,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	mat_darken.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_darken.pipelines[0]] };
 	mat_darken.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_darken.pipelines[0]] };
 
-	renderer.data.materials = { mat_green_square, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text, mat_volume, mat_darken };
+	renderer.data.materials = { mat_pause_screen, mat_death_screen, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text, mat_volume, mat_darken };
 
 	// Create semaphores/fences
 	renderer.image_available_semaphores.resize(parameters.max_frames);
@@ -2292,8 +2308,9 @@ void resize_swap_chain(Renderer &renderer)
 
 	glfwGetFramebufferSize(renderer.window, &w, &h);
 
-	std::unordered_map<std::string, VulkanPipeline> pipelines;
-	VulkanPipeline pipeline_green = {};
+	std::vector<std::pair<std::string, VulkanPipeline>> pipelines;
+	VulkanPipeline pipeline_pause_screen = {};
+	VulkanPipeline pipeline_death_screen = {};
 	VulkanPipeline pipeline_red = {};
 	VulkanPipeline pipeline_blue = {};
 	VulkanPipeline pipeline_yellow = {};
@@ -2324,7 +2341,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.access_stages.push_back(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	create_pipeline(pipeline_red, pipeline_parameters);
-	pipelines["standard_red"] = pipeline_red;
+	pipelines.push_back({ "standard_red", pipeline_red });
 
 	pipeline_parameters.num_uniform_buffers -= 1;
 
@@ -2333,13 +2350,13 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.num_textures += 5;
 
 	create_pipeline(pipeline_blue, pipeline_parameters);
-	pipelines["standard_blue"] = pipeline_blue;
+	pipelines.push_back({ "standard_blue", pipeline_blue });
 
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard_light_index.spv"], renderer.data.shaders["Resources/frag_yellow.spv"] };
 	pipeline_parameters.num_textures -= 5;
 
 	create_pipeline(pipeline_yellow, pipeline_parameters);
-	pipelines["standard_yellow"] = pipeline_yellow;
+	pipelines.push_back({ "standard_yellow", pipeline_yellow });
 
 	pipeline_parameters.subpass = 1;
 	pipeline_parameters.num_uniform_buffers = 2;
@@ -2349,7 +2366,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.samples = VkSampleCountFlagBits(0);
 
 	create_pipeline(pipeline_volume, pipeline_parameters);
-	pipelines["volume"] = pipeline_volume;
+	pipelines.push_back({ "volume", pipeline_volume });
 
 	pipeline_parameters.pipeline_barriers = {};
 	pipeline_parameters.attribute_descriptions = attribute_descriptions_tex_coords;
@@ -2363,7 +2380,6 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_text.spv"], renderer.data.shaders["Resources/frag_text.spv"] };
 
 	create_pipeline(pipeline_text, pipeline_parameters);
-	pipelines["text"] = pipeline_text;
 
 	pipeline_parameters.attribute_descriptions = attribute_descriptions;
 	pipeline_parameters.binding_descriptions = binding_descriptions;
@@ -2372,15 +2388,22 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_darken.spv"], renderer.data.shaders["Resources/frag_darken.spv"] };
 
 	create_pipeline(pipeline_darken, pipeline_parameters);
-	pipelines["darken"] = pipeline_darken;
 
-	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_standard.spv"], renderer.data.shaders["Resources/frag_green.spv"] };
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_menu_screen.spv"], renderer.data.shaders["Resources/frag_pause_screen.spv"] };
 
-	create_pipeline(pipeline_green, pipeline_parameters);
-	pipelines["standard_green"] = pipeline_green;
+	create_pipeline(pipeline_pause_screen, pipeline_parameters);
+
+	pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_menu_screen.spv"], renderer.data.shaders["Resources/frag_death_screen.spv"] };
+
+	create_pipeline(pipeline_death_screen, pipeline_parameters);
+
+	pipelines.push_back({ "standard_pause", pipeline_pause_screen });
+	pipelines.push_back({ "standard_death", pipeline_death_screen });
+	pipelines.push_back({ "text", pipeline_text });
+	pipelines.push_back({ "darken", pipeline_darken });
 
 	// Create pipelines for shadow maps
-	std::unordered_map<std::string, VulkanPipeline> shadow_map_pipelines;
+	std::vector<std::pair<std::string, VulkanPipeline>> shadow_map_pipelines;
 	VulkanPipelineParameters pipeline_shadow_map_parameters = {};
 	pipeline_shadow_map_parameters.attribute_descriptions = attribute_descriptions;
 	pipeline_shadow_map_parameters.binding_descriptions = binding_descriptions;
@@ -2406,11 +2429,11 @@ void resize_swap_chain(Renderer &renderer)
 		pipeline_shadow_map_parameters.subpass = i;
 		VulkanPipeline shadow_pipeline = {};
 		create_pipeline(shadow_pipeline, pipeline_shadow_map_parameters);
-		shadow_map_pipelines["SHADOW_" + std::to_string(i)] = shadow_pipeline;
+		shadow_map_pipelines.push_back({ "SHADOW_" + std::to_string(i), shadow_pipeline });
 	}
 
 	// Create reflection map pipelines
-	std::unordered_map<std::string, VulkanPipeline> reflection_map_pipelines;
+	std::vector<std::pair<std::string, VulkanPipeline>> reflection_map_pipelines;
 	VulkanPipeline pipeline_red_reflect = {};
 	VulkanPipeline pipeline_yellow_reflect = {};
 	VulkanPipelineParameters reflect_pipeline_parameters = {};
@@ -2434,7 +2457,7 @@ void resize_swap_chain(Renderer &renderer)
 	reflect_pipeline_parameters.pipeline_flags = PIPELINE_ORDER_CLOCKWISE;
 
 	create_pipeline(pipeline_yellow_reflect, reflect_pipeline_parameters);
-	reflection_map_pipelines["REFLECT_YELLOW"] = pipeline_yellow_reflect;
+	reflection_map_pipelines.push_back({ "REFLECT_YELLOW", pipeline_yellow_reflect });
 
 	reflect_pipeline_parameters.pipeline_barriers = {};
 	reflect_pipeline_parameters.shaders = { renderer.data.shaders["Resources/vert_reflect_map.spv"], renderer.data.shaders["Resources/frag_red_reflect.spv"] };
@@ -2442,10 +2465,10 @@ void resize_swap_chain(Renderer &renderer)
 	reflect_pipeline_parameters.num_uniform_buffers += 1;
 
 	create_pipeline(pipeline_red_reflect, reflect_pipeline_parameters);
-	reflection_map_pipelines["REFLECT_RED"] = pipeline_red_reflect;
+	reflection_map_pipelines.push_back({ "REFLECT_RED", pipeline_red_reflect });
 
 	// Create pipelines for box internals
-	std::unordered_map<std::string, VulkanPipeline> box_internals_pipelines = {};
+	std::vector<std::pair<std::string, VulkanPipeline>> box_internals_pipelines = {};
 	VulkanPipeline box_internals_pipeline = {};
 	VulkanPipelineParameters box_internals_pipeline_parameters = {};
 	box_internals_pipeline_parameters.attribute_descriptions = attribute_descriptions;
@@ -2467,7 +2490,7 @@ void resize_swap_chain(Renderer &renderer)
 	box_internals_pipeline_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	create_pipeline(box_internals_pipeline, box_internals_pipeline_parameters);
-	box_internals_pipelines["BOX_INTERNALS"] = box_internals_pipeline;
+	box_internals_pipelines.push_back({ "BOX_INTERNALS", box_internals_pipeline });
 
 	// Create render pass managers
 	std::vector<VkClearValue> clear_values(5);
@@ -2520,14 +2543,23 @@ void resize_swap_chain(Renderer &renderer)
 	renderer.render_passes = { shadow_map_render_pass_manager, reflection_map_render_pass_manager, box_internals_render_pass_manager, render_pass_manager };
 
 	// Create materials
-	Material mat_green_square = {};
-	mat_green_square.models = { &renderer.data.models["SQUARE"] };
-	mat_green_square.pipelines = { "standard_green" };
-	mat_green_square.textures = {};
-	mat_green_square.use_lights = LIGHT_USAGE_NONE;
-	mat_green_square.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_green_square.pipelines[0]] };
-	mat_green_square.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_green_square.pipelines[0]] };
-	mat_green_square.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_green_square.pipelines[0]] };
+	Material mat_pause_screen = {};
+	mat_pause_screen.models = { &renderer.data.models["SQUARE"] };
+	mat_pause_screen.pipelines = { "standard_pause" };
+	mat_pause_screen.textures = {};
+	mat_pause_screen.use_lights = LIGHT_USAGE_NONE;
+	mat_pause_screen.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_pause_screen.pipelines[0]] };
+	mat_pause_screen.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_pause_screen.pipelines[0]] };
+	mat_pause_screen.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_pause_screen.pipelines[0]] };
+
+	Material mat_death_screen = {};
+	mat_death_screen.models = { &renderer.data.models["SQUARE"] };
+	mat_death_screen.pipelines = { "standard_death" };
+	mat_death_screen.textures = {};
+	mat_death_screen.use_lights = LIGHT_USAGE_NONE;
+	mat_death_screen.resources = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].resources[mat_death_screen.pipelines[0]] };
+	mat_death_screen.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_death_screen.pipelines[0]] };
+	mat_death_screen.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_death_screen.pipelines[0]] };
 
 	Material mat_red_square = {};
 	mat_red_square.models = { &renderer.data.models["SQUARE"] };
@@ -2656,7 +2688,7 @@ void resize_swap_chain(Renderer &renderer)
 	mat_darken.vertex_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].vertex_buffers[mat_darken.pipelines[0]] };
 	mat_darken.index_buffers = { &renderer.render_passes[RENDER_PASS_INDEX_DRAW].index_buffers[mat_darken.pipelines[0]] };
 
-	renderer.data.materials = { mat_green_square, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text, mat_volume, mat_darken };
+	renderer.data.materials = { mat_pause_screen, mat_death_screen, mat_red_square, mat_blue_cube, mat_yellow_cube, mat_text, mat_volume, mat_darken };
 
 
 	// Recreate instance for volumetric fog

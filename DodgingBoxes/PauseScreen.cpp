@@ -7,6 +7,7 @@ PauseScreen::PauseScreen(Renderer *renderer, Font *font)
 {
 	this->renderer = renderer;
 	location = glm::vec3(0.0, 0.0, 0.0);
+	run_time = 0.f;
 
 	UniformBufferParameters buffer_parameters = {};
 	buffer_parameters.range = sizeof(SquareUniform);
@@ -16,14 +17,14 @@ PauseScreen::PauseScreen(Renderer *renderer, Font *font)
 
 	InstanceParameters instance_parameters = {};
 	instance_parameters.light_index = -1;
-	instance_parameters.material = MATERIAL_GREEN_SQUARE;
+	instance_parameters.material = MATERIAL_PAUSE_SCREEN;
 	instance_parameters.uniform_buffers = { {square_uniform_buffer} };
 
 	square_instance = create_instance(*renderer, instance_parameters);
 
 	UniformBufferParameters darken_buffer_parameters = {};
-	darken_buffer_parameters.range = sizeof(SquareUniform);
-	darken_buffer_parameters.size = sizeof(SquareUniform);
+	darken_buffer_parameters.range = sizeof(PauseDarkenUniform);
+	darken_buffer_parameters.size = sizeof(PauseDarkenUniform);
 
 	screen_darken_uniform_buffer = get_uniform_buffer(*renderer, darken_buffer_parameters);
 
@@ -49,7 +50,7 @@ PauseScreen::~PauseScreen()
 
 void PauseScreen::update(double time)
 {
-
+	run_time += float(time);
 }
 
 std::vector<Rectangle *> PauseScreen::get_collider()
@@ -65,6 +66,7 @@ void PauseScreen::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float wid
 	uniform_data.model = glm::translate(glm::mat4(1), location) * glm::scale(glm::mat4(1), glm::vec3(0.6, 0.225, 1.0));
 	uniform_data.view = view;
 	uniform_data.proj = proj;
+	uniform_data.time = run_time;
 
 	UniformBufferUpdateParameters uniform_update = {};
 	uniform_update.buffer_name = square_uniform_buffer;
@@ -77,7 +79,7 @@ void PauseScreen::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float wid
 
 	submit_instance(*renderer, instance_submit);
 
-	SquareUniform darken_uniform_data = {};
+	PauseDarkenUniform darken_uniform_data = {};
 	darken_uniform_data.model = glm::translate(glm::mat4(1), glm::vec3(location.x, location.y, -0.5)) * glm::scale(glm::mat4(1), glm::vec3(2.072, 2.072, 1.0));
 	darken_uniform_data.view = view;
 	darken_uniform_data.proj = proj;

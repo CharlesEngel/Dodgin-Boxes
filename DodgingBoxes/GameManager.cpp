@@ -12,6 +12,8 @@ GameManager::GameManager(Renderer *renderer, uint32_t width, uint32_t height)
 {
 	this->renderer = renderer;
 	game_should_end = false;
+	start_new_game = false;
+	score = 0.0;
 
 	view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 10.0f);
@@ -23,7 +25,7 @@ GameManager::GameManager(Renderer *renderer, uint32_t width, uint32_t height)
 	font = new Font(FONT_ARIAL);
 
 	objects.push_back(new Player(renderer, &input, &game_should_end));
-	objects.push_back(new EnemyManager(renderer, font));
+	objects.push_back(new EnemyManager(renderer, font, &score));
 
 	transform = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.0, 0.0, -0.5)), glm::vec3(2.071, 2.071, 1.0));
 
@@ -49,12 +51,14 @@ GameManager::GameManager(Renderer *renderer, uint32_t width, uint32_t height)
 	state = GAME_STATE_DEFAULT;
 
 	pause_screen = new PauseScreen(renderer, font);
+	death_screen = new DeathScreen(renderer, font, &score);
 }
 
 GameManager::~GameManager()
 {
 	delete font;
 	delete pause_screen;
+	delete death_screen;
 
 	if (renderer->device.device != VK_NULL_HANDLE)
 	{
@@ -97,6 +101,10 @@ void GameManager::handle_input(GLFWwindow *window, int key, int scancode, int ac
 		{
 			input.esc = true;
 		}
+		else if (key == GLFW_KEY_ENTER)
+		{
+			input.enter = true;
+		}
 	}
 	else if (action == GLFW_RELEASE)
 	{
@@ -124,11 +132,21 @@ void GameManager::handle_input(GLFWwindow *window, int key, int scancode, int ac
 		{
 			input.esc = false;
 		}
+		else if (key == GLFW_KEY_ENTER)
+		{
+			input.enter = false;
+		}
 	}
 }
 
 void GameManager::update(double time, uint32_t width, uint32_t height)
 {
+	if (game_should_end && state != GAME_STATE_OVER)
+	{
+		state = GAME_STATE_OVER;
+		death_screen->write_high_score();
+	}
+
 	if (!input.esc)
 	{
 		esc_released = true;
@@ -143,8 +161,17 @@ void GameManager::update(double time, uint32_t width, uint32_t height)
 		{
 			state = GAME_STATE_PAUSED;
 		}
+		else if (state == GAME_STATE_OVER)
+		{
+			start_new_game = true;
+		}
 
 		esc_released = false;
+	}
+
+	if (state == GAME_STATE_OVER && input.enter)
+	{
+		user_quit = true;
 	}
 
 
@@ -188,6 +215,9 @@ void GameManager::update(double time, uint32_t width, uint32_t height)
 			object->update(time);
 		}
 	}
+
+	death_screen->update(time);
+	pause_screen->update(time);
 }
 
 void GameManager::resolve_collisions()
@@ -222,6 +252,10 @@ void GameManager::submit_for_rendering(uint32_t width, uint32_t height)
 	if (state == GAME_STATE_PAUSED)
 	{
 		pause_screen->submit_for_rendering(view, proj, view_width, view_height);
+	}
+	else if (state == GAME_STATE_OVER)
+	{
+		death_screen->submit_for_rendering(view, proj, view_width, view_height);
 	}
 
 	for (auto object : objects)
@@ -258,7 +292,12 @@ void GameManager::submit_for_rendering(uint32_t width, uint32_t height)
 	submit_instance(*renderer, submit_parameters);
 }
 
-bool GameManager::game_has_ended()
+bool GameManager::game_has_ended() const
 {
-	return game_should_end;
+	return start_new_game;
+}
+
+bool GameManager::should_quit() const
+{
+	return user_quit;
 }

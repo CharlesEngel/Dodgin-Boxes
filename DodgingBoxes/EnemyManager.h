@@ -8,7 +8,7 @@
 class EnemyManager : public GameObject
 {
 public:
-	EnemyManager(Renderer *renderer, Font *font);
+	EnemyManager(Renderer *renderer, Font *font, double *score_holder);
 	virtual ~EnemyManager();
 
 	virtual void update(double time);
@@ -22,7 +22,7 @@ private:
 	std::vector<Rectangle *> colliders;
 
 	const uint32_t max_enemies = 13;
-	double score;
+	double *score;
 
 	double spawn_time;
 

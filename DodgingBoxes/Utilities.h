@@ -6,3 +6,5 @@
 constexpr auto PI = 3.141592f;
 
 int random_int(int low, int high);
+
+int num_digits(int value);

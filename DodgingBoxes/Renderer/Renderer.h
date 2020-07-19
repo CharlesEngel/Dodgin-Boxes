@@ -30,13 +30,14 @@ enum RenderPassIds
 
 enum MaterialIds
 {
-	MATERIAL_GREEN_SQUARE = 0,
-	MATERIAL_RED_SQUARE = 1,
-	MATERIAL_BLUE_CUBE = 2,
-	MATERIAL_YELLOW_CUBE = 3,
-	MATERIAL_TEXT = 4,
-	MATERiAL_VOLUME = 5,
-	MATERIAL_DARKEN = 6
+	MATERIAL_PAUSE_SCREEN = 0,
+	MATERIAL_DEATH_SCREEN = 1,
+	MATERIAL_RED_SQUARE = 2,
+	MATERIAL_BLUE_CUBE = 3,
+	MATERIAL_YELLOW_CUBE = 4,
+	MATERIAL_TEXT = 5,
+	MATERiAL_VOLUME = 6,
+	MATERIAL_DARKEN = 7
 };
 
 enum LightType
@@ -144,7 +145,7 @@ struct BoxInternalsUniformBuffer
 struct RenderPassManager
 {
 	VulkanRenderPass pass;
-	std::unordered_map<std::string, VulkanPipeline> pass_pipelines;
+	std::vector<std::pair<std::string, VulkanPipeline>> pass_pipelines;
 
 	std::unordered_map<std::string, std::vector<VulkanResource>> resources;
 	std::unordered_map<std::string, std::vector<VulkanBuffer>> vertex_buffers;
@@ -270,7 +271,7 @@ struct DataManagerParameters
 struct RenderPassManagerParameters
 {
 	VulkanRenderPass pass;
-	std::unordered_map<std::string, VulkanPipeline> pass_pipelines;
+	std::vector<std::pair<std::string, VulkanPipeline>> pass_pipelines;
 	std::vector<VkClearValue> clear_values;
 
 	bool mip_map;
