@@ -51,10 +51,9 @@ void EnemyManager::update(double time)
 
 	if (spawn_time > (pow(3.0, (enemies.size()))))
 	{
-		if (enemies.size() < max_enemies/* && (random_int(0, 100) > 65)*/)
+		if (enemies.size() < max_enemies)
 		{
 			// If conditions line up, create enemy
-			//score += 100;
 			enemies.push_back(new Enemy(renderer));
 			colliders.push_back(enemies.back()->get_collider()[0]);
 		}
@@ -90,5 +89,21 @@ void EnemyManager::handle_external_collisions(const Rectangle *collider, const G
 
 		// Tell enemy to handle collision
 		enemies[index]->handle_external_collisions(collider, other);
+	}
+}
+
+void EnemyManager::pause()
+{
+	for (auto &enemy : enemies)
+	{
+		enemy->pause();
+	}
+}
+
+void EnemyManager::unpause()
+{
+	for (auto &enemy : enemies)
+	{
+		enemy->unpause();
 	}
 }

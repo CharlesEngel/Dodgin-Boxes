@@ -34,16 +34,29 @@ Enemy::Enemy(Renderer *renderer)
 	instance = create_instance(*renderer, instance_parameters);
 
 	collider.set_placement(location + glm::vec2(-scale_factor / 2.f, -scale_factor / 2.f), glm::vec2(scale_factor, scale_factor));
+
+	sound_manager = &SoundManager::get_instance();
+	enemy_sound = sound_manager->register_sound(SOUND_TYPE_ENEMY);
+
+	sound_manager->update_sound_loop(enemy_sound, true);
+	sound_manager->update_sound_gain(enemy_sound, 1.2);
+	sound_manager->update_sound_max_distance(enemy_sound, 0.04f);
+	sound_manager->update_sound_position(enemy_sound, location.x, location.y, 0.0);
+	sound_manager->play_sound(enemy_sound);
 }
 
 Enemy::~Enemy()
 {
+	sound_manager->stop_sound(enemy_sound);
+
 	if (renderer->device.device != VK_NULL_HANDLE)
 	{
 		free_uniform_buffer(*renderer, uniform_buffer);
 		free_instance(*renderer, instance);
 		free_light(*renderer, light);
 	}
+
+	sound_manager->delete_sound(enemy_sound);
 }
 
 void Enemy::update(double time)
@@ -96,6 +109,9 @@ void Enemy::update(double time)
 
 		// Update position
 		collider.set_placement(location + .90f * glm::vec2(-scale_factor / 2.f, -scale_factor / 2.f), .90f * glm::vec2(scale_factor, scale_factor));
+
+		sound_manager->update_sound_position(enemy_sound, location.x, location.y, 0.0);
+		sound_manager->update_sound_velocity(enemy_sound, velocity.x, velocity.y, 0.0);
 	}
 	else if (state == ENEMY_DYING)
 	{
@@ -186,4 +202,14 @@ void Enemy::handle_external_collisions(const Rectangle *collider, const GameObje
 	{
 		state = ENEMY_DYING;
 	}
+}
+
+void Enemy::pause()
+{
+	sound_manager->pause_sound(enemy_sound);
+}
+
+void Enemy::unpause()
+{
+	sound_manager->play_sound(enemy_sound);
 }

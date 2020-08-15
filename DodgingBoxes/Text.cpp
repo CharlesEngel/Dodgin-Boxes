@@ -54,6 +54,16 @@ void Text::handle_external_collisions(const Rectangle *collider, const GameObjec
 
 }
 
+void Text::pause()
+{
+	
+}
+
+void Text::unpause()
+{
+	
+}
+
 void Text::update_string(std::string string)
 {
 	// If you're changing the string to anything new

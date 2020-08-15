@@ -2,7 +2,8 @@
 #include "Text.h"
 
 #include <string>
-#include <stack>
+
+#include "SoundManager.h"
 
 struct DeathUniform
 {
@@ -28,6 +29,8 @@ public:
 	virtual std::vector<Rectangle *> get_collider();
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const;
 	virtual void handle_external_collisions(const Rectangle *collider, const GameObject *other);
+	virtual void pause();
+	virtual void unpause();
 
 	void write_high_score();
 
@@ -41,8 +44,8 @@ private:
 	Text score_number_text;
 	Text high_score_text;
 	Text high_score_number_text;
-	Text esc_restart_text;
-	Text enter_quit_text;
+	Text enter_restart_text;
+	Text esc_quit_text;
 	std::string square_uniform_buffer;
 	std::string square_instance;
 

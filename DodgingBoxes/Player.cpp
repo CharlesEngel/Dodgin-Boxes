@@ -3,6 +3,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 
 Player::Player(Renderer *renderer, Input *input, bool *game_end_flag)
+	: sound_manager(&SoundManager::get_instance())
 {
 	this->renderer = renderer;
 	game_end = game_end_flag;
@@ -37,10 +38,32 @@ Player::Player(Renderer *renderer, Input *input, bool *game_end_flag)
 	instance = create_instance(*renderer, instance_parameters);
 
 	collider.set_placement(location + glm::vec2(-0.1, -0.1), glm::vec2(0.2, 0.2));
+
+	sound_manager->update_listener_position(0.0, 0.0, 0.0);
+	sound_manager->update_listener_velocity(0.0, 0.0, 0.0);
+
+	dash_sound = sound_manager->register_sound(SOUND_TYPE_DASH);
+	death_sound = sound_manager->register_sound(SOUND_TYPE_DEATH);
+	
+	sound_manager->update_sound_relative(dash_sound, true);
+	sound_manager->update_sound_position(dash_sound, 0.0, 0.0, 0.0);
+	sound_manager->update_sound_velocity(dash_sound, 0.0, 0.0, 0.0);
+	sound_manager->update_sound_gain(dash_sound, 1.25);
+	sound_manager->update_sound_loop(dash_sound, false);
+
+	sound_manager->update_sound_relative(death_sound, true);
+	sound_manager->update_sound_position(death_sound, 0.0, 0.0, 0.0);
+	sound_manager->update_sound_velocity(death_sound, 0.0, 0.0, 0.0);
+	sound_manager->update_sound_gain(death_sound, 0.65f);
+	sound_manager->update_sound_loop(death_sound, false);
+
+	sound_manager->update_listener_orientation(0.0, 0.0, 1.0, 0.0, -1.0, 0.0);
 }
 
 Player::~Player()
 {
+	sound_manager->stop_sound(death_sound);
+
 	if (renderer->device.device != VK_NULL_HANDLE)
 	{
 		// Free resources
@@ -48,10 +71,15 @@ Player::~Player()
 		free_instance(*renderer, instance);
 		free_light(*renderer, light);
 	}
+
+	sound_manager->delete_sound(death_sound);
+	sound_manager->delete_sound(dash_sound);
 }
 
 void Player::update(double time)
 {
+	bool play_dash_sound = false;
+
 	if (state == PLAYER_DEFAULT || state == PLAYER_DASHING)
 	{
 		glm::vec2 direction(0.0);
@@ -118,6 +146,8 @@ void Player::update(double time)
 			dash_direction = direction;
 			current_dash_time = 0.0;
 			input_w_released = false;
+
+			play_dash_sound = true;
 		}
 
 		if (state != PLAYER_DASHING)
@@ -129,6 +159,7 @@ void Player::update(double time)
 		{
 			// Find new location if you are dashing
 			location += glm::vec2(time * dash_speed * dash_direction.x, time * dash_speed * dash_direction.y);
+
 			current_dash_time += float(time);
 			if (current_dash_time > total_dash_time)
 			{
@@ -156,6 +187,23 @@ void Player::update(double time)
 
 		// Update collider
 		collider.set_placement(location + glm::vec2(-scale_factor / 2.f, -scale_factor / 2.f), glm::vec2(scale_factor, scale_factor));
+
+		// Update listener information
+		sound_manager->update_listener_position(location.x, location.y, 0.f);
+
+		if (state == PLAYER_DASHING)
+		{
+			sound_manager->update_listener_velocity(direction.x * dash_speed, direction.y * dash_speed, 0.f);
+		}
+		else
+		{
+			sound_manager->update_listener_velocity(direction.x * speed, direction.y * speed, 0.f);
+		}
+
+		if (play_dash_sound)
+		{
+			sound_manager->play_sound(dash_sound);
+		}
 	}
 	else if (state == PLAYER_DYING)
 	{
@@ -173,6 +221,8 @@ void Player::update(double time)
 
 		// Set collider out of bounds so other enemies don't collide with it
 		collider.set_placement(glm::vec2(40, 40), glm::vec2(0, 0));
+
+		sound_manager->update_listener_position(40, 40, 0.0);
 	}
 	else
 	{
@@ -228,6 +278,35 @@ void Player::handle_external_collisions(const Rectangle *collider, const GameObj
 {
 	if ((state == PLAYER_DEFAULT || state == PLAYER_DASHING) && other->type == 1)
 	{
+		sound_manager->play_sound(death_sound);
 		state = PLAYER_DYING;
+	}
+}
+
+void Player::pause()
+{
+	resume_dash = sound_manager->is_sound_playing(dash_sound);
+	if (resume_dash)
+	{
+		sound_manager->pause_sound(dash_sound);
+	}
+
+	resume_death = sound_manager->is_sound_playing(death_sound);
+	if (resume_death)
+	{
+		sound_manager->pause_sound(death_sound);
+	}
+}
+
+void Player::unpause()
+{
+	if (resume_dash)
+	{
+		sound_manager->play_sound(dash_sound);
+	}
+
+	if (resume_death)
+	{
+		sound_manager->play_sound(death_sound);
 	}
 }

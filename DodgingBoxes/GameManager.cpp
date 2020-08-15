@@ -52,6 +52,19 @@ GameManager::GameManager(Renderer *renderer, uint32_t width, uint32_t height)
 
 	pause_screen = new PauseScreen(renderer, font);
 	death_screen = new DeathScreen(renderer, font, &score);
+
+	sound_manager = &SoundManager::get_instance();
+
+	menu_sound = sound_manager->register_sound(SOUND_TYPE_MENU);
+	sound_manager->update_sound_gain(menu_sound, 1.15f);
+
+	music_sound = sound_manager->register_sound(SOUND_TYPE_MUSIC);
+	sound_manager->update_sound_loop(music_sound, true);
+	sound_manager->update_sound_relative(music_sound, true);
+	sound_manager->update_sound_position(music_sound, 0.f, 0.f, 0.f);
+	sound_manager->update_sound_velocity(music_sound, 0.f, 0.f, 0.f);
+	sound_manager->update_sound_gain(music_sound, 0.3f);
+	sound_manager->play_sound(music_sound);
 }
 
 GameManager::~GameManager()
@@ -59,6 +72,9 @@ GameManager::~GameManager()
 	delete font;
 	delete pause_screen;
 	delete death_screen;
+
+	sound_manager->stop_sound(music_sound);
+	sound_manager->delete_sound(music_sound);
 
 	if (renderer->device.device != VK_NULL_HANDLE)
 	{
@@ -144,6 +160,7 @@ void GameManager::update(double time, uint32_t width, uint32_t height)
 	if (game_should_end && state != GAME_STATE_OVER)
 	{
 		state = GAME_STATE_OVER;
+		sound_manager->update_sound_gain(music_sound, 0.1f);
 		death_screen->write_high_score();
 	}
 
@@ -156,14 +173,28 @@ void GameManager::update(double time, uint32_t width, uint32_t height)
 		if (state == GAME_STATE_PAUSED)
 		{
 			state = GAME_STATE_DEFAULT;
+			sound_manager->update_sound_gain(music_sound, 0.3f);
+			play_menu_sound();
+
+			for (auto &object : objects)
+			{
+				object->unpause();
+			}
 		}
 		else if (state == GAME_STATE_DEFAULT)
 		{
 			state = GAME_STATE_PAUSED;
+			sound_manager->update_sound_gain(music_sound, 0.1f);
+			play_menu_sound();
+
+			for (auto &object : objects)
+			{
+				object->pause();
+			}
 		}
 		else if (state == GAME_STATE_OVER)
 		{
-			start_new_game = true;
+			user_quit = true;
 		}
 
 		esc_released = false;
@@ -171,7 +202,8 @@ void GameManager::update(double time, uint32_t width, uint32_t height)
 
 	if (state == GAME_STATE_OVER && input.enter)
 	{
-		user_quit = true;
+		start_new_game = true;
+		play_menu_sound();
 	}
 
 
@@ -300,4 +332,13 @@ bool GameManager::game_has_ended() const
 bool GameManager::should_quit() const
 {
 	return user_quit;
+}
+
+void GameManager::play_menu_sound()
+{
+	sound_manager->update_sound_relative(menu_sound, true);
+	sound_manager->update_sound_position(menu_sound, 0.f, 0.f, 0.f);
+	sound_manager->update_sound_velocity(menu_sound, 0.f, 0.f, 0.f);
+
+	sound_manager->play_sound(menu_sound);
 }

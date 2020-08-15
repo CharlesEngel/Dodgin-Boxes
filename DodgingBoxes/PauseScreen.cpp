@@ -100,3 +100,13 @@ void PauseScreen::handle_external_collisions(const Rectangle *collider, const Ga
 {
 
 }
+
+void PauseScreen::pause()
+{
+
+}
+
+void PauseScreen::unpause()
+{
+
+}

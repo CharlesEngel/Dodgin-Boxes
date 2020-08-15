@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <time.h>
+#include "Utilities.h"
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/gtc/matrix_transform.hpp>
@@ -133,6 +134,7 @@ int main()
 		if (game_manager->game_has_ended())
 		{
 			delete game_manager;
+			SoundManager::get_instance().reset();
 			game_manager = new GameManager(&renderer, w, h);
 		}
 	}

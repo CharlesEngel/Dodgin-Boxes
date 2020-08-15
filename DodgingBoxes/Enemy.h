@@ -4,6 +4,8 @@
 #include "GameObject.h"
 #include <chrono>
 
+#include "SoundManager.h"
+
 struct EnemyUniform
 {
 	glm::mat4 model;
@@ -37,6 +39,8 @@ public:
 	virtual std::vector<Rectangle *> get_collider();
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const;
 	virtual void handle_external_collisions(const Rectangle *collider, const GameObject *other);
+	virtual void pause();
+	virtual void unpause();
 
 	EnemyState state;
 	glm::vec2 location;
@@ -56,6 +60,9 @@ private:
 	const float scale_factor = 0.12f;
 	float speed;
 	float current_death_time;
+
+	size_t enemy_sound;
+	SoundManager *sound_manager;
 
 	EnemyDirection direction;
 private:

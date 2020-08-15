@@ -14,6 +14,8 @@ public:
 	virtual std::vector<Rectangle *> get_collider();
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const;
 	virtual void handle_external_collisions(const Rectangle *collider, const GameObject *other);
+	virtual void pause();
+	virtual void unpause();
 
 	void update_string(std::string string);
 	void update_position(glm::vec3 new_location);

@@ -4,6 +4,8 @@
 #include "GameObject.h"
 #include <glm/mat4x4.hpp>
 
+#include "SoundManager.h"
+
 #include "GameManager.h"
 
 struct PlayerUniform
@@ -31,6 +33,8 @@ public:
 	virtual std::vector<Rectangle *> get_collider();
 	virtual void submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const;
 	virtual void handle_external_collisions(const Rectangle *collider, const GameObject *other);
+	virtual void pause();
+	virtual void unpause();
 
 	glm::vec2 location;
 private:
@@ -56,6 +60,12 @@ private:
 	float current_death_time;
 
 	PlayerState state;
+
+	size_t dash_sound;
+	bool resume_dash;
+	size_t death_sound;
+	bool resume_death;
+	SoundManager *sound_manager;
 
 	bool input_w_released;
 };

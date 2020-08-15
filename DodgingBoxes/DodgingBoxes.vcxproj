@@ -104,8 +104,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\VulkanLayer\Lib32\Debug;$(SolutionDir)..\Dependencies\GLFW\lib32;$(SolutionDir)..\Dependencies\Vulkan\Lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;VulkanLayer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib32;$(SolutionDir)..\Dependencies\VulkanLayer\Lib32\Debug;$(SolutionDir)..\Dependencies\GLFW\lib32;$(SolutionDir)..\Dependencies\Vulkan\Lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenAL32.lib;glfw3.lib;vulkan-1.lib;VulkanLayer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -122,8 +122,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>VulkanLayer.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\GLFW\lib;$(SolutionDir)..\Dependencies\Vulkan\Lib;$(SolutionDir)..\Dependencies\VulkanLayer\Lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenAL32.lib;VulkanLayer.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib;$(SolutionDir)..\Dependencies\GLFW\lib;$(SolutionDir)..\Dependencies\Vulkan\Lib;$(SolutionDir)..\Dependencies\VulkanLayer\Lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -144,8 +144,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\VulkanLayer\Lib32\Release;$(SolutionDir)..\Dependencies\GLFW\lib32;$(SolutionDir)..\Dependencies\Vulkan\Lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;VulkanLayer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib32;$(SolutionDir)..\Dependencies\VulkanLayer\Lib32\Release;$(SolutionDir)..\Dependencies\GLFW\lib32;$(SolutionDir)..\Dependencies\Vulkan\Lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenAL32.lib;glfw3.lib;vulkan-1.lib;VulkanLayer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -166,8 +166,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>VulkanLayer.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\GLFW\lib;$(SolutionDir)..\Dependencies\Vulkan\Lib;$(SolutionDir)..\Dependencies\VulkanLayer\Lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenAL32.lib;VulkanLayer.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib;$(SolutionDir)..\Dependencies\GLFW\lib;$(SolutionDir)..\Dependencies\Vulkan\Lib;$(SolutionDir)..\Dependencies\VulkanLayer\Lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -182,6 +182,7 @@
     <ClCompile Include="PauseScreen.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="Text.cpp" />
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
@@ -197,6 +198,7 @@
     <ClInclude Include="PauseScreen.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Renderer\Renderer.h" />
+    <ClInclude Include="SoundManager.h" />
     <ClInclude Include="Text.h" />
     <ClInclude Include="Utilities.h" />
   </ItemGroup>

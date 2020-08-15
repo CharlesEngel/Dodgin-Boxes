@@ -94,6 +94,17 @@ void Character::handle_external_collisions(const Rectangle *collider, const Game
 
 }
 
+void Character::pause()
+{
+
+}
+
+void Character::unpause()
+{
+
+}
+
+
 void Character::update_character(char character, char previous_character)
 {
 	this->character = character;

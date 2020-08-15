@@ -5,7 +5,7 @@
 #include <fstream>
 
 DeathScreen::DeathScreen(Renderer *renderer, Font *font, double *score_holder)
-	: game_over_text(renderer, font, glm::vec2(-0.33f, 0.5f), 1.2f, "GAME   OVER"), score_text(renderer, font, glm::vec2(-0.175f, 0.2f), 1.0f, "SCORE:"), score_number_text(renderer, font, glm::vec2(0.0f, 0.075f), 0.9f, "0"), high_score_text(renderer, font, glm::vec2(-0.325f, -0.1f), 1.0f, "HIGH   SCORE:"), high_score_number_text(renderer, font, glm::vec2(0.0f, -0.225f), 0.9f, "0"), esc_restart_text(renderer, font, glm::vec2(-0.38, -0.45), 0.75f, "ESC   TO   RESTART"), enter_quit_text(renderer, font, glm::vec2(-0.32, -0.535), 0.65f, "ENTER   TO   QUIT")
+	: game_over_text(renderer, font, glm::vec2(-0.33f, 0.5f), 1.2f, "GAME   OVER"), score_text(renderer, font, glm::vec2(-0.175f, 0.2f), 1.0f, "SCORE:"), score_number_text(renderer, font, glm::vec2(0.0f, 0.075f), 0.9f, "0"), high_score_text(renderer, font, glm::vec2(-0.325f, -0.1f), 1.0f, "HIGH   SCORE:"), high_score_number_text(renderer, font, glm::vec2(0.0f, -0.225f), 0.9f, "0"), enter_restart_text(renderer, font, glm::vec2(-0.46, -0.45), 0.75f, "ENTER   TO   RESTART"), esc_quit_text(renderer, font, glm::vec2(-0.30, -0.535), 0.65f, "ESC   TO   QUIT")
 {
 	this->renderer = renderer;
 	location = glm::vec3(0.0, 0.0, 0.0);
@@ -84,8 +84,8 @@ void DeathScreen::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float wid
 	high_score_text.submit_for_rendering(view, proj, width, height);
 	score_number_text.submit_for_rendering(view, proj, width, height);
 	high_score_number_text.submit_for_rendering(view, proj, width, height);
-	esc_restart_text.submit_for_rendering(view, proj, width, height);
-	enter_quit_text.submit_for_rendering(view, proj, width, height);
+	enter_restart_text.submit_for_rendering(view, proj, width, height);
+	esc_quit_text.submit_for_rendering(view, proj, width, height);
 
 	DeathUniform uniform_data = {};
 	uniform_data.model = glm::translate(glm::mat4(1), location) * glm::scale(glm::mat4(1), glm::vec3(0.9, 1.23, 1.0));
@@ -122,6 +122,16 @@ void DeathScreen::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float wid
 }
 
 void DeathScreen::handle_external_collisions(const Rectangle *collider, const GameObject *other)
+{
+
+}
+
+void DeathScreen::pause()
+{
+
+}
+
+void DeathScreen::unpause()
 {
 
 }

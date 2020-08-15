@@ -55,6 +55,8 @@ public:
 	GameManager(const GameManager&) = delete;
 
 private:
+	void play_menu_sound();
+
 	std::vector<GameObject *> objects;
 	Renderer *renderer;
 	static Input input;
@@ -76,6 +78,10 @@ private:
 	DeathScreen *death_screen;
 
 	GameState state;
+
+	SoundManager *sound_manager;
+	size_t menu_sound;
+	size_t music_sound;
 
 	bool game_should_end;
 	bool start_new_game;
