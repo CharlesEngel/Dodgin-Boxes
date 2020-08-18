@@ -39,7 +39,7 @@ Enemy::Enemy(Renderer *renderer)
 	enemy_sound = sound_manager->register_sound(SOUND_TYPE_ENEMY);
 
 	sound_manager->update_sound_loop(enemy_sound, true);
-	sound_manager->update_sound_gain(enemy_sound, 1.2);
+	sound_manager->update_sound_gain(enemy_sound, 1.2f);
 	sound_manager->update_sound_max_distance(enemy_sound, 0.04f);
 	sound_manager->update_sound_position(enemy_sound, location.x, location.y, 0.0);
 	sound_manager->play_sound(enemy_sound);
