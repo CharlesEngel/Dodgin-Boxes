@@ -140,8 +140,6 @@ struct BoxInternalsUniformBuffer
 	int light_index;
 };
 
-// TODO: Is this a good name?
-// ANSWER: Not really
 struct RenderPassManager
 {
 	VulkanRenderPass pass;

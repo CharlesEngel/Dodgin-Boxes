@@ -79,14 +79,22 @@ float g1(float dotNV, float k) {
 	return 1.0 / (dotNV * (1.0 - k) + k);
 }
 
-float ggx(vec3 v, vec3 l, vec3 n, float ind, float roughness) {
+float fresnel(vec3 v, vec3 l, float ind)
+{
 	vec3 h = normalize(v + l);
-	float alpha = roughness * roughness;
-	float alphaSqr = alpha * alpha;
 	float c = dot(v, h);
 	float g = sqrt(pow(c, 2.0) + pow(ind, 2.0) - 1.0);
 
 	float F = 0.5 * (pow(g-c,2.0)/pow(g+c,2.0)) * (1.0 + (pow(c*(g+c)-1.0, 2.0)/pow(c*(g-c)+1.0, 2.0)));
+	return F;
+}
+
+float ggx(vec3 v, vec3 l, vec3 n, float ind, float roughness) {
+	vec3 h = normalize(v + l);
+	float alpha = roughness * roughness;
+	float alphaSqr = alpha * alpha;
+	
+	float F = fresnel(v, l, ind);
 	float denominator = clamp(dot(n, h), 0.0, 1.0) * clamp(dot(n, h), 0.0, 1.0) * (alphaSqr - 1.0) + 1.0;
 	float D = alphaSqr / (3.141592 * denominator * denominator);
 	float k = alpha/2.0;
@@ -159,7 +167,9 @@ void main() {
 	diffuse_color[lightIndex] = vec3(0.0, 0.0, 0.0);
 
 	vec4 color = vec4(ambient_color + depth_map_value_0 * diffuse_color[0] + depth_map_value_1 * diffuse_color[1] + depth_map_value_2 * diffuse_color[2] + depth_map_value_3 * diffuse_color[3] + depth_map_value_4 * diffuse_color[4] + depth_map_value_5 * diffuse_color[5] + depth_map_value_6 * diffuse_color[6] + depth_map_value_7 * diffuse_color[7] + depth_map_value_8 * diffuse_color[8] + depth_map_value_9 * diffuse_color[9] + depth_map_value_10 * diffuse_color[10] + depth_map_value_11 * diffuse_color[11] + depth_map_value_12 * diffuse_color[12] + depth_map_value_13 * diffuse_color[13], 1.0);
-	
-	// TODO: fix this
-	outColor = 2.0 * normalize(normalize(0.4 * reflect_value) + normalize(color));
+
+	// I know I'm doing this wrong and that an index of refraction fo 6 is impossible, I just prefer the effect doing it this way.
+	vec3 pos_vec = normalize(inCameraPos - inPosition);
+	float F = fresnel(pos_vec, reflect(pos_vec, normal), 6.0);
+	outColor = color + reflect_value * F;
 }

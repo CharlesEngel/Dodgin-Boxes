@@ -97,7 +97,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	color_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
 	color_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
 	color_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	color_attachment_parameters.samples = renderer.device.max_sample_count;
+	color_attachment_parameters.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	create_texture(color_attachment, color_attachment_parameters);
 
@@ -112,7 +112,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	depth_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
 	depth_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
 	depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	depth_attachment_parameters.samples = renderer.device.max_sample_count;
+	depth_attachment_parameters.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	create_texture(depth_attachment, depth_attachment_parameters);
 
@@ -152,8 +152,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	shadow_map_attachment_parameters.command_pool = renderer.device.command_pool;
 	shadow_map_attachment_parameters.memory_manager = &renderer.memory_manager;
 	shadow_map_attachment_parameters.format = find_depth_format(renderer.device.physical_device);
-	shadow_map_attachment_parameters.width = 256;
-	shadow_map_attachment_parameters.height = 256;
+	shadow_map_attachment_parameters.width = 128;
+	shadow_map_attachment_parameters.height = 128;
 	shadow_map_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	shadow_map_attachment_parameters.samples = VK_SAMPLE_COUNT_1_BIT;
 	shadow_map_attachment_parameters.layers = 6;
@@ -500,7 +500,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	color_attachment_description.attachment_format = color_attachment_description.attachment.format;
 	color_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	color_attachment_description.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	color_attachment_description.samples = renderer.device.max_sample_count;
+	color_attachment_description.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	// Description for depth attachment
 	VulkanRenderPassAttachment depth_attachment_description = {};
@@ -508,7 +508,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	depth_attachment_description.attachment_format = depth_attachment_description.attachment.format;
 	depth_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	depth_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	depth_attachment_description.samples = renderer.device.max_sample_count;
+	depth_attachment_description.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	// Description for volumetric lighting depth attachment
 	VulkanRenderPassAttachment volume_depth_attachment_description = {};
@@ -768,7 +768,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_parameters.viewport_offset_x = (w - pipeline_parameters.viewport_width) / 2;
 	pipeline_parameters.viewport_offset_y = (h - pipeline_parameters.viewport_height) / 2;
 	pipeline_parameters.subpass = 0;
-	pipeline_parameters.samples = renderer.device.max_sample_count;
+	pipeline_parameters.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	pipeline_parameters.num_textures = max_lights;
 	pipeline_parameters.num_uniform_buffers += 1;
@@ -850,8 +850,8 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	pipeline_shadow_map_parameters.render_pass = shadow_map_render_pass;
 	pipeline_shadow_map_parameters.shaders = { renderer.data.shaders["Resources/vert_shadow_map.spv"] };
 	pipeline_shadow_map_parameters.swap_chain = renderer.swap_chain;
-	pipeline_shadow_map_parameters.viewport_width = 256;
-	pipeline_shadow_map_parameters.viewport_height = 256;
+	pipeline_shadow_map_parameters.viewport_width = 128;
+	pipeline_shadow_map_parameters.viewport_height = 128;
 	pipeline_shadow_map_parameters.viewport_offset_x = 0;
 	pipeline_shadow_map_parameters.viewport_offset_y = 0;
 	pipeline_shadow_map_parameters.subpass = 0;
@@ -1193,9 +1193,9 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 void draw(Renderer &renderer, DrawParameters &parameters)
 {
 	VolumeUniformBuffer volume_data = {};
-	volume_data.model = glm::scale(glm::mat4(1), glm::vec3(10.0, 10.0, 1.0));
+	volume_data.model = /*glm::scale(glm::mat4(1), glm::vec3(10.0, 10.0, 1.0))*/ glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.0, 0.0, -0.5)), glm::vec3(2.071, 2.071, 1.0));
 	volume_data.view = glm::lookAt(glm::vec3(0.0, 0.0, 2.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-	volume_data.proj = glm::perspective(PI / 2.f, 1.f, 0.001f, 3.0f);
+	volume_data.proj = /*glm::perspective(PI / 2.f, 1.f, 0.001f, 3.0f)*/ glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 10.0f);
 	volume_data.proj[1][1] *= -1;
 
 	UniformBufferUpdateParameters volume_update_parameters = {};
@@ -1540,7 +1540,6 @@ void free_uniform_buffer(Renderer &renderer, std::string uniform_buffer_name)
 	UniformBuffer uniform_buffer = renderer.data.uniform_buffers[uniform_buffer_name];
 	std::string name = uniform_buffer.name;
 
-	// TODO: this might be a little too slow
 	vkDeviceWaitIdle(renderer.device.device);
 
 	for (auto &buffer : uniform_buffer.buffers)
@@ -1770,8 +1769,6 @@ void create_data_manager(DataManager &data_manager, DataManagerParameters &data_
 
 void cleanup_data_manager(Renderer &renderer, DataManager &data_manager)
 {
-	// TODO: There's probably a better way to do this
-	// ...But it's cleanup code. Does it matter?
 	std::vector<VulkanBuffer> buffers_to_cleanup = {};
 	for (auto &model : data_manager.models)
 	{
@@ -1887,7 +1884,7 @@ void resize_swap_chain(Renderer &renderer)
 	color_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
 	color_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
 	color_attachment_parameters.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	color_attachment_parameters.samples = renderer.device.max_sample_count;
+	color_attachment_parameters.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	create_texture(color_attachment, color_attachment_parameters);
 
@@ -1902,7 +1899,7 @@ void resize_swap_chain(Renderer &renderer)
 	depth_attachment_parameters.height = renderer.swap_chain.swap_chain_extent.height;
 	depth_attachment_parameters.width = renderer.swap_chain.swap_chain_extent.width;
 	depth_attachment_parameters.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	depth_attachment_parameters.samples = renderer.device.max_sample_count;
+	depth_attachment_parameters.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	create_texture(depth_attachment, depth_attachment_parameters);
 
@@ -1944,7 +1941,7 @@ void resize_swap_chain(Renderer &renderer)
 	color_attachment_description.attachment_format = color_attachment_description.attachment.format;
 	color_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	color_attachment_description.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	color_attachment_description.samples = renderer.device.max_sample_count;
+	color_attachment_description.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	// Description for depth attachment
 	VulkanRenderPassAttachment depth_attachment_description = {};
@@ -1952,7 +1949,7 @@ void resize_swap_chain(Renderer &renderer)
 	depth_attachment_description.attachment_format = depth_attachment_description.attachment.format;
 	depth_attachment_description.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	depth_attachment_description.final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	depth_attachment_description.samples = renderer.device.max_sample_count;
+	depth_attachment_description.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	// Description for volumetric lighting depth attachment
 	VulkanRenderPassAttachment volume_depth_attachment_description = {};
@@ -2267,7 +2264,7 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_parameters.viewport_offset_x = (w - pipeline_parameters.viewport_width) / 2;
 	pipeline_parameters.viewport_offset_y = (h - pipeline_parameters.viewport_height) / 2;
 	pipeline_parameters.subpass = 0;
-	pipeline_parameters.samples = renderer.device.max_sample_count;
+	pipeline_parameters.samples = /*renderer.device.max_sample_count*/ VK_SAMPLE_COUNT_4_BIT;
 
 	pipeline_parameters.num_textures = max_lights;
 	pipeline_parameters.num_uniform_buffers += 1;
@@ -2349,8 +2346,8 @@ void resize_swap_chain(Renderer &renderer)
 	pipeline_shadow_map_parameters.render_pass = shadow_map_render_pass;
 	pipeline_shadow_map_parameters.shaders = { renderer.data.shaders["Resources/vert_shadow_map.spv"] };
 	pipeline_shadow_map_parameters.swap_chain = renderer.swap_chain;
-	pipeline_shadow_map_parameters.viewport_width = 256;
-	pipeline_shadow_map_parameters.viewport_height = 256;
+	pipeline_shadow_map_parameters.viewport_width = 128;
+	pipeline_shadow_map_parameters.viewport_height = 128;
 	pipeline_shadow_map_parameters.viewport_offset_x = 0;
 	pipeline_shadow_map_parameters.viewport_offset_y = 0;
 	pipeline_shadow_map_parameters.subpass = 0;

@@ -38,7 +38,7 @@ float VectorToDepth (vec3 Vec)
     const float f = 2.0;
     const float n = 0.001;
 
-	return clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - 1.00025, 0.0, 1.0);
+	return pow(clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - (1.0002/* * LocalZcomp * 10.0*/)/*0045*/, 0.0, 1.0), 1.18);
 }
 
 float fresnel(vec3 v, vec3 l, float ind) {
@@ -90,20 +90,20 @@ void main() {
 
 	vec3 diffuse_color[14];
 
-	float depth_map_value_0 = texture(depthMapSampler0, vec4(inPosition - lights.location[0], VectorToDepth(lights.location[0] - inPosition) + 0.0001));
+	float depth_map_value_0 = texture(depthMapSampler0, vec4(inPosition - lights.location[0], VectorToDepth(lights.location[0] - inPosition)));
 	float depth_map_value_1 = texture(depthMapSampler1, vec4(inPosition - lights.location[1], VectorToDepth(lights.location[1] - inPosition)));
 	float depth_map_value_2 = texture(depthMapSampler2, vec4(inPosition - lights.location[2], VectorToDepth(lights.location[2] - inPosition)));
-	float depth_map_value_3 = texture(depthMapSampler3, vec4(normalize(inPosition - lights.location[3]), VectorToDepth(lights.location[3] - inPosition)), 0.0);
-	float depth_map_value_4 = texture(depthMapSampler4, vec4(normalize(inPosition - lights.location[4]), VectorToDepth(lights.location[4] - inPosition)), 0.0);
-	float depth_map_value_5 = texture(depthMapSampler5, vec4(normalize(inPosition - lights.location[5]), VectorToDepth(lights.location[5] - inPosition)), 0.0);
-	float depth_map_value_6 = texture(depthMapSampler6, vec4(normalize(inPosition - lights.location[6]), VectorToDepth(lights.location[6] - inPosition)), 0.0);
-	float depth_map_value_7 = texture(depthMapSampler7, vec4(normalize(inPosition - lights.location[7]), VectorToDepth(lights.location[7] - inPosition)), 0.0);
-	float depth_map_value_8 = texture(depthMapSampler8, vec4(normalize(inPosition - lights.location[8]), VectorToDepth(lights.location[8] - inPosition)), 0.0);
-	float depth_map_value_9 = texture(depthMapSampler9, vec4(normalize(inPosition - lights.location[9]), VectorToDepth(lights.location[9] - inPosition)), 0.0);
-	float depth_map_value_10 = texture(depthMapSampler10, vec4(normalize(inPosition - lights.location[10]), VectorToDepth(lights.location[10] - inPosition)), 0.0);
-	float depth_map_value_11 = texture(depthMapSampler11, vec4(normalize(inPosition - lights.location[11]), VectorToDepth(lights.location[11] - inPosition)), 0.0);
-	float depth_map_value_12 = texture(depthMapSampler12, vec4(normalize(inPosition - lights.location[12]), VectorToDepth(lights.location[12] - inPosition)), 0.0);
-	float depth_map_value_13 = texture(depthMapSampler13, vec4(normalize(inPosition - lights.location[13]), VectorToDepth(lights.location[13] - inPosition)), 0.0);
+	float depth_map_value_3 = texture(depthMapSampler3, vec4(normalize(inPosition - lights.location[3]), VectorToDepth(lights.location[3] - inPosition)));
+	float depth_map_value_4 = texture(depthMapSampler4, vec4(normalize(inPosition - lights.location[4]), VectorToDepth(lights.location[4] - inPosition)));
+	float depth_map_value_5 = texture(depthMapSampler5, vec4(normalize(inPosition - lights.location[5]), VectorToDepth(lights.location[5] - inPosition)));
+	float depth_map_value_6 = texture(depthMapSampler6, vec4(normalize(inPosition - lights.location[6]), VectorToDepth(lights.location[6] - inPosition)));
+	float depth_map_value_7 = texture(depthMapSampler7, vec4(normalize(inPosition - lights.location[7]), VectorToDepth(lights.location[7] - inPosition)));
+	float depth_map_value_8 = texture(depthMapSampler8, vec4(normalize(inPosition - lights.location[8]), VectorToDepth(lights.location[8] - inPosition)));
+	float depth_map_value_9 = texture(depthMapSampler9, vec4(normalize(inPosition - lights.location[9]), VectorToDepth(lights.location[9] - inPosition)));
+	float depth_map_value_10 = texture(depthMapSampler10, vec4(normalize(inPosition - lights.location[10]), VectorToDepth(lights.location[10] - inPosition)));
+	float depth_map_value_11 = texture(depthMapSampler11, vec4(normalize(inPosition - lights.location[11]), VectorToDepth(lights.location[11] - inPosition)));
+	float depth_map_value_12 = texture(depthMapSampler12, vec4(normalize(inPosition - lights.location[12]), VectorToDepth(lights.location[12] - inPosition)));
+	float depth_map_value_13 = texture(depthMapSampler13, vec4(normalize(inPosition - lights.location[13]), VectorToDepth(lights.location[13] - inPosition)));
 
 	for (int i = 0; i < 14; i++)
 	{
