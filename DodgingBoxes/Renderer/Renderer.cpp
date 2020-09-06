@@ -1331,7 +1331,7 @@ void draw(Renderer &renderer, DrawParameters &parameters)
 		command_buffers[i] = renderer.render_passes[i].pass.command_buffers[renderer.image_index];
 	}
 
-	submit_info.commandBufferCount = command_buffers.size();
+	submit_info.commandBufferCount = static_cast<uint32_t>(command_buffers.size());
 	submit_info.pCommandBuffers = command_buffers.data();
 
 	VkSemaphore signal_semphores[] = { renderer.render_finished_semaphores[parameters.draw_frame] };

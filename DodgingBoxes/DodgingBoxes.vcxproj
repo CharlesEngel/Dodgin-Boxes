@@ -104,7 +104,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib32;$(SolutionDir)..\Dependencies\VulkanLayer\Lib32\Debug;$(SolutionDir)..\Dependencies\GLFW\lib32;$(SolutionDir)..\Dependencies\Vulkan\Lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib32;$(SolutionDir)..\Dependencies\VulkanLayer\Lib32\Db;$(SolutionDir)..\Dependencies\GLFW\lib32;$(SolutionDir)..\Dependencies\Vulkan\Lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenAL32.lib;glfw3.lib;vulkan-1.lib;VulkanLayer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -123,7 +123,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>OpenAL32.lib;VulkanLayer.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib;$(SolutionDir)..\Dependencies\GLFW\lib;$(SolutionDir)..\Dependencies\Vulkan\Lib;$(SolutionDir)..\Dependencies\VulkanLayer\Lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib;$(SolutionDir)..\Dependencies\GLFW\lib;$(SolutionDir)..\Dependencies\Vulkan\Lib;$(SolutionDir)..\Dependencies\VulkanLayer\Lib\Db;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -144,7 +144,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib32;$(SolutionDir)..\Dependencies\VulkanLayer\Lib32\Release;$(SolutionDir)..\Dependencies\GLFW\lib32;$(SolutionDir)..\Dependencies\Vulkan\Lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib32;$(SolutionDir)..\Dependencies\VulkanLayer\Lib32\Rl;$(SolutionDir)..\Dependencies\GLFW\lib32;$(SolutionDir)..\Dependencies\Vulkan\Lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenAL32.lib;glfw3.lib;vulkan-1.lib;VulkanLayer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -167,7 +167,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>OpenAL32.lib;VulkanLayer.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib;$(SolutionDir)..\Dependencies\GLFW\lib;$(SolutionDir)..\Dependencies\Vulkan\Lib;$(SolutionDir)..\Dependencies\VulkanLayer\Lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Dependencies\OpenAL\lib;$(SolutionDir)..\Dependencies\GLFW\lib;$(SolutionDir)..\Dependencies\Vulkan\Lib;$(SolutionDir)..\Dependencies\VulkanLayer\Lib\Rl;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

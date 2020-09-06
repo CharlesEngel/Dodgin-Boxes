@@ -76,7 +76,7 @@ void Text::update_string(std::string string)
 		if (string.size() < characters.size())
 		{
 			// Move character objects into inactive_characters
-			for (uint32_t i = string.size(); i < characters.size(); i++)
+			for (size_t i = string.size(); i < characters.size(); i++)
 			{
 				inactive_characters.push(characters.back());
 				characters.erase(characters.end());

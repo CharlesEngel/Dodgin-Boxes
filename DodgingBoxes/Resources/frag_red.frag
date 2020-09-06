@@ -38,7 +38,7 @@ float VectorToDepth (vec3 Vec)
     const float f = 2.0;
     const float n = 0.001;
 
-	return pow(clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - (1.0002/* * LocalZcomp * 10.0*/)/*0045*/, 0.0, 1.0), 1.18);
+	return pow(clamp(2.0 * (1/LocalZcomp - 1/n) / (1/f - 1/n) - (1.0002/* * LocalZcomp * 10.0*/)/*0045*/, 0.0, 1.0), 1.15);
 }
 
 float fresnel(vec3 v, vec3 l, float ind) {

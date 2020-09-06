@@ -37,7 +37,7 @@ void EnemyManager::update(double time)
 		{
 			// Remove enemy if it is dead
 			delete (*enemy);
-			uint32_t index = std::distance(enemies.begin(), enemy);
+			size_t index = std::distance(enemies.begin(), enemy);
 			enemy = enemies.erase(enemy);
 			colliders.erase(colliders.begin() + index);
 		}

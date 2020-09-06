@@ -62,5 +62,5 @@ void read_wav_file(std::string file_name, ALenum &format, ALvoid **data, ALsizei
 	format = bps == 8 ? (channels == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_STEREO8) : (channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16);
 	frequency = sample_rate;
 	*data = buffer;
-	size = file_size - chunk_offset;
+	size = static_cast<ALsizei>(file_size - chunk_offset);
 }

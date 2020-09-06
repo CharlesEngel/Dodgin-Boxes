@@ -2,7 +2,7 @@
 
 SoundManager::~SoundManager()
 {
-	alDeleteBuffers(buffers.size(), buffers.data());
+	alDeleteBuffers(static_cast<ALsizei>(buffers.size()), buffers.data());
 	alcMakeContextCurrent(NULL);
 	alcDestroyContext(context);
 	alcCloseDevice(device);
@@ -160,7 +160,7 @@ SoundManager::SoundManager(std::vector<std::string> sound_files)
 	WAVInfo info = {};
 
 	buffers.resize(sound_files.size());
-	alGenBuffers(buffers.size(), buffers.data());
+	alGenBuffers(static_cast<ALsizei>(buffers.size()), buffers.data());
 
 	for (size_t i = 0; i < sound_files.size(); i++)
 	{

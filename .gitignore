@@ -351,3 +351,15 @@ MigrationBackup/
 
 # compiled shaders
 *.spv
+
+# Dependencies
+Dependencies\IncludeDependencies\GLFW
+Dependencies\IncludeDependencies\OpenAl
+Dependencies\IncludeDependencies\vulkan
+Dependencies\IncludeDependencies\glm
+Dependencies\IncludeDependencies\stb
+Dependencies\IncludeDependencies\shaderc
+
+Dependencies\GLFW
+Dependencies\OpenAl
+Dependencies\vulkan

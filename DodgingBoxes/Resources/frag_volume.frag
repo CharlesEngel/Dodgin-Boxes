@@ -58,14 +58,14 @@ void main()
 	vec3 end = vec3(inPosition.xy, 2.0-depth);
 	vec3 origin = vec3(0.0, 0.0, 2.0);
 
-	const float numSteps = 10.0;
+	const float numSteps = 7.0;
 
 	float distToEnd = distance(origin, end)/*depth*/;
 	float stepSize = distToEnd / numSteps;
 	vec3 dir = normalize(end - origin);
 	vec3 pos = origin;
 
-	float opacity = (1.0 - 1.0 / (exp(distToEnd * 0.04))) /*0.0*/;
+	float opacity = (1.0 - 1.0 / (exp(distToEnd * 0.05))) /*0.0*/;
 
 	vec3 color = colorLoad.rgb;
 
