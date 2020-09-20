@@ -157,6 +157,7 @@ void GameManager::handle_input(GLFWwindow *window, int key, int scancode, int ac
 
 void GameManager::update(double time, uint32_t width, uint32_t height)
 {
+	// If the player dies, play gameover music update high score
 	if (game_should_end && state != GAME_STATE_OVER)
 	{
 		state = GAME_STATE_OVER;
@@ -164,6 +165,7 @@ void GameManager::update(double time, uint32_t width, uint32_t height)
 		death_screen->write_high_score();
 	}
 
+	// Handle pausing/playing/quitting
 	if (!input.esc)
 	{
 		esc_released = true;
@@ -200,6 +202,7 @@ void GameManager::update(double time, uint32_t width, uint32_t height)
 		esc_released = false;
 	}
 
+	// Restart game if requested
 	if (state == GAME_STATE_OVER && input.enter)
 	{
 		start_new_game = true;
@@ -254,6 +257,7 @@ void GameManager::update(double time, uint32_t width, uint32_t height)
 
 void GameManager::resolve_collisions()
 {
+	// Check for collision
 	if (state == GAME_STATE_DEFAULT)
 	{
 		for (uint32_t i = 0; i < objects.size(); i++)

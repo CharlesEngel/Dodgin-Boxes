@@ -60,6 +60,7 @@ void DeathScreen::update(double time)
 {
 	run_time += float(time);
 
+	// Update text values
 	score_number_text.update_position(glm::vec3(-0.02 * num_digits(int(*score)), 0.075, 0.9f));
 	score_number_text.update_string(std::to_string(int(*score)));
 
@@ -79,6 +80,7 @@ std::vector<Rectangle *> DeathScreen::get_collider()
 
 void DeathScreen::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float width, float height) const
 {
+	// Submit text for rendering
 	game_over_text.submit_for_rendering(view, proj, width, height);
 	score_text.submit_for_rendering(view, proj, width, height);
 	high_score_text.submit_for_rendering(view, proj, width, height);
@@ -87,6 +89,7 @@ void DeathScreen::submit_for_rendering(glm::mat4 view, glm::mat4 proj, float wid
 	enter_restart_text.submit_for_rendering(view, proj, width, height);
 	esc_quit_text.submit_for_rendering(view, proj, width, height);
 
+	// Update uniforms and submit instances
 	DeathUniform uniform_data = {};
 	uniform_data.model = glm::translate(glm::mat4(1), location) * glm::scale(glm::mat4(1), glm::vec3(0.9, 1.23, 1.0));
 	uniform_data.view = view;
@@ -138,6 +141,7 @@ void DeathScreen::unpause()
 
 void DeathScreen::write_high_score()
 {
+	// Write the new high score to a file
 	std::ofstream write;
 	write.open("Resources/save_data.b");
 	write.write((char*)&high_score, sizeof(high_score));

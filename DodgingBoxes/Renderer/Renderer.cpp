@@ -14,7 +14,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	renderer.instances = {};
 	renderer.max_frames = parameters.max_frames;
 
-	// Copy window
+	// Copy window and enable validation layers
 	if (enable_validation_layers) {
 		parameters.instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
@@ -133,6 +133,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 
 	textures["RENDER_PASS_ATTACHMENT_VOLUME_DEPTH"] = volume_depth_attachment;
 
+	// Create attachment for shadows
 	VulkanTexture shadow_map_attachment_0 = {};
 	VulkanTexture shadow_map_attachment_1 = {};
 	VulkanTexture shadow_map_attachment_2 = {};
@@ -289,7 +290,7 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 	create_texture(box_internals_depth_attachment, box_internals_attachment_depth_parameters);
 	textures["BOX_INTERNALS_DEPTH_ATTACHMENT"] = box_internals_depth_attachment;
 
-	// Create models
+	// Create models and binding/attribute descriptions
 	struct VertexWithTexCoord
 	{
 		alignas(16) glm::vec3 point;
@@ -1193,9 +1194,9 @@ void create_renderer(Renderer &renderer, RendererParameters &parameters)
 void draw(Renderer &renderer, DrawParameters &parameters)
 {
 	VolumeUniformBuffer volume_data = {};
-	volume_data.model = /*glm::scale(glm::mat4(1), glm::vec3(10.0, 10.0, 1.0))*/ glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.0, 0.0, -0.5)), glm::vec3(2.071, 2.071, 1.0));
+	volume_data.model = glm::scale(glm::translate(glm::mat4(1), glm::vec3(0.0, 0.0, -0.5)), glm::vec3(2.071, 2.071, 1.0));
 	volume_data.view = glm::lookAt(glm::vec3(0.0, 0.0, 2.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-	volume_data.proj = /*glm::perspective(PI / 2.f, 1.f, 0.001f, 3.0f)*/ glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 10.0f);
+	volume_data.proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 10.0f);
 	volume_data.proj[1][1] *= -1;
 
 	UniformBufferUpdateParameters volume_update_parameters = {};
@@ -1620,6 +1621,7 @@ std::string create_instance(Renderer &renderer, InstanceParameters &parameters)
 		resource_parameters.textures = mat.textures;
 		resource_parameters.uniform_buffers = {};
 		resource_parameters.input_attachments = mat.input_attachments;
+
 		// If lights are not being used
 		if (mat.use_lights == LIGHT_USAGE_NONE)
 		{

@@ -176,7 +176,7 @@ void SoundManager::load_wav_file(std::string file_name, WAVInfo &info)
 {
 	unsigned char* buffer = 0;
 
-	// open and read all file contents
+	// open and read file
 	FILE* f = 0;
 	fopen_s(&f, file_name.c_str(), "rb");
 
@@ -189,19 +189,19 @@ void SoundManager::load_wav_file(std::string file_name, WAVInfo &info)
 	fread(buffer, 1, file_size, f);
 	fclose(f);
 
-	// ensure the file type is a wave file, identified by RIFF
+	// check for RIFF
 	if (memcmp(buffer, "RIFF", 4) != 0)
 	{
 		throw std::runtime_error("Invalid wave file!");
 	}
 
-	// pull out different useful data parameters from buffer
+	// retrieve data
 	unsigned int channels = buffer[22] | (buffer[23] << 8);
 	unsigned int sample_rate = buffer[24] | (buffer[25] << 8) | (buffer[26] << 16) | (buffer[27] << 24);
 	unsigned int bps = buffer[34] | (buffer[35] << 8);
 	info.size = buffer[40] | (buffer[41] << 8) | (buffer[42] << 16) | (buffer[43] << 24);
 
-	// skip `useless to us` chunks
+	// skip chunks
 	size_t chunk_offset = 36;
 	while (memcmp(buffer + chunk_offset, "data", 4) != 0) {
 		chunk_offset += 4;
@@ -210,7 +210,6 @@ void SoundManager::load_wav_file(std::string file_name, WAVInfo &info)
 	}
 	unsigned char* b_data = &(buffer[chunk_offset + 8]);
 
-	//info.size = file_size - chunk_offset;
 	info.format = bps == 8 ? (channels == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_STEREO8) : (channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16);
 	info.frequency = sample_rate;
 	info.data = b_data;
