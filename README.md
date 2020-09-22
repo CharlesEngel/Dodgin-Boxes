@@ -41,7 +41,7 @@ Render scene to cubemap texture centered in the middle of the reflective cube. T
 
 -Rough glass
 
-The reflected cube mentioned earlier also has rougher and smoother spots on it. This is achieved by rendering the inside of the cube to a cubemap. The cubemaps for the internals of the cube and the reflections are both mipmapped and the mip-level to sample is chosen based on a roughness texture. (The reflection is actually mixed with the internals of the cube incorrectly, because if I just used the Fresnel as an interpolator like I should, the top would want to reflect the blackness above leading to a black spot on the top of the cube, which I don't like the look of.)
+The reflective cube mentioned earlier also has rougher and smoother spots on it. This is achieved by rendering the inside of the cube to a cubemap. The cubemaps for the internals of the cube and the reflections are both mipmapped and the mip-level to sample is chosen based on a roughness texture. (The reflection is actually mixed with the internals of the cube incorrectly, because if I just used the Fresnel as an interpolator like I should, the top would want to reflect the blackness above leading to a black spot on the top of the cube, which I don't like the look of.)
 
 
 -Fog
