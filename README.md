@@ -11,7 +11,7 @@ Omni-directional shadow mapping using cubemaps.
 
 -Reflections
 
-Render scene to cubemap texture centered in the middle of the reflective cube. Then, when choosing which point on the cubemap to sample, reflect view vector and find where that reflected vector intersects the bounds of the room. Use the vector from the center of the cube to that vector to sample the cubemap. This method is still not perfect and when other objects are near the cube they tend to distort, but they are moving fast enough that it is not too noticeable.
+Render scene to cubemap texture centered in the middle of the reflective cube. Then, when choosing which point on the cubemap to sample, reflect view vector and find where that reflected vector intersects the bounds of the room. Use the vector from the center of the cube to that point to sample the cubemap. This method is still not perfect and when other objects are near the cube they tend to distort, but they are moving fast enough that it is not too noticeable.
 
 
 -Rough glass
@@ -21,7 +21,7 @@ The reflective cube mentioned earlier also has rougher and smoother spots on it.
 
 -Fog
 
-After everything other than text and menus has been rendered, a raymarching process is performed to include fog which is lit and also shadowed. (Note: A simplified and linear falloff is being used for the lighting here because it was expensive to compute a more complicated falloff for each light for each step in the raymarching.)
+After everything other than text and menus has been rendered, a raymarching process is performed to include fog which is lit and shadowed. (Note: A simplified and linear falloff is being used for the lighting here because it was expensive to compute a more complicated falloff for each light for each step in the raymarching.)
 
 
 # Dependencies:
