@@ -3,33 +3,6 @@ A simple game using my (bad) Vulkan abstraction layer.
 
 [![Dodgin' Boxes](http://img.youtube.com/vi/SX8QdKs8QtY/0.jpg)](http://www.youtube.com/watch?v=SX8QdKs8QtY "Dodgin' Boxes")
 
-Dependencies:
--Vulkan
--OpenAL
--GLFW
--GLM
--stb
-
-
-To build:
-Install Vulkan SDK and put include files in SimpleGame\Dependencies\IncludeDependencies\vulkan and SimpleGame\Dependencies\IncludeDependencies\shaderc
-
-Install OpenAL and put include files in SimpleGame\Dependencies\IncludeDependencies\OpenAL
-
-Put GLFW include files in SimpleGame\Dependencies\IncludeDependencies\GLFW
-
-Put glm include files in SimpleGame\Dependencies\IncludeDependencies\glm
-
-Put stb include files in SimpleGame\Dependencies\IncludeDependencies\stb
-
-Add libraries to SimpleGame\Dependencies\*DEPENDENCY NAME*\lib and SimpleGame\Dependencies\*DEPENDENCY NAME*\lib32 (Note: glm and stb are header only)
-
-Run compile_shaders.bat in SimpleGame\DodgingBoxes\Resources
-
-After that just open the solution in Visual Studio and build.
-
-
-
 # List of effects and how they were achieved:
 -Shadows
 
@@ -49,3 +22,29 @@ The reflective cube mentioned earlier also has rougher and smoother spots on it.
 -Fog
 
 After everything other than text and menus has been rendered, a raymarching process is performed to include fog with is lit and also shadowed. (Note: A simplified and linear falloff is being used for the lighting here because it was expensive to compute a complex falloff for each light for each step in the raymarching.)
+
+
+# Dependencies:
+-Vulkan
+-OpenAL
+-GLFW
+-GLM
+-stb
+
+
+# To build:
+Install Vulkan SDK and put include files in SimpleGame\Dependencies\IncludeDependencies\vulkan and SimpleGame\Dependencies\IncludeDependencies\shaderc
+
+Install OpenAL and put include files in SimpleGame\Dependencies\IncludeDependencies\OpenAL
+
+Put GLFW include files in SimpleGame\Dependencies\IncludeDependencies\GLFW
+
+Put glm include files in SimpleGame\Dependencies\IncludeDependencies\glm
+
+Put stb include files in SimpleGame\Dependencies\IncludeDependencies\stb
+
+Add libraries to SimpleGame\Dependencies\*DEPENDENCY NAME*\lib and SimpleGame\Dependencies\*DEPENDENCY NAME*\lib32 (Note: glm and stb are header only)
+
+Run compile_shaders.bat in SimpleGame\DodgingBoxes\Resources
+
+After that just open the solution in Visual Studio and build.
