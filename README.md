@@ -21,7 +21,7 @@ The reflective cube mentioned earlier also has rougher and smoother spots on it.
 
 -Fog
 
-After everything other than text and menus has been rendered, a raymarching process is performed to include fog with is lit and also shadowed. (Note: A simplified and linear falloff is being used for the lighting here because it was expensive to compute a complex falloff for each light for each step in the raymarching.)
+After everything other than text and menus has been rendered, a raymarching process is performed to include fog which is lit and also shadowed. (Note: A simplified and linear falloff is being used for the lighting here because it was expensive to compute a more complicated falloff for each light for each step in the raymarching.)
 
 
 # Dependencies:
