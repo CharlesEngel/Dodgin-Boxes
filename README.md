@@ -1,6 +1,9 @@
 # Dodgin' Boxes
 A simple game using my (bad) Vulkan abstraction layer.
 
+
+Video:
+
 [![Dodgin' Boxes](http://img.youtube.com/vi/SX8QdKs8QtY/0.jpg)](http://www.youtube.com/watch?v=SX8QdKs8QtY "Dodgin' Boxes")
 
 # List of effects and how they were achieved:
@@ -33,6 +36,8 @@ After everything other than text and menus has been rendered, a raymarching proc
 
 
 # To build:
+Download dependencies
+
 Install Vulkan SDK and put include files in SimpleGame\Dependencies\IncludeDependencies\vulkan and SimpleGame\Dependencies\IncludeDependencies\shaderc
 
 Install OpenAL and put include files in SimpleGame\Dependencies\IncludeDependencies\OpenAL
