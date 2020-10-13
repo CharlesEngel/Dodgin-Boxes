@@ -29,10 +29,15 @@ After everything other than text and menus has been rendered, a raymarching proc
 
 # Dependencies:
 -Vulkan
+
 -OpenAL
+
 -GLFW
+
 -GLM
+
 -stb
+
 
 
 # To build:
