@@ -41,20 +41,19 @@ After everything other than text and menus has been rendered, a raymarching proc
 
 
 # To build:
-Download dependencies
+Clone repository.
 
-Install Vulkan SDK and put include files in SimpleGame\Dependencies\IncludeDependencies\vulkan and SimpleGame\Dependencies\IncludeDependencies\shaderc
+Make sure CMake, git, OpenAl, and the Vulkan SDK are all installed.
 
-Install OpenAL and put include files in SimpleGame\Dependencies\IncludeDependencies\OpenAL
+If on Windows, change the paths in src/Resources/compile_shaders.bat to point to glslc then run it.
+If on Linux, run src/Resources/compile_shaders.sh.
 
-Put GLFW include files in SimpleGame\Dependencies\IncludeDependencies\GLFW
+From the Dodgin-Boxes directory, call:
+>mkdir build
 
-Put glm include files in SimpleGame\Dependencies\IncludeDependencies\glm
+>cd build
 
-Put stb include files in SimpleGame\Dependencies\IncludeDependencies\stb
+>cmake ..
 
-Add libraries to SimpleGame\Dependencies\*DEPENDENCY NAME*\lib and SimpleGame\Dependencies\*DEPENDENCY NAME*\lib32 (Note: glm and stb are header only)
-
-Run compile_shaders.bat in SimpleGame\DodgingBoxes\Resources
-
-After that just open the solution in Visual Studio and build.
+If on Windows, open the created Visual Studio project and build.
+If on Linux, run make.
