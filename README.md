@@ -45,15 +45,24 @@ Clone repository.
 
 Make sure CMake, git, OpenAl, and the Vulkan SDK are all installed.
 
+
+
 If on Windows, change the paths in src/Resources/compile_shaders.bat to point to glslc then run it.
+
 If on Linux, run src/Resources/compile_shaders.sh.
 
+
+
 From the Dodgin-Boxes directory, call:
+
 >mkdir build
 
 >cd build
 
 >cmake ..
 
+
+
 If on Windows, open the created Visual Studio project and build.
+
 If on Linux, run make.
