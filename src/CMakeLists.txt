@@ -11,9 +11,6 @@ target_link_libraries(dodgin_boxes glfw glm)
 target_link_libraries(dodgin_boxes vulkan_layer)
 target_link_libraries(dodgin_boxes renderer)
 
-find_package(Vulkan REQUIRED)
-find_package(OpenAL REQUIRED)
-
 target_link_libraries(dodgin_boxes ${Vulkan_LIBRARIES})
 target_include_directories(dodgin_boxes PUBLIC ${Vulkan_INCLUDE_DIR})
 

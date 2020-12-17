@@ -7,9 +7,6 @@ target_include_directories(app PUBLIC ../include)
 
 target_link_libraries(app dodgin_boxes vulkan_layer glfw glm)
 
-find_package(Vulkan REQUIRED)
-find_package(OpenAL REQUIRED)
-
 target_link_libraries(app ${Vulkan_LIBRARIES})
 target_include_directories(app PUBLIC ${Vulkan_INCLUDE_DIR})
 
