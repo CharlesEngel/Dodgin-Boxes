@@ -7,7 +7,7 @@
 #include <algorithm>
 #include "Utilities.h"
 
-const bool enable_validation_layers = false;
+const bool enable_validation_layers = true;
 
 void create_renderer(Renderer &renderer, RendererParameters &parameters)
 {

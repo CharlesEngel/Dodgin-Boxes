@@ -171,5 +171,10 @@ void main() {
 	// I know I'm doing this wrong and that an index of refraction fo 6 is impossible, I just prefer the effect doing it this way.
 	vec3 pos_vec = normalize(inCameraPos - inPosition);
 	float F = fresnel(pos_vec, reflect(pos_vec, normal), 6.0);
+
+	if (normal == vec3(0.0, 0.0, 1.0))
+	{
+		F = 0.3;
+	}
 	outColor = color + reflect_value * F;
 }
